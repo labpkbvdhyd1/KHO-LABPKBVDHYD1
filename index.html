@@ -402,7 +402,7 @@
                         <button class="btn-reset-filter" onclick="resetFilter('imp')">Tất cả</button>
                         <button class="btn-export" onclick="exportMonthlyImportStatsToCSV()">📥 Tải Excel Nhập</button>
                         <button class="btn-print-slip" onclick="printTableSelection('monthlyImportTable')">📄 Xuất Phiếu Thống Kê Nhập</button>
-                        <button onclick="xuatBienBanBanGiao()" style="background-color: #28a745; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 11px;">🖨️ Xuất Biên Bản Bàn Giao</button>
+                        <button onclick="xuatBienBanBanGiao()">Xuất Biên Bản Bàn Giao</button>
                         <div class="toolbar-group" style="display: inline-block; margin-left: 10px; margin-right: 10px;">
                             <label for="txtNguoiGiao" style="font-weight: bold; margin-right: 5px;">Tên Người Giao:</label>
                             <input type="text" id="txtNguoiGiao" placeholder="Nhập tên người giao..." 
@@ -915,11 +915,21 @@
                 populateLabelProductSelect();
             });
 
-            db.ref('qr_inventory_v11').on('value', (snapshot) => {
-                const data = snapshot.val();
-                inventory = data || {};
-                renderTables();
-            });
+db.ref('qr_inventory_v11').on('value', (snapshot) => {
+    const data = snapshot.val();
+    
+    if (data) {
+        // Chuyển đổi toàn bộ Object mã lô từ Firebase thành Mảng (Array) để các bảng trên giao diện đọc được
+        inventory = Object.values(data);
+    } else {
+        inventory = [];
+    }
+    
+    // Gọi hàm vẽ lại bảng hiển thị giao diện
+    if (typeof renderTables === 'function') {
+        renderTables();
+    }
+});
 
             db.ref('qr_logs_v11').on('value', (snapshot) => {
                 const data = snapshot.val();
@@ -1688,6 +1698,354 @@ function renderTables() {
             const checkboxes = document.querySelectorAll(`#${tableId} .row-checkbox`);
             checkboxes.forEach(cb => cb.checked = masterCheckbox.checked);
         }
+// --- HÀM XỬ LÝ XUẤT BIÊN BẢN BÀN GIAO ---
+        let tenNguoiGiaoGlobal = "";
+
+        function luuTenNguoiGiao(val) {
+            tenNguoiGiaoGlobal = val;
+        }
+
+        function xuatBienBanBanGiao() {
+            // Lấy danh sách các dòng được tích chọn trong bảng Thống kê Nhập (Tab 3)
+            const checkboxes = document.querySelectorAll('#monthlyImportTable .row-checkbox:checked');
+            let selectedItems = [];
+
+            checkboxes.forEach(cb => {
+                let row = cb.closest('tr');
+                if (row) {
+                    let cols = row.querySelectorAll('td');
+                    if (cols.length >= 9) {
+                        selectedItems.push({
+                            thoiGian: cols[1].innerText,
+                            tenSanPham: cols[2].innerText,
+                            lot: cols[3].innerText,
+                            date: cols[4].innerText,
+                            quyCach: cols[5].innerText,
+                            tinhTrang: cols[6].innerText,
+                            nhietDo: cols[7].innerText,
+                            sl: cols[8].innerText
+                        });
+                    }
+                }
+            });
+
+            // Nếu không chọn dòng nào, có thể lấy tất cả hoặc thông báo nhắc nhở
+            if (selectedItems.length === 0) {
+                alert("Vui lòng tích chọn ít nhất một sản phẩm trong bảng Thống kê Nhập để xuất biên bản bàn giao!");
+                return;
+            }
+
+// --- HÀM XỬ LÝ XUẤT BIÊN BẢN BÀN GIAO ---
+let tenNguoiGiaoGlobal = "";
+
+function luuTenNguoiGiao(val) {
+    tenNguoiGiaoGlobal = val;
+}
+
+function xuatBienBanBanGiao() {
+    // Lấy danh sách các dòng được tích chọn trong bảng Thống kê Nhập (Tab 3)
+    const checkboxes = document.querySelectorAll('#monthlyImportTable .row-checkbox:checked');
+    let selectedItems = [];
+
+    checkboxes.forEach(cb => {
+        let row = cb.closest('tr');
+        if (row) {
+            let cols = row.querySelectorAll('td');
+            if (cols.length >= 9) {
+                selectedItems.push({
+                    thoiGian: cols[1].innerText,
+                    tenSanPham: cols[2].innerText,
+                    lot: cols[3].innerText,
+                    date: cols[4].innerText,
+                    quyCach: cols[5].innerText,
+                    tinhTrang: cols[6].innerText,
+                    nhietDo: cols[7].innerText,
+                    sl: cols[8].innerText
+                });
+            }
+        }
+    });
+
+    if (selectedItems.length === 0) {
+        alert("Vui lòng tích chọn ít nhất một sản phẩm trong bảng Thống kê Nhập để xuất biên bản bàn giao!");
+        return;
+    }
+
+    let nguoiGiao = tenNguoiGiaoGlobal || document.getElementById('txtNguoiGiao').value.trim() || "Chưa cập nhật";
+    let nguoiNhan = currentUser ? currentUser.name : "Chưa đăng nhập";
+    let currentDate = new Date();
+    let ngayStr = `Ngày ${currentDate.getDate()} tháng ${currentDate.getMonth() + 1} năm ${currentDate.getFullYear()}`;
+
+    let rowsHtml = '';
+    selectedItems.forEach((item, index) => {
+        rowsHtml += `
+            <tr>
+                <td>${index + 1}</td>
+                <td class="text-left"><b>${item.tenSanPham}</b></td>
+                <td>${item.lot}</td>
+                <td>${item.date}</td>
+                <td>${item.quyCach}</td>
+                <td><b>${item.sl.replace('+', '')}</b></td>
+                <td>${item.nhietDo}</td>
+                <td>${item.tinhTrang}</td>
+                <td></td>
+            </tr>
+        `;
+    });
+
+    let printArea = document.getElementById('printSlipArea');
+    printArea.style.display = 'block';
+    printArea.innerHTML = `
+        <div class="sheet">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+                <div style="text-align: center; width: 40%;">
+                    <div style="font-size: 11pt; font-weight: bold;">PHÒNG KHÁM BỆNH VIỆN</div>
+                    <div style="font-size: 12pt; font-weight: bold;">ĐẠI HỌC Y DƯỢC 1</div>
+                    <div style="font-size: 10pt;">KHO XÉT NGHIỆM</div>
+                </div>
+                <div style="text-align: center; width: 60%;">
+                    <div style="font-size: 11pt; font-weight: bold;">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>
+                    <div style="font-size: 12pt; font-weight: bold;">Độc lập - Tự do - Hạnh phúc</div>
+                    <div style="font-size: 10pt; font-style: italic;">---------------o0o---------------</div>
+                </div>
+            </div>
+
+            <div class="title-section" style="margin-top: 25px;">
+                <h2>BIÊN BẢN BÀN GIAO HÓA CHẤT / VẬT TƯ XÉT NGHIỆM</h2>
+                <div class="sub-code">Kỳ bàn giao kho phân nhóm xét nghiệm</div>
+            </div>
+
+            <div class="info-section" style="font-size: 12pt; line-height: 1.6;">
+                <p><b>Hôm nay, ngày:</b> ${ngayStr}</p>
+                <p><b>Bên giao (Người giao):</b> ${nguoiGiao}</p>
+                <p><b>Bên nhận (Người tiếp nhận):</b> ${nguoiNhan} (Kho Xét Nghiệm)</p>
+                <p>Hai bên tiến hành bàn giao các loại hóa chất, vật tư xét nghiệm với chi tiết sau:</p>
+            </div>
+
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th style="width: 40px;">STT</th>
+                        <th>Tên Hóa Chất / Vật Tư</th>
+                        <th style="width: 85px;">Số Lô (LOT)</th>
+                        <th style="width: 85px;">Hạn Dùng</th>
+                        <th style="width: 75px;">Quy Cách</th>
+                        <th style="width: 55px;">Số Lượng</th>
+                        <th style="width: 70px;">Nhiệt Độ</th>
+                        <th style="width: 75px;">Tình Trạng</th>
+                        <th style="width: 90px;">Ghi Chú</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${rowsHtml}
+                </tbody>
+            </table>
+
+            <div style="margin-top: 20px; font-size: 12pt;">
+                <p><b>Ý kiến khác (nếu có):</b> Không.</p>
+                <p>Biên bản được lập thành 02 bản có giá trị pháp lý như nhau, mỗi bên giữ 01 bản.</p>
+            </div>
+
+            <div class="signature-section">
+                <div class="signature-box">
+                    <p><b>ĐẠI DIỆN BÊN GIAO</b></p>
+                    <p style="font-style: italic; font-size: 10pt;">(Ký, ghi rõ họ tên)</p>
+                    <div class="signature-space"></div>
+                    <p><b>${nguoiGiao}</b></p>
+                </div>
+                <div class="signature-box">
+                    <p><b>KHO PHÒNG KHÁM</b></p>
+                    <p style="font-style: italic; font-size: 10pt;">(Ký, ghi rõ họ tên)</p>
+                    <div class="signature-space"></div>
+                    <p><b>${nguoiNhan}</b></p>
+                </div>
+                <div class="signature-box">
+                    <p><b>P. KẾ TOÁN / TÀI CHÍNH</b></p>
+                    <p style="font-style: italic; font-size: 10pt;">(Ký, ghi rõ họ tên)</p>
+                    <div class="signature-space"></div>
+                    <p>&nbsp;</p>
+                </div>
+            </div>
+        </div>
+    `;
+
+    setTimeout(() => {
+        window.print();
+    }, 300);
+}
+        // --- CẤU HÌNH KẾT NỐI FIREBASE ---
+        const firebaseConfig = {
+          apiKey: "AIzaSyCODnAwFDbfixlIWQKdgZmMFWVa6M4goJc",
+          authDomain: "kho-labpkbvdhyd1.firebaseapp.com",
+          databaseURL: "https://kho-labpkbvdhyd1-default-rtdb.firebaseio.com",
+          projectId: "kho-labpkbvdhyd1",
+          storageBucket: "kho-labpkbvdhyd1.firebasestorage.app",
+          messagingSenderId: "1039878184033",
+          appId: "1:1039878184033:web:22875e1ce1f2f78c24de20",
+          measurementId: "G-GFGRSF4327"
+        };
+
+        // Khởi tạo Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.database();
+
+        let currentCategory = "NHÓM MIỄN DỊCH";
+        let suggestTimeout = null;
+        let currentUser = null;
+        let qrcodeObj = null;
+
+        let userAccounts = [];
+        let mappedProducts = [];
+        let inventory = {};
+        let logs = [];
+
+        // --- CÁC HÀM GẮN RA GLOBAL (WINDOW) CHO BIÊN BẢN BÀN GIAO ---
+        let tenNguoiGiaoGlobal = "";
+
+        window.luuTenNguoiGiao = function(val) {
+            tenNguoiGiaoGlobal = val;
+        };
+
+window.xuatBienBanBanGiao = function() {
+    const checkboxes = document.querySelectorAll('#monthlyImportTable .row-checkbox:checked');
+    let selectedItems = [];
+
+    checkboxes.forEach(cb => {
+        let row = cb.closest('tr');
+        if (row) {
+            let cols = row.querySelectorAll('td');
+            if (cols.length >= 9) {
+                selectedItems.push({
+                    thoiGian: cols[1].innerText,
+                    tenSanPham: cols[2].innerText,
+                    lot: cols[3].innerText,
+                    date: cols[4].innerText,
+                    quyCach: cols[5].innerText,
+                    tinhTrang: cols[6].innerText,
+                    nhietDo: cols[7].innerText,
+                    sl: cols[8].innerText
+                });
+            }
+        }
+    });
+
+    if (selectedItems.length === 0) {
+        alert("Vui lòng tích chọn ít nhất một sản phẩm trong bảng Thống kê Nhập để xuất biên bản bàn giao!");
+        return;
+    }
+
+    let nguoiGiao = (typeof tenNguoiGiaoGlobal !== 'undefined' ? tenNguoiGiaoGlobal : "") || 
+                    (document.getElementById('txtNguoiGiao') ? document.getElementById('txtNguoiGiao').value.trim() : "") || 
+                    "Chưa cập nhật";
+    let nguoiNhan = (typeof currentUser !== 'undefined' && currentUser && currentUser.name) ? currentUser.name : "Chưa đăng nhập";
+    let currentDate = new Date();
+    let ngayStr = `Ngày ${currentDate.getDate()} tháng ${currentDate.getMonth() + 1} năm ${currentDate.getFullYear()}`;
+
+    let rowsHtml = '';
+    selectedItems.forEach((item, index) => {
+        rowsHtml += `
+            <tr>
+                <td>${index + 1}</td>
+                <td class="text-left"><b>${item.tenSanPham}</b></td>
+                <td>${item.lot}</td>
+                <td>${item.date}</td>
+                <td>${item.quyCach}</td>
+                <td><b>${item.sl.replace('+', '')}</b></td>
+                <td>${item.nhietDo}</td>
+                <td>${item.tinhTrang}</td>
+                <td></td>
+            </tr>
+        `;
+    });
+
+    let printArea = document.getElementById('printSlipArea');
+    if (printArea) {
+        printArea.style.display = 'block';
+        printArea.innerHTML = `
+            <div class="sheet">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+                    <div style="text-align: center; width: 40%;">
+                        <div style="font-size: 11pt; font-weight: bold;">PHÒNG KHÁM BỆNH VIỆN</div>
+                        <div style="font-size: 12pt; font-weight: bold;">ĐẠI HỌC Y DƯỢC 1</div>
+                        <div style="font-size: 10pt;">KHO XÉT NGHIỆM</div>
+                    </div>
+                    <div style="text-align: center; width: 60%;">
+                        <div style="font-size: 11pt; font-weight: bold;">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>
+                        <div style="font-size: 12pt; font-weight: bold;">Độc lập - Tự do - Hạnh phúc</div>
+                        <div style="font-size: 10pt; font-style: italic;">---------------o0o---------------</div>
+                    </div>
+                </div>
+
+                <div class="title-section" style="margin-top: 25px;">
+                    <h2>BIÊN BẢN BÀN GIAO HÓA CHẤT / VẬT TƯ XÉT NGHIỆM</h2>
+                    <div class="sub-code">Kỳ bàn giao kho phân nhóm xét nghiệm</div>
+                </div>
+
+                <div class="info-section" style="font-size: 12pt; line-height: 1.6;">
+                    <p><b>Hôm nay, ngày:</b> ${ngayStr}</p>
+                    <p><b>Bên giao (Người giao):</b> ${nguoiGiao}</p>
+                    <p><b>Bên nhận (Người tiếp nhận):</b> ${nguoiNhan} (Kho Xét Nghiệm)</p>
+                    <p>Hai bên tiến hành bàn giao các loại hóa chất, vật tư xét nghiệm với chi tiết sau:</p>
+                </div>
+
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 40px;">STT</th>
+                            <th>Tên Hóa Chất / Vật Tư</th>
+                            <th style="width: 85px;">Số Lô (LOT)</th>
+                            <th style="width: 85px;">Hạn Dùng</th>
+                            <th style="width: 75px;">Quy Cách</th>
+                            <th style="width: 55px;">Số Lượng</th>
+                            <th style="width: 70px;">Nhiệt Độ</th>
+                            <th style="width: 75px;">Tình Trạng</th>
+                            <th style="width: 90px;">Ghi Chú</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rowsHtml}
+                    </tbody>
+                </table>
+
+                <div style="margin-top: 20px; font-size: 12pt;">
+                    <p><b>Ý kiến khác (nếu có):</b> Không.</p>
+                    <p>Biên bản được lập thành 02 bản có giá trị pháp lý như nhau, mỗi bên giữ 01 bản.</p>
+                </div>
+
+                <div class="signature-section">
+                    <div class="signature-box">
+                        <p><b>ĐẠI DIỆN BÊN GIAO</b></p>
+                        <p style="font-style: italic; font-size: 10pt;">(Ký, ghi rõ họ tên)</p>
+                        <div class="signature-space"></div>
+                        <p><b>${nguoiGiao}</b></p>
+                    </div>
+                    <div class="signature-box">
+                        <p><b>KHO PHÒNG KHÁM</b></p>
+                        <p style="font-style: italic; font-size: 10pt;">(Ký, ghi rõ họ tên)</p>
+                        <div class="signature-space"></div>
+                        <p><b>${nguoiNhan}</b></p>
+                    </div>
+                    <div class="signature-box">
+                        <p><b>P. KẾ TOÁN / TÀI CHÍNH</b></p>
+                        <p style="font-style: italic; font-size: 10pt;">(Ký, ghi rõ họ tên)</p>
+                        <div class="signature-space"></div>
+                        <p>&nbsp;</p>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        setTimeout(() => {
+            window.print();
+        }, 300);
+    } else {
+        console.error("Không tìm thấy phần tử printSlipArea trong HTML!");
+    }
+};
+        // --- CÁC HÀM KHỞI TẠO VÀ XỬ LÝ KHÁC ---
+        // ... (giữ nguyên toàn bộ các hàm phía dưới của bạn như initFirebaseSync, renderTables, v.v.)
     </script>
 </body>
 </html>
