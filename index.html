@@ -1656,21 +1656,25 @@ function renderTables() {
             });
         }
 
-        function deleteInventoryBatch(index) {
-            if (!currentUser || currentUser.role !== 'ADMIN') {
-                alert("Chỉ tài khoản Quản trị (Admin) mới có quyền xóa lô hàng!");
-                return;
-            }
-            if (confirm("Bạn có chắc chắn muốn xóa lô hàng này khỏi kho?")) {
-                let invArr = Array.isArray(inventory) ? inventory : Object.values(inventory);
-                invArr.splice(index, 1);
-                inventory = invArr;
-                db.ref('qr_inventory_v11').set(inventory).then(() => {
-                    renderTables();
-                    alert("Đã xóa lô hàng thành công!");
-                });
-            }
-        }
+function deleteLogEntry(index) {
+    if (!currentUser || currentUser.role !== 'ADMIN') {
+        alert("Chỉ tài khoản Quản trị (Admin) mới có quyền xóa lịch sử giao dịch!");
+        return;
+    }
+    if (confirm("Bạn có chắc chắn muốn xóa dòng lịch sử giao dịch này không?")) {
+        let logsArr = Array.isArray(logs) ? logs : Object.values(logs);
+        logsArr.splice(index, 1);
+        logs = logsArr;
+        
+        db.ref('qr_logs_v11').set(logs).then(() => {
+            renderTables();
+            alert("Đã xóa lịch sử giao dịch thành công!");
+        }).catch(err => {
+            console.error("Lỗi khi xóa lịch sử:", err);
+            alert("❌ Không thể xóa lịch sử trên cơ sở dữ liệu!");
+        });
+    }
+}
 
         function toggleSelectAll(selectAllCheckbox, tableId) {
             let checkboxes = document.querySelectorAll(`#${tableId} tbody input[type="checkbox"]`);
