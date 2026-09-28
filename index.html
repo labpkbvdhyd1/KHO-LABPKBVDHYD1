@@ -850,16 +850,16 @@
 
     <script>
         // --- CẤU HÌNH KẾT NỐI FIREBASE ---
-const firebaseConfig = {
-  apiKey: "AIzaSyCODnAwFDbfixlIWQKdgZmMFWVa6M4goJc",
-  authDomain: "kho-labpkbvdhyd1.firebaseapp.com",
-  databaseURL: "https://kho-labpkbvdhyd1-default-rtdb.firebaseio.com",
-  projectId: "kho-labpkbvdhyd1",
-  storageBucket: "kho-labpkbvdhyd1.firebasestorage.app",
-  messagingSenderId: "1039878184033",
-  appId: "1:1039878184033:web:22875e1ce1f2f78c24de20",
-  measurementId: "G-GFGRSF4327"
-};
+        const firebaseConfig = {
+          apiKey: "AIzaSyCODnAwFDbfixlIWQKdgZmMFWVa6M4goJc",
+          authDomain: "kho-labpkbvdhyd1.firebaseapp.com",
+          databaseURL: "https://kho-labpkbvdhyd1-default-rtdb.firebaseio.com",
+          projectId: "kho-labpkbvdhyd1",
+          storageBucket: "kho-labpkbvdhyd1.firebasestorage.app",
+          messagingSenderId: "1039878184033",
+          appId: "1:1039878184033:web:22875e1ce1f2f78c24de20",
+          measurementId: "G-GFGRSF4327"
+        };
 
         // Khởi tạo Firebase
         if (!firebase.apps.length) {
@@ -1437,12 +1437,256 @@ const firebaseConfig = {
             });
         }
 
-        function renderTables() {
-            // Hàm render các bảng hiển thị dữ liệu tồn kho, lịch sử...
+function renderTables() {
+            // 1. RENDER BẢNG TỒN KHO (TAB 2)
+            const invTbody = document.querySelector('#inventoryTable tbody');
+            const searchInvInput = document.getElementById('searchInvInput');
+            const searchInvKey = searchInvInput ? searchInvInput.value.trim().toLowerCase() : '';
+            const filterInvFrom = document.getElementById('filterInvFrom').value;
+            const filterInvTo = document.getElementById('filterInvTo').value;
+
+            let invHtml = [];
+            let totalBatchesCount = 0;
+
+            Object.keys(inventory).forEach(key => {
+                let item = inventory[key];
+                if (!item) return;
+
+                // Lọc theo nhóm hiện tại
+                if (item.category !== currentCategory) return;
+
+                // Tìm kiếm
+                let matchesSearch = !searchInvKey || 
+                    (item.name && item.name.toLowerCase().includes(searchInvKey)) ||
+                    (item.barcode && item.barcode.toLowerCase().includes(searchInvKey)) ||
+                    (item.lot && item.lot.toLowerCase().includes(searchInvKey));
+
+                if (matchesSearch) {
+                    totalBatchesCount++;
+                    let isExpired = false;
+                    if (item.expiry) {
+                        let expDate = new Date(item.expiry);
+                        let today = new Date();
+                        if (expDate < today) isExpired = true;
+                    }
+
+                    let isLow = item.quantity <= (item.minStock || 5);
+                    let rowClass = isExpired ? 'expired' : (isLow ? 'low-stock' : '');
+                    let statusText = isExpired ? '🔴 HẾT HẠN' : (isLow ? '⚠️ SẮP HẾT / THẤP' : '🟢 ỔN ĐỊNH');
+
+                    invHtml.push(`<tr class="${rowClass}">
+                        <td style="text-align: center;"><input type="checkbox" class="row-checkbox"></td>
+                        <td><b>${item.name}</b></td>
+                        <td><b style="color:#0056b3;">${item.barcode}</b></td>
+                        <td>${item.storageTemp || '2-8°C'}</td>
+                        <td><b style="color:#0056b3;">${item.lot}</b></td>
+                        <td>${item.time}</td>
+                        <td>${item.user || '-'}</td>
+                        <td><b>${item.expiry}</b></td>
+                        <td><b style="font-size:13px; color: ${item.quantity > 0 ? '#007bff' : 'red'};">${item.quantity}</b></td>
+                        <td>${item.minStock || 5}</td>
+                        <td><b>${statusText}</b></td>
+                        <td class="admin-only-col">
+                            ${currentUser && currentUser.role === 'ADMIN' ? `<button class="btn-delete" onclick="deleteInventoryBatch('${key}')">Xóa Lô</button>` : '-'}
+                        </td>
+                    </tr>`);
+                }
+            });
+
+            invTbody.innerHTML = invHtml.length ? invHtml.join('') : `<tr><td colspan="12" style="text-align:center; color:#888;">Chưa có dữ liệu tồn kho trong nhóm này</td></tr>`;
+            document.getElementById('totalInventoryBatches').innerText = totalBatchesCount;
+
+            // 2. RENDER BẢNG THỐNG KÊ NHẬP (TAB 3)
+            const impTbody = document.querySelector('#monthlyImportTable tbody');
+            const searchImpInput = document.getElementById('searchImpInput');
+            const searchImpKey = searchImpInput ? searchImpInput.value.trim().toLowerCase() : '';
+            
+            let impHtml = [];
+            logs.filter(l => l.type === 'NHẬP').forEach((l, index) => {
+                let matches = !searchImpKey || 
+                    (l.name && l.name.toLowerCase().includes(searchImpKey)) ||
+                    (l.barcode && l.barcode.toLowerCase().includes(searchImpKey)) ||
+                    (l.lot && l.lot.toLowerCase().includes(searchImpKey));
+
+                if (matches) {
+                    impHtml.push(`<tr>
+                        <td style="text-align: center;"><input type="checkbox" class="row-checkbox"></td>
+                        <td>${l.time}</td>
+                        <td><b>${l.name}</b></td>
+                        <td><b style="color:#0056b3;">${l.lot}</b></td>
+                        <td>${l.expiry}</td>
+                        <td>1 Hộp</td>
+                        <td>Đạt</td>
+                        <td>2-8°C</td>
+                        <td><b style="color:green;">+${l.qty}</b></td>
+                    </tr>`);
+                }
+            });
+            impTbody.innerHTML = impHtml.length ? impHtml.join('') : `<tr><td colspan="9" style="text-align:center; color:#888;">Chưa có lịch sử nhập kho</td></tr>`;
+
+            // 3. RENDER BẢNG THỐNG KÊ XUẤT (TAB 4)
+            const expTbody = document.querySelector('#monthlyExportTable tbody');
+            const searchExpInput = document.getElementById('searchExpInput');
+            const searchExpKey = searchExpInput ? searchExpInput.value.trim().toLowerCase() : '';
+
+            let expHtml = [];
+            logs.filter(l => l.type === 'XUẤT').forEach((l) => {
+                let matches = !searchExpKey || 
+                    (l.name && l.name.toLowerCase().includes(searchExpKey)) ||
+                    (l.barcode && l.barcode.toLowerCase().includes(searchExpKey));
+
+                if (matches) {
+                    expHtml.push(`<tr>
+                        <td style="text-align: center;"><input type="checkbox" class="row-checkbox"></td>
+                        <td>${l.time}</td>
+                        <td><b>${l.name}</b> (${l.barcode})</td>
+                        <td><b style="color:#d97706;">-${l.qty}</b></td>
+                    </tr>`);
+                }
+            });
+            expTbody.innerHTML = expHtml.length ? expHtml.join('') : `<tr><td colspan="4" style="text-align:center; color:#888;">Chưa có lịch sử xuất kho</td></tr>`;
+
+            // 4. RENDER BẢNG LỊCH SỬ GIAO DỊCH (TAB 5)
+            const logTbody = document.querySelector('#logTable tbody');
+            const searchLogInput = document.getElementById('searchLogInput');
+            const searchLogKey = searchLogInput ? searchLogInput.value.trim().toLowerCase() : '';
+
+            let totalImpCount = 0;
+            let totalExpCount = 0;
+            let logHtml = [];
+
+            logs.forEach((l, index) => {
+                if (l.type === 'NHẬP') totalImpCount += l.qty;
+                if (l.type === 'XUẤT') totalExpCount += l.qty;
+
+                let matches = !searchLogKey || 
+                    (l.name && l.name.toLowerCase().includes(searchLogKey)) ||
+                    (l.user && l.user.toLowerCase().includes(searchLogKey)) ||
+                    (l.barcode && l.barcode.toLowerCase().includes(searchLogKey)) ||
+                    (l.lot && l.lot.toLowerCase().includes(searchLogKey));
+
+                if (matches) {
+                    let badgeColor = l.type === 'NHẬP' ? 'color: green; font-weight: bold;' : 'color: #d97706; font-weight: bold;';
+                    logHtml.push(`<tr>
+                        <td style="text-align: center;"><input type="checkbox" class="row-checkbox"></td>
+                        <td>${l.time}</td>
+                        <td>${l.user}</td>
+                        <td><b>${l.name}</b></td>
+                        <td>${l.barcode}</td>
+                        <td>${l.lot}</td>
+                        <td>${l.expiry}</td>
+                        <td style="${badgeColor}">${l.type}</td>
+                        <td><b>${l.qty}</b></td>
+                        <td>${l.note}</td>
+                        <td class="admin-only-col">
+                            ${currentUser && currentUser.role === 'ADMIN' ? `<button class="btn-delete" onclick="deleteLogEntry(${index})">Xóa</button>` : '-'}
+                        </td>
+                    </tr>`);
+                }
+            });
+
+            logTbody.innerHTML = logHtml.length ? logHtml.join('') : `<tr><td colspan="11" style="text-align:center; color:#888;">Chưa có lịch sử giao dịch</td></tr>`;
+            document.getElementById('totalImport').innerText = totalImpCount;
+            document.getElementById('totalExport').innerText = totalExpCount;
         }
 
         function renderReorderTable() {
-            // Hàm hiển thị danh sách hàng cần đặt bổ sung
+            const tbody = document.querySelector('#reorderTable tbody');
+            const searchInput = document.getElementById('searchReorderInput');
+            const searchKey = searchInput ? searchInput.value.trim().toLowerCase() : '';
+
+            // Tính tổng tồn kho thực tế của từng sản phẩm dựa trên barcode
+            let stockMap = {};
+            Object.keys(inventory).forEach(key => {
+                let item = inventory[key];
+                if (item && item.barcode) {
+                    let bCode = item.barcode.trim();
+                    stockMap[bCode] = (stockMap[bCode] || 0) + item.quantity;
+                }
+            });
+
+            let reorderHtml = [];
+            let outOfStockCount = 0;
+            let lowStockCount = 0;
+
+            mappedProducts.forEach(p => {
+                let currentStock = stockMap[p.barcode || p.name] || 0;
+                let minStock = p.minStock || 5;
+
+                if (currentStock <= minStock) {
+                    if (currentStock === 0) outOfStockCount++;
+                    else lowStockCount++;
+
+                    let matches = !searchKey || 
+                        (p.name && p.name.toLowerCase().includes(searchKey)) ||
+                        (p.barcode && p.barcode.toLowerCase().includes(searchKey)) ||
+                        (p.manufacturer && p.manufacturer.toLowerCase().includes(searchKey));
+
+                    if (matches) {
+                        let statusBadge = currentStock === 0 ? '<span style="color:red; font-weight:bold;">🔴 HẾT HÀNG (GẤP)</span>' : '<span style="color:#d97706; font-weight:bold;">⚠️ SẮP HẾT</span>';
+                        reorderHtml.push(`<tr>
+                            <td style="text-align: center;"><input type="checkbox" class="row-checkbox"></td>
+                            <td>${currentStock === 0 ? '<b>CẤP 1</b>' : 'CẤP 2'}</td>
+                            <td><b>${p.name}</b></td>
+                            <td><b style="color:#0056b3;">${p.barcode}</b></td>
+                            <td>${p.manufacturer || '-'}</td>
+                            <td>${p.unit || 'Hộp'}</td>
+                            <td>${p.spec || '-'}</td>
+                            <td><b style="color:red; font-size:13px;">${currentStock}</b></td>
+                            <td>${minStock}</td>
+                            <td>${statusBadge}</td>
+                        </tr>`);
+                    }
+                }
+            });
+
+            tbody.innerHTML = reorderHtml.length ? reorderHtml.join('') : `<tr><td colspan="10" style="text-align:center; color:#28a745; font-weight:bold;">🎉 Tất cả sản phẩm đều đủ tồn kho, không cần đặt thêm!</td></tr>`;
+            document.getElementById('totalOutOfStockCount').innerText = outOfStockCount;
+            document.getElementById('totalLowStockCount').innerText = lowStockCount;
+        }
+
+        function deleteInventoryBatch(key) {
+            if (confirm("Bạn có chắc chắn muốn xóa lô hàng tồn kho này không?")) {
+                delete inventory[key];
+                db.ref('qr_inventory_v11').set(inventory).then(() => {
+                    renderTables();
+                });
+            }
+        }
+
+        function deleteLogEntry(index) {
+            if (confirm("Bạn có chắc chắn muốn xóa lịch sử giao dịch này không?")) {
+                logs.splice(index, 1);
+                db.ref('qr_logs_v11').set(logs).then(() => {
+                    renderTables();
+                });
+            }
+        }
+
+        function resetFilter(type) {
+            if (type === 'inv') {
+                document.getElementById('searchInvInput').value = '';
+                document.getElementById('filterInvFrom').value = '';
+                document.getElementById('filterInvTo').value = '';
+            } else if (type === 'imp') {
+                document.getElementById('searchImpInput').value = '';
+                document.getElementById('filterImpFrom').value = '';
+                document.getElementById('filterImpTo').value = '';
+            } else if (type === 'exp') {
+                document.getElementById('searchExpInput').value = '';
+                document.getElementById('filterExpFrom').value = '';
+                document.getElementById('filterExpTo').value = '';
+            } else if (type === 'log') {
+                document.getElementById('searchLogInput').value = '';
+                document.getElementById('filterLogFrom').value = '';
+                document.getElementById('filterLogTo').value = '';
+            }
+            renderTables();
+        }
+
+        function toggleSelectAll(masterCheckbox, tableId) {
+            const checkboxes = document.querySelectorAll(`#${tableId} .row-checkbox`);
+            checkboxes.forEach(cb => cb.checked = masterCheckbox.checked);
         }
     </script>
 </body>
