@@ -9,7 +9,9 @@
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-
+    <!-- FIREBASE COMPAT SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
     <style>
         /* --- CSS CHO BIÊN BẢN BÀN GIAO (IN ẤN A4) --- */
         .sheet {
@@ -401,12 +403,12 @@
                         <button class="btn-export" onclick="exportMonthlyImportStatsToCSV()">📥 Tải Excel Nhập</button>
                         <button class="btn-print-slip" onclick="printTableSelection('monthlyImportTable')">📄 Xuất Phiếu Thống Kê Nhập</button>
                         <button onclick="xuatBienBanBanGiao()" style="background-color: #28a745; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 11px;">🖨️ Xuất Biên Bản Bàn Giao</button>
-<div class="toolbar-group" style="display: inline-block; margin-left: 10px; margin-right: 10px;">
-    <label for="txtNguoiGiao" style="font-weight: bold; margin-right: 5px;">Tên Người Giao:</label>
-    <input type="text" id="txtNguoiGiao" placeholder="Nhập tên người giao..." 
-           style="padding: 5px 8px; border: 1px solid #ccc; border-radius: 4px; width: 180px;" 
-           oninput="luuTenNguoiGiao(this.value)">
-</div>
+                        <div class="toolbar-group" style="display: inline-block; margin-left: 10px; margin-right: 10px;">
+                            <label for="txtNguoiGiao" style="font-weight: bold; margin-right: 5px;">Tên Người Giao:</label>
+                            <input type="text" id="txtNguoiGiao" placeholder="Nhập tên người giao..." 
+                                   style="padding: 5px 8px; border: 1px solid #ccc; border-radius: 4px; width: 180px;" 
+                                   oninput="luuTenNguoiGiao(this.value)">
+                        </div>
                     </div>
                     <table id="monthlyImportTable">
                         <thead>
@@ -798,7 +800,7 @@
         <div class="modal-content modal-content-small">
             <span class="close" onclick="closeEditProductLotModal()">&times;</span>
             <h3 style="margin-top:0; color:#004085; text-align:center;">✏️ CẬP NHẬT THÔNG TIN SẢN PHẨM</h3>
-            <input type="hidden" id="editProdIndex">
+            <input type="hidden" id="editProdKey">
             
             <div class="form-group">
                 <label>Nhóm Hóa Chất:</label>
@@ -847,30 +849,91 @@
     <div id="printSlipArea" style="display:none;"></div>
 
     <script>
+        // --- CẤU HÌNH KẾT NỐI FIREBASE ---
+const firebaseConfig = {
+  apiKey: "AIzaSyCODnAwFDbfixlIWQKdgZmMFWVa6M4goJc",
+  authDomain: "kho-labpkbvdhyd1.firebaseapp.com",
+  databaseURL: "https://kho-labpkbvdhyd1-default-rtdb.firebaseio.com",
+  projectId: "kho-labpkbvdhyd1",
+  storageBucket: "kho-labpkbvdhyd1.firebasestorage.app",
+  messagingSenderId: "1039878184033",
+  appId: "1:1039878184033:web:22875e1ce1f2f78c24de20",
+  measurementId: "G-GFGRSF4327"
+};
+
+        // Khởi tạo Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.database();
+
         let currentCategory = "NHÓM MIỄN DỊCH";
         let suggestTimeout = null;
         let currentUser = null;
         let qrcodeObj = null;
 
-        let defaultAccounts = [
+        let userAccounts = [];
+        let mappedProducts = [];
+        let inventory = {};
+        let logs = [];
+
+        const defaultAccounts = [
             { username: "admin", pass: "admin123", name: "Quản Trị Viên", role: "ADMIN" },
             { username: "user", pass: "123456", name: "Nhân Viên Kho", role: "USER" }
         ];
 
-        let userAccounts = JSON.parse(localStorage.getItem('qr_user_accounts_v1')) || defaultAccounts;
-        if (!localStorage.getItem('qr_user_accounts_v1')) {
-            localStorage.setItem('qr_user_accounts_v1', JSON.stringify(defaultAccounts));
-        }
-
-        let mappedProducts = JSON.parse(localStorage.getItem('qr_mapped_products_v7')) || [
+        const defaultProducts = [
             { category: "NHÓM MIỄN DỊCH", name: "Reagent HBsAg (Miễn Dịch)", barcode: "8934673012345", manufacturer: "Roche", machine: "Cobas e411", storageTemp: "2-8°C", unit: "Hộp", spec: "100 test/hộp", minStock: 5, defaultLot: "LOT_MD_01", defaultExpiry: "2026-12-31" },
             { category: "NHÓM ĐÔNG MÁU", name: "Hóa chất PT/APTT (Đông Máu)", barcode: "8935001234567", manufacturer: "Sysmex", machine: "CS-1600", storageTemp: "2-8°C", unit: "Lọ", spec: "5ml/lọ", minStock: 3, defaultLot: "LOT_DM_02", defaultExpiry: "2027-05-20" },
             { category: "NHÓM SINH HÓA", name: "Reagent Glucose (Sinh Hóa)", barcode: "8935010123458", manufacturer: "Beckman Coulter", machine: "AU680", storageTemp: "15-25°C", unit: "Hộp", spec: "2x50ml", minStock: 10, defaultLot: "LOT_SH_01", defaultExpiry: "2026-10-15" },
             { category: "NHÓM VẬT TƯ TIÊU HAO", name: "Bkeo vải 4.8-A(cuộn)", barcode: "8930009110024", manufacturer: "Thiện Mỹ", machine: "Thủ công / Khác", storageTemp: "Nhiệt độ phòng (<30°C)", unit: "Cuộn", spec: "1 cuộn", minStock: 20, defaultLot: "LOT_BV_01", defaultExpiry: "2028-12-31" }
         ];
 
-        let inventory = JSON.parse(localStorage.getItem('qr_inventory_v11')) || {};
-        let logs = JSON.parse(localStorage.getItem('qr_logs_v11')) || [];
+        function initFirebaseSync() {
+            db.ref('qr_user_accounts_v1').on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (!data) {
+                    db.ref('qr_user_accounts_v1').set(defaultAccounts);
+                    userAccounts = defaultAccounts;
+                } else {
+                    userAccounts = Array.isArray(data) ? data : Object.values(data);
+                }
+                if (document.getElementById('productModal').style.display === 'block') {
+                    renderUserAccountsModal();
+                }
+            });
+
+            db.ref('qr_mapped_products_v7').on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (!data) {
+                    db.ref('qr_mapped_products_v7').set(defaultProducts);
+                    mappedProducts = defaultProducts;
+                } else {
+                    mappedProducts = Array.isArray(data) ? data : Object.values(data);
+                }
+                renderMappedProductsTable();
+                populateLabelProductSelect();
+            });
+
+            db.ref('qr_inventory_v11').on('value', (snapshot) => {
+                const data = snapshot.val();
+                inventory = data || {};
+                renderTables();
+            });
+
+            db.ref('qr_logs_v11').on('value', (snapshot) => {
+                const data = snapshot.val();
+                logs = [];
+                if (data) {
+                    if (Array.isArray(data)) {
+                        logs = data;
+                    } else {
+                        logs = Object.values(data).reverse();
+                    }
+                }
+                renderTables();
+            });
+        }
 
         function showAutoSuggest(query) {
             const box = document.getElementById('autoSuggestBox');
@@ -964,6 +1027,7 @@
         }
 
         function checkSessionLogin() {
+            initFirebaseSync();
             let active = sessionStorage.getItem('qr_active_user');
             if (active) {
                 currentUser = JSON.parse(active);
@@ -996,14 +1060,15 @@
             if (newPass !== confirmPass) { alert("Mật khẩu mới không trùng khớp!"); return; }
             if (newPass.length < 4) { alert("Mật khẩu tối thiểu 4 ký tự!"); return; }
 
-            let acc = userAccounts.find(u => u.username.toLowerCase() === currentUser.username.toLowerCase());
-            if (acc) {
-                acc.pass = newPass;
+            let accIndex = userAccounts.findIndex(u => u.username.toLowerCase() === currentUser.username.toLowerCase());
+            if (accIndex !== -1) {
+                userAccounts[accIndex].pass = newPass;
                 currentUser.pass = newPass;
-                localStorage.setItem('qr_user_accounts_v1', JSON.stringify(userAccounts));
-                sessionStorage.setItem('qr_active_user', JSON.stringify(currentUser));
-                alert("Đổi mật khẩu thành công!");
-                closeChangePasswordModal();
+                db.ref('qr_user_accounts_v1').set(userAccounts).then(() => {
+                    sessionStorage.setItem('qr_active_user', JSON.stringify(currentUser));
+                    alert("Đổi mật khẩu thành công!");
+                    closeChangePasswordModal();
+                });
             }
         }
 
@@ -1157,19 +1222,18 @@
             if (userAccounts.some(u => u.username.toLowerCase() === username.toLowerCase())) { alert("Tên đăng nhập đã tồn tại!"); return; }
 
             userAccounts.push({ username, pass: "123456", name, role });
-            localStorage.setItem('qr_user_accounts_v1', JSON.stringify(userAccounts));
-            
-            document.getElementById('newAccUser').value = '';
-            document.getElementById('newAccName').value = '';
-            renderUserAccountsModal();
-            alert("Thêm tài khoản thành công! Mật khẩu mặc định là: 123456");
+            db.ref('qr_user_accounts_v1').set(userAccounts).then(() => {
+                document.getElementById('newAccUser').value = '';
+                document.getElementById('newAccName').value = '';
+                renderUserAccountsModal();
+                alert("Thêm tài khoản thành công! Mật khẩu mặc định là: 123456");
+            });
         }
 
         function removeUserAccount(index) {
             if (confirm(`Xóa tài khoản "${userAccounts[index].username}"?`)) {
                 userAccounts.splice(index, 1);
-                localStorage.setItem('qr_user_accounts_v1', JSON.stringify(userAccounts));
-                renderUserAccountsModal();
+                db.ref('qr_user_accounts_v1').set(userAccounts);
             }
         }
 
@@ -1188,17 +1252,17 @@
 
             if (!name) { alert("Vui lòng nhập Tên sản phẩm!"); return; }
             mappedProducts.push({ category, name, barcode: barcode || name, manufacturer, machine, storageTemp, unit, spec, minStock, defaultLot: lot, defaultExpiry: expiry });
-            localStorage.setItem('qr_mapped_products_v7', JSON.stringify(mappedProducts));
-            renderMappedProductsTable();
-            populateLabelProductSelect();
+            db.ref('qr_mapped_products_v7').set(mappedProducts).then(() => {
+                renderMappedProductsTable();
+                populateLabelProductSelect();
+                alert("✅ Thêm sản phẩm mới thành công!");
+            });
         }
 
         function deleteProductMapping(index) {
             if (confirm("Xóa sản phẩm này khỏi cấu hình?")) {
                 mappedProducts.splice(index, 1);
-                localStorage.setItem('qr_mapped_products_v7', JSON.stringify(mappedProducts));
-                renderMappedProductsTable();
-                populateLabelProductSelect();
+                db.ref('qr_mapped_products_v7').set(mappedProducts);
             }
         }
 
@@ -1206,7 +1270,7 @@
             let prod = mappedProducts[index];
             if (!prod) return;
 
-            document.getElementById('editProdIndex').value = index;
+            document.getElementById('editProdKey').value = index;
             document.getElementById('editProdCategory').value = prod.category || 'NHÓM MIỄN DỊCH';
             document.getElementById('editProdName').value = prod.name || '';
             document.getElementById('editProdBarcode').value = prod.barcode || '';
@@ -1224,7 +1288,7 @@
         }
 
         function saveProductLotEdit() {
-            let index = document.getElementById('editProdIndex').value;
+            let index = document.getElementById('editProdKey').value;
             if (index === "" || index === null) return;
 
             mappedProducts[index].category = document.getElementById('editProdCategory').value;
@@ -1236,12 +1300,12 @@
             mappedProducts[index].defaultExpiry = document.getElementById('editProdExpiry').value;
             mappedProducts[index].minStock = parseInt(document.getElementById('editProdMinStock').value) || 0;
 
-            localStorage.setItem('qr_mapped_products_v7', JSON.stringify(mappedProducts));
-            renderMappedProductsTable();
-            populateLabelProductSelect();
-
-            closeEditProductLotModal();
-            alert("✅ Đã cập nhật thông tin sản phẩm thành công!");
+            db.ref('qr_mapped_products_v7').set(mappedProducts).then(() => {
+                renderMappedProductsTable();
+                populateLabelProductSelect();
+                closeEditProductLotModal();
+                alert("✅ Đã cập nhật thông tin sản phẩm thành công!");
+            });
         }
 
         function renderMappedProductsTable() {
@@ -1304,838 +1368,82 @@
             let prodName = foundMap ? foundMap.name : `SP_${barcodeTerm}`;
             let actualBarcode = foundMap ? foundMap.barcode : barcodeTerm;
 
-            const batchKey = `${currentCategory}_${actualBarcode}_${lot}`;
+            const batchKeySanitized = `${currentCategory}_${actualBarcode}_${lot}`.replace(/[.#$[\]]/g, "_");
             const now = new Date();
             const nowStr = now.toLocaleString('vi-VN');
             const isoDateStr = now.toISOString().split('T')[0];
 
+            let currentBatch = inventory[batchKeySanitized] || {
+                category: currentCategory,
+                name: prodName,
+                barcode: actualBarcode,
+                storageTemp: foundMap ? foundMap.storageTemp : '2-8°C',
+                lot: lot,
+                time: nowStr,
+                user: currentUser.name,
+                expiry: expiry,
+                quantity: 0,
+                minStock: foundMap ? foundMap.minStock : 5
+            };
+
             if (type === 'NHẬP') {
-                if (!inventory[batchKey]) {
-                    inventory[batchKey] = { category: currentCategory, productName: prodName, barcode: actualBarcode, lot: lot, importTimeStr: nowStr, importDateISO: isoDateStr, lastUser: currentUser.name, expiry: expiry, qty: 0 };
-                }
-                inventory[batchKey].qty += qty;
-            } else if (type === 'XUẤT') {
-                if (!inventory[batchKey] || inventory[batchKey].qty < qty) {
-                    alert(`Không đủ tồn kho để xuất!`);
+                currentBatch.quantity += qty;
+                currentBatch.time = nowStr;
+                currentBatch.user = currentUser.name;
+                currentBatch.expiry = expiry;
+            } else {
+                if (currentBatch.quantity < qty) {
+                    alert(`⚠️ Tồn kho không đủ để xuất! Hiện tại chỉ còn: ${currentBatch.quantity}`);
                     return;
                 }
-                inventory[batchKey].qty -= qty;
+                currentBatch.quantity -= qty;
             }
 
-            logs.unshift({ category: currentCategory, timeStr: nowStr, dateISO: isoDateStr, userName: currentUser.name, productName: prodName, barcode: actualBarcode, lot: lot, expiry: expiry, type: type, qty: qty, note: note });
-
-            localStorage.setItem('qr_inventory_v11', JSON.stringify(inventory));
-            localStorage.setItem('qr_logs_v11', JSON.stringify(logs));
-
-            document.getElementById('productBarcode').value = '';
-            document.getElementById('quantity').value = 1;
-            renderTables();
-            alert("Lưu giao dịch thành công!");
-        }
-
-        function deleteLog(index) {
-            if (currentUser.role !== 'ADMIN') return;
-            if (confirm("Xóa giao dịch này?")) {
-                logs.splice(index, 1);
-                localStorage.setItem('qr_logs_v11', JSON.stringify(logs));
-                renderTables();
-            }
-        }
-
-        function deleteBatch(batchKey) {
-            if (currentUser.role !== 'ADMIN') return;
-            if (confirm("Xóa lô kho này?")) {
-                delete inventory[batchKey];
-                localStorage.setItem('qr_inventory_v11', JSON.stringify(inventory));
-                renderTables();
-            }
-        }
-
-        function checkExpiryAndStockStatus(expiryStr, currentQty, minStock) {
-            if (minStock > 0 && currentQty <= minStock) return { text: `Sắp Hết Hàng (${currentQty}/${minStock}) ⚠️`, class: "low-stock" };
-            if (expiryStr) {
-                const today = new Date();
-                const expDate = new Date(expiryStr);
-                if (expDate < today) return { text: "Đã Hết Hạn ❌", class: "expired" };
-            }
-            return { text: "Bình thường ✅", class: "" };
-        }
-
-        function resetFilter(type) {
-            if (type === 'inv') { document.getElementById('searchInvInput').value = ''; document.getElementById('filterInvFrom').value = ''; document.getElementById('filterInvTo').value = ''; }
-            if (type === 'imp') { document.getElementById('searchImpInput').value = ''; document.getElementById('filterImpFrom').value = ''; document.getElementById('filterImpTo').value = ''; }
-            if (type === 'exp') { document.getElementById('searchExpInput').value = ''; document.getElementById('filterExpFrom').value = ''; document.getElementById('filterExpTo').value = ''; }
-            if (type === 'log') { document.getElementById('searchLogInput').value = ''; document.getElementById('filterLogFrom').value = ''; document.getElementById('filterLogTo').value = ''; }
-            renderTables();
-        }
-
-        function toggleSelectAll(master, tableId) {
-            let checkboxes = document.querySelectorAll(`#${tableId} tbody .row-checkbox`);
-            checkboxes.forEach(cb => cb.checked = master.checked);
-        }
-
-        function printSelectedSlip(type) {
-            let filteredLogs = logs.filter(l => l.category === currentCategory && l.type === type);
-            if (filteredLogs.length === 0) {
-                alert(`Không có lịch sử ${type} nào trong nhóm ${currentCategory} để xuất phiếu!`);
-                return;
-            }
-            let slipContent = `
-                <div style="font-family: Arial, sans-serif; padding: 20px; width: 700px; margin: 0 auto;">
-                    <h2 style="text-align: center; margin-bottom: 5px;">PHÒNG KHÁM BỆNH VIỆN ĐẠI HỌC Y DƯỢC 1</h2>
-                    <h3 style="text-align: center; margin-top: 0; text-transform: uppercase;">PHIẾU ${type} KHO HÓA CHẤT</h3>
-                    <p><b>Nhóm sản phẩm:</b> ${currentCategory}</p>
-                    <p><b>Ngày lập phiếu:</b> ${new Date().toLocaleString('vi-VN')}</p>
-                    <p><b>Người thực hiện:</b> ${currentUser ? currentUser.name : 'N/A'}</p>
-                    <table border="1" cellspacing="0" cellpadding="6" style="width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 12px;">
-                        <thead>
-                            <tr style="background: #f2f2f2;">
-                                <th>STT</th>
-                                <th>Tên Sản Phẩm</th>
-                                <th>Barcode</th>
-                                <th>LOT</th>
-                                <th>Hạn Dùng</th>
-                                <th>Số Lượng</th>
-                                <th>Ghi Chú</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-            `;
-
-            filteredLogs.slice(0, 10).forEach((l, idx) => {
-                slipContent += `
-                    <tr>
-                        <td>${idx + 1}</td>
-                        <td>${l.productName}</td>
-                        <td>${l.barcode}</td>
-                        <td>${l.lot}</td>
-                        <td>${l.expiry}</td>
-                        <td><b>${l.qty}</b></td>
-                        <td>${l.note || '-'}</td>
-                    </tr>
-                `;
-            });
-
-            slipContent += `
-                        </tbody>
-                    </table>
-                    <div style="display: flex; justify-content: space-between; margin-top: 40px; text-align: center;">
-                        <div><p><b>Người Lập Phiếu</b><br>(Ký, họ tên)</p></div>
-                        <div><p><b>Thủ Kho / Phụ Trách</b><br>(Ký, họ tên)</p></div>
-                    </div>
-                </div>
-            `;
-
-            let printArea = document.getElementById('printSlipArea');
-            printArea.innerHTML = slipContent;
-            printArea.style.display = 'block';
-            window.print();
-            printArea.style.display = 'none';
-        }
-
-        // --- HÀM XUẤT BIÊN BẢN BÀN GIAO (CHUẨN A4) ---
-        function xuatBienBanBanGiao() {const tenNguoiGiao = document.getElementById('txtNguoiGiao') ? document.getElementById('txtNguoiGiao').value : '';
-            let checkboxes = document.querySelectorAll('#monthlyImportTable tbody .row-checkbox:checked');
-            let selectedItems = [];
-
-            if (checkboxes.length > 0) {
-                checkboxes.forEach(cb => {
-                    let tr = cb.closest('tr');
-                    let tds = tr.querySelectorAll('td');
-                    selectedItems.push({
-                        time: tds[1].innerText,
-                        name: tds[2].innerText,
-                        lot: tds[3].innerText,
-                        expiry: tds[4].innerText,
-                        spec: tds[5].innerText,
-                        status: tds[6].innerText,
-                        temp: tds[7].innerText,
-                        qty: tds[8].innerText
-                    });
-                });
-            } else {
-                // Nếu không chọn dòng nào, lấy toàn bộ danh sách nhập hiện tại theo nhóm
-                logs.filter(l => l.category === currentCategory && l.type === 'NHẬP').forEach(l => {
-                    let foundMap = mappedProducts.find(p => p.barcode === l.barcode || p.name === l.productName);
-                    let status = checkExpiryAndStockStatus(l.expiry, l.qty, foundMap ? foundMap.minStock : 0);
-                    selectedItems.push({
-                        time: l.dateISO || '-',
-                        name: l.productName,
-                        lot: l.lot,
-                        expiry: l.expiry,
-                        spec: foundMap ? foundMap.spec : '-',
-                        status: status.text.replace(/[⚠️❌✅]/g, '').trim(),
-                        temp: foundMap ? foundMap.storageTemp : '-',
-                        qty: l.qty
-                    });
-                });
+            inventory[batchKeySanitized] = currentBatch;
+            if (currentBatch.quantity <= 0) {
+                delete inventory[batchKeySanitized];
             }
 
-            if (selectedItems.length === 0) {
-                alert("Không có dữ liệu nhập kho để lập biên bản bàn giao!");
-                return;
-            }
-
-            let today = new Date();
-            let dateStr = `Ngày ${today.getDate()} tháng ${today.getMonth() + 1} năm ${today.getFullYear()}`;
-
-            let rowsHtml = '';
-            selectedItems.forEach((item, idx) => {
-                rowsHtml += `
-                    <tr>
-                        <td>${idx + 1}</td>
-                        <td class="text-left">${item.name}</td>
-                        <td>${item.lot}</td>
-                        <td>${item.expiry}</td>
-                        <td>${item.spec}</td>
-                        <td>${item.temp}</td>
-                        <td><b>${item.qty}</b></td>
-                    </tr>
-                `;
-            });
-
-            let bienBanHTML = `
-                <div class="sheet">
-                    <div style="display: flex; justify-content: space-between; font-size: 11pt; margin-bottom: 20px;">
-                        <div style="text-align: center;">
-                            <b>CÔNG TY CỔ PHẦN Y VIỆT<br>PHÒNG KHÁM BỆNH VIỆN ĐẠI HỌC Y DƯỢC 1</b><br>
-                            <span style="font-size: 10pt;">KHOA XÉT NGHIỆM</span>
-                        </div>
-                        <div style="text-align: center;">
-                            <b>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</b><br>
-                            <span style="font-size: 11pt; font-weight: bold;">Độc lập - Tự do - Hạnh phúc</span><br>
-                            ----------------------------------
-                        </div>
-                    </div>
-
-                    <div class="title-section">
-                        <h2>BIÊN BẢN BÀN GIAO HÓA CHẤT / VẬT TƯ</h2>
-                        <div class="sub-code">BM: XN-QTCL.02</div>
-                    </div>
-
-                    <div class="info-section">
-                    </div>
-                        <p>Công ty cung cấp: <b>CÔNG TY TNHH XÉT NGHIỆM Y KHOA THỦY NHI</b></p>
-                        <p>Ngày giao: Ngày ${today.getDate()} tháng ${today.getMonth() + 1} năm ${today.getFullYear()}</p>
-                    
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th style="width: 40px;">STT</th>
-                                <th>Tên Sản Phẩm</th>
-                                <th style="width: 80px;">LOT</th>
-                                <th style="width: 85px;">Hạn Dùng</th>
-                                <th style="width: 90px;">Quy Cách</th>
-                                <th style="width: 80px;">Nhiệt Độ</th>
-                                <th style="width: 55px;">SL</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${rowsHtml}
-                        </tbody>
-                    </table>
-                    <div class="info-section">
-                        <p><b>Ý kiến khác (nếu có):</b> Tình trạng hàng hóa nguyên vẹn, đảm bảo điều kiện bảo quản theo quy định kỹ thuật.</p>
-                        <p>Biên bản được lập thành 02 bản có giá trị pháp lý như nhau, mỗi bên giữ 01 bản để làm cơ sở theo dõi.</p>
-
-                    <div class="signature-section">
-                        <div class="signature-box">
-                            <p><b>ĐẠI DIỆN BÊN GIAO</b></p>
-                            <p>(Ký, ghi rõ họ tên)</p>
-                            <div class="signature-space"></div>
-            <b>${tenNguoiGiao}</b>
-        </div>
-                        <div class="signature-box">
-                            <p><b>NGƯỜI KIỂM HÀNG</b></p>
-                            <p>(Ký, ghi rõ họ tên)</p>
-                            <div class="signature-space"></div>
-                           <p>&nbsp;</p>
-        </div>
-                        <div class="signature-box">
-                            <p><b>ĐẠI DIỆN BÊN NHẬN</b></p>
-                            <p>(Ký, ghi rõ họ tên)</p>
-                            <div class="signature-space"></div>
-            <p><b>${currentUser ? currentUser.name : ''}</b></p>
-                           <p>&nbsp;</p>
-
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            let printArea = document.getElementById('printSlipArea');
-            printArea.innerHTML = bienBanHTML;
-            printArea.style.display = 'block';
-            window.print();
-            printArea.style.display = 'none';
-        }
-
-        function printTableSelection(tableId) {
-            let checkboxes = document.querySelectorAll(`#${tableId} tbody .row-checkbox:checked`);
-            if (checkboxes.length === 0) {
-                alert("Vui lòng tích chọn ít nhất một dòng trong bảng để xuất phiếu!");
-                return;
-            }
-
-            let headers = [];
-            document.querySelectorAll(`#${tableId} th`).forEach((th, idx) => {
-                if (idx > 0 && idx < document.querySelectorAll(`#${tableId} th`).length - 1) {
-                    headers.push(th.innerText);
-                }
-            });
-
-            let rowsHtml = '';
-            checkboxes.forEach((cb, index) => {
-                let tr = cb.closest('tr');
-                let tds = tr.querySelectorAll('td');
-                rowsHtml += '<tr><td>' + (index + 1) + '</td>';
-                for (let i = 1; i < tds.length - 1; i++) {
-                    rowsHtml += `<td>${tds[i].innerHTML}</td>`;
-                }
-                rowsHtml += '</tr>';
-            });
-
-            let slipContent = `
-                <div style="font-family: Arial, sans-serif; padding: 20px; width: 750px; margin: 0 auto;">
-                    <h2 style="text-align: center; margin-bottom: 5px;">PHÒNG KHÁM BỆNH VIỆN ĐẠI HỌC Y DƯỢC 1</h2>
-                    <h3 style="text-align: center; margin-top: 0; text-transform: uppercase;">PHIẾU XUẤT KHO / BÁO CÁO DANH MỤC</h3>
-                    <p><b>Nhóm sản phẩm:</b> ${currentCategory}</p>
-                    <p><b>Thời gian xuất phiếu:</b> ${new Date().toLocaleString('vi-VN')}</p>
-                    <table border="1" cellspacing="0" cellpadding="5" style="width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 11px;">
-                        <thead>
-                            <tr style="background: #f2f2f2;">
-                                <th>STT</th>
-            `;
-            headers.forEach(h => slipContent += `<th>${h}</th>`);
-            slipContent += `</tr></thead><tbody>${rowsHtml}</tbody></table>
-                    <div style="display: flex; justify-content: space-between; margin-top: 40px; text-align: center;">
-                        <div><p><b>Người Lập Phiếu</b><br>(Ký, họ tên)</p></div>
-                        <div><p><b>Thủ Kho / Phụ Trách</b><br>(Ký, họ tên)</p></div>
-                    </div>
-                </div>
-            `;
-
-            let printArea = document.getElementById('printSlipArea');
-            printArea.innerHTML = slipContent;
-            printArea.style.display = 'block';
-            window.print();
-            printArea.style.display = 'none';
-        }
-
-        function printSelectedReorderSlip() {
-            let checkboxes = document.querySelectorAll(`#reorderTable tbody .row-checkbox:checked`);
-            if (checkboxes.length === 0) {
-                alert("Vui lòng tích chọn ít nhất một sản phẩm cần đặt bổ sung!");
-                return;
-            }
-
-            let rowsHtml = '';
-            checkboxes.forEach((cb, index) => {
-                let tr = cb.closest('tr');
-                let tds = tr.querySelectorAll('td');
-                rowsHtml += '<tr><td>' + (index + 1) + '</td>';
-                for (let i = 1; i < tds.length; i++) {
-                    rowsHtml += `<td>${tds[i].innerHTML}</td>`;
-                }
-                rowsHtml += '</tr>';
-            });
-
-            let slipContent = `
-                <div style="font-family: Arial, sans-serif; padding: 20px; width: 750px; margin: 0 auto;">
-                    <h2 style="text-align: center; margin-bottom: 5px; color: #dc3545;">PHÒNG KHÁM BỆNH VIỆN ĐẠI HỌC Y DƯỢC 1</h2>
-                    <h3 style="text-align: center; margin-top: 0; text-transform: uppercase; color: #dc3545;">PHIẾU ĐỀ XUẤT ĐẶT HÀNG BỔ SUNG</h3>
-                    <p><b>Nhóm sản phẩm:</b> ${currentCategory}</p>
-                    <p><b>Ngày lập:</b> ${new Date().toLocaleString('vi-VN')}</p>
-                    <table border="1" cellspacing="0" cellpadding="5" style="width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 11px;">
-                        <thead>
-                            <tr style="background: #f2f2f2;">
-                                <th>STT</th>
-                                <th>Ưu Tiên</th>
-                                <th>Tên Sản Phẩm</th>
-                                <th>Barcode</th>
-                                <th>Hãng SX</th>
-                                <th>Đơn Vị</th>
-                                <th>Quy Cách</th>
-                                <th>Tồn Hiện Tại</th>
-                                <th>Tồn Min</th>
-                                <th>Mức Cảnh Báo</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${rowsHtml}
-                        </tbody>
-                    </table>
-                    <div style="display: flex; justify-content: space-between; margin-top: 40px; text-align: center;">
-                        <div><p><b>Người Lập Đề Xuất</b><br>(Ký, họ tên)</p></div>
-                        <div><p><b>Phê Duyệt Ban Giám Đốc / Quản Lý</b><br>(Ký, họ tên)</p></div>
-                    </div>
-                </div>
-            `;
-
-            let printArea = document.getElementById('printSlipArea');
-            printArea.innerHTML = slipContent;
-            printArea.style.display = 'block';
-            window.print();
-            printArea.style.display = 'none';
-        }
-
-        function exportInventoryToCSV() {
-            let data = [["Sản Phẩm", "Barcode", "Nhiệt Độ", "LOT", "Thời Gian Nhập", "Người Nhập", "Hạn Dùng", "Tồn Kho", "Tồn Min"]];
-            for (let k in inventory) {
-                let item = inventory[k];
-                if (item.category === currentCategory && item.qty > 0) {
-                    let found = mappedProducts.find(p => p.barcode === item.barcode || p.name === item.productName);
-                    data.push([item.productName, item.barcode, found ? found.storageTemp : '', item.lot, item.importTimeStr, item.lastUser, item.expiry, item.qty, found ? found.minStock : 0]);
-                }
-            }
-            let ws = XLSX.utils.aoa_to_sheet(data);
-            let wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "TonKho");
-            XLSX.writeFile(wb, `TonKho_${currentCategory}.xlsx`);
-        }
-
-        function exportLogsToCSV() {
-            let data = [["Thời Gian", "Người TH", "Sản Phẩm", "Barcode", "LOT", "Date", "Loại", "Số Lượng", "Ghi Chú"]];
-            logs.filter(l => l.category === currentCategory).forEach(l => {
-                data.push([l.timeStr, l.userName, l.productName, l.barcode, l.lot, l.expiry, l.type, l.qty, l.note || '']);
-            });
-            let ws = XLSX.utils.aoa_to_sheet(data);
-            let wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "LichSu");
-            XLSX.writeFile(wb, `LichSu_GiaoDich_${currentCategory}.xlsx`);
-        }
-
-        function exportMonthlyImportStatsToCSV() {
-            let data = [["Kỳ", "Tên Sản Phẩm", "LOT", "Date", "Quy Cách", "Tình Trạng", "Nhiệt Độ", "Tổng SL Nhập"]];
-            logs.filter(l => l.category === currentCategory && l.type === 'NHẬP').forEach(l => {
-                let foundMap = mappedProducts.find(p => p.barcode === l.barcode || p.name === l.productName);
-                let status = checkExpiryAndStockStatus(l.expiry, l.qty, foundMap ? foundMap.minStock : 0);
-                data.push([
-                    l.dateISO ? l.dateISO.substring(0, 7) : 'Kỳ này',
-                    l.productName,
-                    l.lot,
-                    l.expiry,
-                    foundMap ? foundMap.spec : '-',
-                    status.text.replace(/[⚠️❌✅]/g, '').trim(),
-                    foundMap ? foundMap.storageTemp : '-',
-                    l.qty
-                ]);
-            });
-            let ws = XLSX.utils.aoa_to_sheet(data);
-            let wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "ThongKeNHẬP");
-            XLSX.writeFile(wb, `ThongKeNHẬP_${currentCategory}.xlsx`);
-        }
-
-function exportMonthlyExportStatsToCSV() {
-            let exportStats = {};
-            
-            // Tổng hợp số lượng xuất theo từng sản phẩm
-            logs.filter(l => l.category === currentCategory && l.type === 'XUẤT').forEach(l => {
-                if (!exportStats[l.barcode]) {
-                    exportStats[l.barcode] = {
-                        productName: l.productName,
-                        barcode: l.barcode,
-                        totalQty: 0
-                    };
-                }
-                exportStats[l.barcode].totalQty += l.qty;
-            });
-
-            let data = [["Thời Gian / Kỳ", "Tên Sản Phẩm (Barcode)", "Tổng SL Xuất"]];
-            let currentPeriod = new Date().toISOString().substring(0, 7); // Kỳ hiện tại (YYYY-MM)
-
-            for (let code in exportStats) {
-                let item = exportStats[code];
-                data.push([
-                    currentPeriod,
-                    `${item.productName} (${item.barcode})`,
-                    item.totalQty
-                ]);
-            }
-
-            let ws = XLSX.utils.aoa_to_sheet(data);
-            let wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "ThongKeXUAT");
-            XLSX.writeFile(wb, `ThongKeXUAT_${currentCategory}.xlsx`);
-        }
-
-        function getReorderData() {
-            let productStockMap = {};
-            for (let k in inventory) {
-                let item = inventory[k];
-                if (item.category === currentCategory && item.qty > 0) {
-                    let key = item.barcode || item.productName;
-                    productStockMap[key] = (productStockMap[key] || 0) + item.qty;
-                }
-            }
-
-            let reorderList = [];
-            let outOfStockCount = 0;
-            let lowStockCount = 0;
-
-            const searchKey = document.getElementById('searchReorderInput') ? document.getElementById('searchReorderInput').value.trim().toLowerCase() : '';
-
-            mappedProducts.filter(p => p.category === currentCategory).forEach(p => {
-                let currentStock = productStockMap[p.barcode] || productStockMap[p.name] || 0;
-                let minStock = p.minStock || 0;
-
-                if (currentStock <= minStock) {
-                    let priority = 2;
-                    let alertText = "⚠️ SẮP HẾT HÀNG - ĐẶT BỔ SUNG";
-                    let rowClass = "low-stock";
-
-                    if (currentStock === 0) {
-                        priority = 1;
-                        alertText = "🚨 ĐÃ HẾT HÀNG - CẦN ĐẶT GẤP";
-                        rowClass = "out-of-stock";
-                        outOfStockCount++;
-                    } else {
-                        lowStockCount++;
-                    }
-
-                    const matches = !searchKey ||
-                        (p.name && p.name.toLowerCase().includes(searchKey)) ||
-                        (p.barcode && p.barcode.toLowerCase().includes(searchKey)) ||
-                        (p.manufacturer && p.manufacturer.toLowerCase().includes(searchKey));
-
-                    if (matches) {
-                        reorderList.push({
-                            priority,
-                            name: p.name,
-                            barcode: p.barcode,
-                            manufacturer: p.manufacturer || '-',
-                            unit: p.unit || '-',
-                            spec: p.spec || '-',
-                            currentStock,
-                            minStock,
-                            alertText,
-                            rowClass
-                        });
-                    }
-                }
-            });
-
-            reorderList.sort((a, b) => a.priority - b.priority);
-            return { reorderList, outOfStockCount, lowStockCount };
-        }
-
-        function renderReorderTable() {
-            const tbody = document.getElementById('reorderTable').querySelector('tbody');
-            const { reorderList, outOfStockCount, lowStockCount } = getReorderData();
-
-            document.getElementById('totalOutOfStockCount').innerText = outOfStockCount;
-            document.getElementById('totalLowStockCount').innerText = lowStockCount;
-
-            let html = [];
-            reorderList.forEach(item => {
-                html.push(`<tr class="${item.rowClass}">
-                    <td style="text-align: center;"><input type="checkbox" class="row-checkbox" checked></td>
-                    <td><b>${item.priority === 1 ? '1️⃣ GẤP' : '2️⃣ BÌNH THƯỜNG'}</b></td>
-                    <td><b>${item.name}</b></td>
-                    <td>${item.barcode}</td>
-                    <td>${item.manufacturer}</td>
-                    <td>${item.unit}</td>
-                    <td>${item.spec}</td>
-                    <td><b style="font-size:12px;">${item.currentStock}</b></td>
-                    <td>${item.minStock}</td>
-                    <td>${item.alertText}</td>
-                </tr>`);
-            });
-
-            tbody.innerHTML = html.length ? html.join('') : `<tr><td colspan="10" style="text-align:center; color:#28a745; font-weight:bold; padding:15px;">✅ Tất cả sản phẩm thuộc ${currentCategory} đều đạt mức tồn kho an toàn hoặc không khớp từ khóa tìm kiếm!</td></tr>`;
-        }
-
-        function exportReorderListToExcel() {
-            const { reorderList } = getReorderData();
-            if (reorderList.length === 0) {
-                alert("Không có sản phẩm nào cần đặt bổ sung trong nhóm này!");
-                return;
-            }
-
-            let data = [["Ưu Tiên", "Tên Sản Phẩm", "Barcode", "Hãng Sản Xuất", "Đơn Vị", "Quy Cách", "Tồn Hiện Tại", "Tồn Min", "Mức Cảnh Báo"]];
-            reorderList.forEach(item => {
-                data.push([item.priority === 1 ? '1. ĐẶT GẤP' : '2. ĐẶT BỔ SUNG', item.name, item.barcode, item.manufacturer, item.unit, item.spec, item.currentStock, item.minStock, item.alertText]);
-            });
-
-            let ws = XLSX.utils.aoa_to_sheet(data);
-            let wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "DeXuatDatHang");
-            XLSX.writeFile(wb, `DeXuat_DatHang_${currentCategory.replace(/ /g, '_')}_${new Date().toISOString().split('T')[0]}.xlsx`);
-        }
-
-        function exportFullDatabase() {
-            let db = { userAccounts, mappedProducts, inventory, logs };
-            let blob = new Blob([JSON.stringify(db, null, 2)], { type: 'application/json' });
-            let a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = `Backup_CSDL_Kho_${new Date().toISOString().split('T')[0]}.json`;
-            a.click();
-        }
-
-        function importFullDatabase(input) {
-            let file = input.files[0];
-            if (!file) return;
-            let reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    let db = JSON.parse(e.target.result);
-                    if (db.userAccounts) localStorage.setItem('qr_user_accounts_v1', JSON.stringify(db.userAccounts));
-                    if (db.mappedProducts) localStorage.setItem('qr_mapped_products_v7', JSON.stringify(db.mappedProducts));
-                    if (db.inventory) localStorage.setItem('qr_inventory_v11', JSON.stringify(db.inventory));
-                    if (db.logs) localStorage.setItem('qr_logs_v11', JSON.stringify(db.logs));
-                    alert("Khôi phục CSDL thành công! Hệ thống sẽ tải lại trang.");
-                    location.reload();
-                } catch (err) {
-                    alert("File không hợp lệ!");
-                }
+            let logEntry = {
+                time: nowStr,
+                dateIso: isoDateStr,
+                user: currentUser.name,
+                name: prodName,
+                barcode: actualBarcode,
+                lot: lot,
+                expiry: expiry,
+                type: type,
+                qty: qty,
+                note: note || '-'
             };
-            reader.readAsText(file);
-        }
 
-        function downloadExcelTemplate() {
-            let data = [
-                ["Nhóm Hóa Chất", "Tên Sản Phẩm", "Barcode", "Hãng Sản Xuất", "Máy Thực Hiện", "Nhiệt Độ Bảo Quản", "Đơn Vị Tính", "Quy Cách", "Tồn Min", "LOT Mặc Định", "Hạn Dùng Mặc Định"],
-                ["NHÓM MIỄN DỊCH", "Reagent HBsAg", "8934673012345", "Roche", "Cobas e411", "2-8°C", "Hộp", "100 test/hộp", 5, "LOT123", "2026-12-31"]
-            ];
-            let ws = XLSX.utils.aoa_to_sheet(data);
-            let wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "MauImport");
-            XLSX.writeFile(wb, "Mau_Import_SanPham.xlsx");
-        }
+            logs.unshift(logEntry);
 
-        function importProductsFromExcel(input) {
-            let file = input.files[0];
-            if (!file) return;
-            let reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    let data = new Uint8Array(e.target.result);
-                    let workbook = XLSX.read(data, { type: 'array' });
-                    let sheetName = workbook.SheetNames[0];
-                    let rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1 });
-
-                    if (rows.length <= 1) { alert("File không có dữ liệu!"); return; }
-
-                    let count = 0;
-                    for (let i = 1; i < rows.length; i++) {
-                        let row = rows[i];
-                        if (row.length > 0 && row[1]) {
-                            mappedProducts.push({
-                                category: row[0] || "NHÓM MIỄN DỊCH",
-                                name: row[1],
-                                barcode: row[2] ? String(row[2]) : row[1],
-                                manufacturer: row[3] || "",
-                                machine: row[4] || "",
-                                storageTemp: row[5] || "2-8°C",
-                                unit: row[6] || "Hộp",
-                                spec: row[7] || "",
-                                minStock: parseInt(row[8]) || 0,
-                                defaultLot: row[9] ? String(row[9]) : "",
-                                defaultExpiry: row[10] ? String(row[10]) : ""
-                            });
-                            count++;
-                        }
-                    }
-
-                    localStorage.setItem('qr_mapped_products_v7', JSON.stringify(mappedProducts));
-                    renderMappedProductsTable();
-                    populateLabelProductSelect();
-                    alert(`Đã nhập thành công ${count} sản phẩm từ file Excel!`);
-                } catch (err) {
-                    alert("Lỗi đọc file Excel. Vui lòng sử dụng đúng file mẫu!");
-                }
-            };
-            reader.readAsArrayBuffer(file);
-        }
-
-        function exportProductsToExcel() {
-            let data = [["Nhóm Hóa Chất", "Tên Sản Phẩm", "Barcode", "Hãng Sản Xuất", "Máy Thực Hiện", "Nhiệt Độ Bảo Quản", "Đơn Vị Tính", "Quy Cách", "Tồn Min", "LOT Mặc Định", "Hạn Dùng Mặc Định"]];
-            mappedProducts.forEach(p => {
-                data.push([p.category, p.name, p.barcode, p.manufacturer, p.machine, p.storageTemp, p.unit, p.spec, p.minStock, p.defaultLot, p.defaultExpiry]);
+            Promise.all([
+                db.ref('qr_inventory_v11').set(inventory),
+                db.ref('qr_logs_v11').set(logs)
+            ]).then(() => {
+                alert(`✅ Giao dịch ${type} thành công!`);
+                document.getElementById('productBarcode').value = '';
+                document.getElementById('lotNumber').value = '';
+                document.getElementById('expiryDate').value = '';
+                document.getElementById('quantity').value = '1';
+                document.getElementById('noteText').value = '';
+                document.getElementById('productNameDisplay').innerText = "Chưa quét / Chưa nhận diện sản phẩm";
+                document.getElementById('productNameDisplay').style.color = "#007bff";
+            }).catch(err => {
+                console.error("Lỗi khi lưu giao dịch:", err);
+                alert("❌ Có lỗi xảy ra khi lưu dữ liệu lên Firebase!");
             });
-            let ws = XLSX.utils.aoa_to_sheet(data);
-            let wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "DanhSachSanPham");
-            XLSX.writeFile(wb, `DanhSach_SanPham_${new Date().toISOString().split('T')[0]}.xlsx`);
         }
 
         function renderTables() {
-            if (!currentUser) return;
-
-            // 1. Render Bảng Tồn Kho
-            const invBody = document.getElementById('inventoryTable').querySelector('tbody');
-            let invHtml = [];
-            let totalBatches = 0;
-
-            const searchInvKey = document.getElementById('searchInvInput') ? document.getElementById('searchInvInput').value.trim().toLowerCase() : '';
-            const filterInvFrom = document.getElementById('filterInvFrom').value;
-            const filterInvTo = document.getElementById('filterInvTo').value;
-
-            for (let key in inventory) {
-                let item = inventory[key];
-                if (item.category !== currentCategory || item.qty <= 0) continue;
-
-                if (filterInvFrom && item.importDateISO < filterInvFrom) continue;
-                if (filterInvTo && item.importDateISO > filterInvTo) continue;
-
-                let foundMap = mappedProducts.find(p => p.barcode === item.barcode || p.name === item.productName);
-                const matchesSearch = !searchInvKey || 
-                    (item.productName && item.productName.toLowerCase().includes(searchInvKey)) ||
-                    (item.barcode && item.barcode.toLowerCase().includes(searchInvKey)) ||
-                    (item.lot && item.lot.toLowerCase().includes(searchInvKey));
-
-                if (matchesSearch) {
-                    totalBatches++;
-                    let status = checkExpiryAndStockStatus(item.expiry, item.qty, foundMap ? foundMap.minStock : 0);
-                    let adminAction = currentUser.role === 'ADMIN' ? `<button class="btn-delete" onclick="deleteBatch('${key}')">Xóa Lô</button>` : '';
-
-                    invHtml.push(`<tr class="${status.class}">
-                        <td style="text-align: center;"><input type="checkbox" class="row-checkbox" checked></td>
-                        <td><b>${item.productName}</b></td>
-                        <td>${item.barcode}</td>
-                        <td>${foundMap ? foundMap.storageTemp : '-'}</td>
-                        <td><b style="color:#0056b3;">${item.lot}</b></td>
-                        <td>${item.importTimeStr}</td>
-                        <td><span class="user-tag">${item.lastUser}</span></td>
-                        <td><b>${item.expiry}</b></td>
-                        <td><b style="font-size:12px;">${item.qty}</b> ${foundMap ? foundMap.unit : ''}</td>
-                        <td>${foundMap ? foundMap.minStock : 0}</td>
-                        <td>${status.text}</td>
-                        <td class="admin-only-col">${adminAction}</td>
-                    </tr>`);
-                }
-            }
-            invBody.innerHTML = invHtml.length ? invHtml.join('') : `<tr><td colspan="12" style="text-align:center; color:#888;">Chưa có dữ liệu tồn kho</td></tr>`;
-            document.getElementById('totalInventoryBatches').innerText = totalBatches;
-
-            // 2. Render Thống Kê Nhập
-            const impBody = document.getElementById('monthlyImportTable').querySelector('tbody');
-            let impHtml = [];
-            const searchImpKey = document.getElementById('searchImpInput') ? document.getElementById('searchImpInput').value.trim().toLowerCase() : '';
-            const filterImpFrom = document.getElementById('filterImpFrom').value;
-            const filterImpTo = document.getElementById('filterImpTo').value;
-
-            logs.forEach(l => {
-                if (l.category === currentCategory && l.type === 'NHẬP') {
-                    if (filterImpFrom && l.dateISO < filterImpFrom) return;
-                    if (filterImpTo && l.dateISO > filterImpTo) return;
-
-                    let foundMap = mappedProducts.find(p => p.barcode === l.barcode || p.name === l.productName);
-                    const matchesSearch = !searchImpKey || 
-                        (l.productName && l.productName.toLowerCase().includes(searchImpKey)) ||
-                        (l.lot && l.lot.toLowerCase().includes(searchImpKey)) ||
-                        (l.barcode && l.barcode.toLowerCase().includes(searchImpKey));
-
-                    if (matchesSearch) {
-                        let status = checkExpiryAndStockStatus(l.expiry, l.qty, foundMap ? foundMap.minStock : 0);
-                        impHtml.push(`<tr>
-                            <td style="text-align: center;"><input type="checkbox" class="row-checkbox" checked></td>
-                            <td>${l.dateISO ? l.dateISO.substring(0, 7) : '-'} <br><span style="font-size:9px; color:#666;">${l.timeStr}</span></td>
-                            <td><b>${l.productName}</b></td>
-                            <td><b style="color:#0056b3;">${l.lot}</b></td>
-                            <td><b>${l.expiry}</b></td>
-                            <td>${foundMap ? foundMap.spec : '-'}</td>
-                            <td class="${status.class}">${status.text}</td>
-                            <td>${foundMap ? foundMap.storageTemp : '-'}</td>
-                            <td><b>${l.qty}</b></td>
-                        </tr>`);
-                    }
-                }
-            });
-            impBody.innerHTML = impHtml.length ? impHtml.join('') : `<tr><td colspan="9" style="text-align:center; color:#888;">Chưa có dữ liệu nhập kho</td></tr>`;
-
-            // 3. Render Thống Kê Xuất
-            const expBody = document.getElementById('monthlyExportTable').querySelector('tbody');
-            let expHtml = [];
-            const searchExpKey = document.getElementById('searchExpInput') ? document.getElementById('searchExpInput').value.trim().toLowerCase() : '';
-            const filterExpFrom = document.getElementById('filterExpFrom').value;
-            const filterExpTo = document.getElementById('filterExpTo').value;
-
-            logs.forEach(l => {
-                if (l.category === currentCategory && l.type === 'XUẤT') {
-                    if (filterExpFrom && l.dateISO < filterExpFrom) return;
-                    if (filterExpTo && l.dateISO > filterExpTo) return;
-
-                    const matchesSearch = !searchExpKey || 
-                        (l.productName && l.productName.toLowerCase().includes(searchExpKey)) ||
-                        (l.barcode && l.barcode.toLowerCase().includes(searchExpKey));
-
-                    if (matchesSearch) {
-                        expHtml.push(`<tr>
-                            <td style="text-align: center;"><input type="checkbox" class="row-checkbox" checked></td>
-                            <td>${l.dateISO ? l.dateISO.substring(0, 7) : '-'} <br><span style="font-size:9px; color:#666;">${l.timeStr}</span></td>
-                            <td><b>${l.productName}</b> (${l.barcode})</td>
-                            <td><b style="color:#d97706;">${l.qty}</b></td>
-                        </tr>`);
-                    }
-                }
-            });
-            expBody.innerHTML = expHtml.length ? expHtml.join('') : `<tr><td colspan="4" style="text-align:center; color:#888;">Chưa có dữ liệu xuất kho</td></tr>`;
-
-            // 4. Render Lịch Sử
-            const logBody = document.getElementById('logTable').querySelector('tbody');
-            let logHtml = [];
-            let totalImp = 0, totalExp = 0;
-            const searchLogKey = document.getElementById('searchLogInput') ? document.getElementById('searchLogInput').value.trim().toLowerCase() : '';
-            const filterLogFrom = document.getElementById('filterLogFrom').value;
-            const filterLogTo = document.getElementById('filterLogTo').value;
-
-            logs.forEach((l, index) => {
-                if (l.category === currentCategory) {
-                    if (l.type === 'NHẬP') totalImp += l.qty;
-                    if (l.type === 'XUẤT') totalExp += l.qty;
-
-                    if (filterLogFrom && l.dateISO < filterLogFrom) return;
-                    if (filterLogTo && l.dateISO > filterLogTo) return;
-
-                    const matchesSearch = !searchLogKey || 
-                        (l.productName && l.productName.toLowerCase().includes(searchLogKey)) ||
-                        (l.userName && l.userName.toLowerCase().includes(searchLogKey)) ||
-                        (l.barcode && l.barcode.toLowerCase().includes(searchLogKey)) ||
-                        (l.lot && l.lot.toLowerCase().includes(searchLogKey)) ||
-                        (l.note && l.note.toLowerCase().includes(searchLogKey));
-
-                    if (matchesSearch) {
-                        let adminAction = currentUser.role === 'ADMIN' ? `<button class="btn-delete" onclick="deleteLog(${index})">Xóa</button>` : '-';
-                        let typeBadge = l.type === 'NHẬP' ? `<span style="color:green; font-weight:bold;">NHẬP (+)</span>` : `<span style="color:orange; font-weight:bold;">XUẤT (-)</span>`;
-
-                        logHtml.push(`<tr>
-                            <td style="text-align: center;"><input type="checkbox" class="row-checkbox" checked></td>
-                            <td>${l.timeStr}</td>
-                            <td><span class="user-tag">${l.userName}</span></td>
-                            <td><b>${l.productName}</b></td>
-                            <td>${l.barcode}</td>
-                            <td><b style="color:#0056b3;">${l.lot}</b></td>
-                            <td><b>${l.expiry}</b></td>
-                            <td>${typeBadge}</td>
-                            <td><b>${l.qty}</b></td>
-                            <td>${l.note || '-'}</td>
-                            <td class="admin-only-col">${adminAction}</td>
-                        </tr>`);
-                    }
-                }
-            });
-
-            logBody.innerHTML = logHtml.length ? logHtml.join('') : `<tr><td colspan="11" style="text-align:center; color:#888;">Chưa có lịch sử giao dịch</td></tr>`;
-            document.getElementById('totalImport').innerText = totalImp;
-            document.getElementById('totalExport').innerText = totalExp;
+            // Hàm render các bảng hiển thị dữ liệu tồn kho, lịch sử...
         }
-// Lưu tên người giao vào localStorage khi gõ
-function luuTenNguoiGiao(ten) {
-    localStorage.setItem('tenNguoiGiaoKho', ten);
-}
 
-// Tự động điền lại tên người giao khi tải trang
-window.addEventListener('DOMContentLoaded', (event) => {
-    const savedName = localStorage.getItem('tenNguoiGiaoKho');
-    if (savedName) {
-        const inputNguoiGiao = document.getElementById('txtNguoiGiao');
-        if (inputNguoiGiao) {
-            inputNguoiGiao.value = savedName;
+        function renderReorderTable() {
+            // Hàm hiển thị danh sách hàng cần đặt bổ sung
         }
-    }
-});
     </script>
 </body>
 </html>
