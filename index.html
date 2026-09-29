@@ -1470,16 +1470,17 @@ function renderTables() {
 
                 if (matchesSearch) {
                     totalBatchesCount++;
-                    let isExpired = false;
-                    if (item.expiry) {
-                        let expDate = new Date(item.expiry);
-                        let today = new Date();
-                        if (expDate < today) isExpired = true;
-                    }
+                    let statusHtml = "ỔN ĐỊNH";
+                    let trClass = "";
+                    let today = new Date().toISOString().split('T')[0];
 
-                    let isLow = item.quantity <= (item.minStock || 5);
-                    let rowClass = isExpired ? 'expired' : (isLow ? 'low-stock' : '');
-                    let statusText = isExpired ? '🔴 HẾT HẠN' : (isLow ? '⚠️ SẮP HẾT / THẤP' : '🟢 ỔN ĐỊNH');
+                    if (item.expiry && item.expiry < today) {
+                        statusHtml = "HẾT HẠN";
+                        trClass = "expired";
+                    } else if (item.quantity <= (item.minStock || 5)) {
+                        statusHtml = "SẮP HẾT / TỒN THẤP";
+                        trClass = "low-stock";
+                    }
 
                     invHtml.push(`<tr class="${trClass}">
                         <td style="text-align: center;"><input type="checkbox" class="inv-checkbox" value="${index}"></td>
