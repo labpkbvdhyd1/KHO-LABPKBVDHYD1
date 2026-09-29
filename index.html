@@ -402,7 +402,7 @@
                         <button class="btn-reset-filter" onclick="resetFilter('imp')">Tất cả</button>
                         <button class="btn-export" onclick="exportMonthlyImportStatsToCSV()">📥 Tải Excel Nhập</button>
                         <button class="btn-print-slip" onclick="printTableSelection('monthlyImportTable')">📄 Xuất Phiếu Thống Kê Nhập</button>
-                        <button onclick="xuatBienBanBanGiao()" style="background-color: #28a745; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 11px;">🖨️ Xuất Biên Bản Bàn Giao</button>
+                        <button class="btn-print-slip" onclick="xuatBienBanBanGiao()">Xuất Biên Bản Bàn Giao</button>
                         <div class="toolbar-group" style="display: inline-block; margin-left: 10px; margin-right: 10px;">
                             <label for="txtNguoiGiao" style="font-weight: bold; margin-right: 5px;">Tên Người Giao:</label>
                             <input type="text" id="txtNguoiGiao" placeholder="Nhập tên người giao..." 
@@ -876,6 +876,9 @@
         let inventory = {};
         let logs = [];
 
+        // Khai báo duy nhất cho biến toàn cục này
+        let tenNguoiGiaoGlobal = "";
+
         const defaultAccounts = [
             { username: "admin", pass: "admin123", name: "Quản Trị Viên", role: "ADMIN" },
             { username: "user", pass: "123456", name: "Nhân Viên Kho", role: "USER" }
@@ -916,7 +919,11 @@
 
             db.ref('qr_inventory_v11').on('value', (snapshot) => {
                 const data = snapshot.val();
-                inventory = data ? (Array.isArray(data) ? data : Object.values(data)) : [];
+                if (data) {
+                    inventory = Object.values(data);
+                } else {
+                    inventory = [];
+                }
                 if (typeof renderTables === 'function') {
                     renderTables();
                 }
@@ -926,7 +933,11 @@
                 const data = snapshot.val();
                 logs = [];
                 if (data) {
-                    logs = Array.isArray(data) ? data : Object.values(data).reverse();
+                    if (Array.isArray(data)) {
+                        logs = data;
+                    } else {
+                        logs = Object.values(data).reverse();
+                    }
                 }
                 renderTables();
             });
@@ -1459,17 +1470,16 @@ function renderTables() {
 
                 if (matchesSearch) {
                     totalBatchesCount++;
-                    let statusHtml = "Bình thường";
-                    let trClass = "";
-                    let today = new Date().toISOString().split('T')[0];
-
-                    if (item.expiry && item.expiry < today) {
-                        statusHtml = "Hết Hạn";
-                        trClass = "expired";
-                    } else if (item.quantity <= (item.minStock || 5)) {
-                        statusHtml = "Sắp hết / Tồn thấp";
-                        trClass = "low-stock";
+                    let isExpired = false;
+                    if (item.expiry) {
+                        let expDate = new Date(item.expiry);
+                        let today = new Date();
+                        if (expDate < today) isExpired = true;
                     }
+
+                    let isLow = item.quantity <= (item.minStock || 5);
+                    let rowClass = isExpired ? 'expired' : (isLow ? 'low-stock' : '');
+                    let statusText = isExpired ? '🔴 HẾT HẠN' : (isLow ? '⚠️ SẮP HẾT / THẤP' : '🟢 ỔN ĐỊNH');
 
                     invHtml.push(`<tr class="${trClass}">
                         <td style="text-align: center;"><input type="checkbox" class="inv-checkbox" value="${index}"></td>
