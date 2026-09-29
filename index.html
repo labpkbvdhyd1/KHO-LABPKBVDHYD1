@@ -1219,7 +1219,7 @@
             if (userAccounts.some(u => u.username.toLowerCase() === username.toLowerCase())) { alert("Tên đăng nhập đã tồn tại!"); return; }
 
             userAccounts.push({ username, pass: "123456", name, role });
-            db.ref('qr_user_accounts_v1).set(userAccounts);
+            db.ref('qr_user_accounts_v1').set(userAccounts);
             
             document.getElementById('newAccUser').value = '';
             document.getElementById('newAccName').value = '';
@@ -1230,7 +1230,7 @@
         function removeUserAccount(index) {
             if (confirm(`Xóa tài khoản "${userAccounts[index].username}"?`)) {
                 userAccounts.splice(index, 1);
-                 db.ref('qr_user_accounts_v1).set(userAccounts);
+                 db.ref('qr_user_accounts_v1').set(userAccounts);
                 renderUserAccountsModal();
             }
         }
