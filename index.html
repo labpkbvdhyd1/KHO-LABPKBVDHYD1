@@ -1471,27 +1471,24 @@ function renderTables() {
                         trClass = "low-stock";
                     }
 
-invHtml.push(`<tr class="${trClass}">
-                        <td style="text-align: center;"><input type="checkbox" class="row-checkbox"></td>
+                    invHtml.push(`<tr class="${trClass}">
+                        <td style="text-align: center;"><input type="checkbox" class="inv-checkbox" value="${index}"></td>
                         <td><b>${item.name}</b></td>
-                        <td><b style="color:#0056b3;">${item.barcode}</b></td>
-                        <td>${item.storageTemp || '2-8°C'}</td>
-                        <td><b style="color:#0056b3;">${item.lot}</b></td>
+                        <td>${item.barcode}</td>
+                        <td>${item.storageTemp || '-'}</td>
+                        <td><b>${item.lot}</b></td>
                         <td>${item.time}</td>
-                        <td><span class="user-tag">${item.user}</span></td>
-                        <td><b>${item.expiry}</b></td>
-                        <td><b style="color: ${item.quantity <= (item.minStock || 5) ? 'red' : 'green'};">${item.quantity}</b></td>
+                        <td>${item.user || '-'}</td>
+                        <td>${item.expiry}</td>
+                        <td><b>${item.quantity}</b></td>
                         <td>${item.minStock || 5}</td>
-                        <td><b>${statusHtml}</b></td>
+                        <td>${statusHtml}</td>
                         <td class="admin-only-col">
-                            ${currentUser && currentUser.role === 'ADMIN' ? `<button class="btn-delete" onclick="deleteInventoryBatch('${item.category}', '${item.barcode}', '${item.lot}')">Xóa</button>` : '-'}
+                            <button class="btn-delete" onclick="deleteInventoryBatch(${index})">Xóa Lô</button>
                         </td>
                     </tr>`);
                 }
             });
-
-            document.querySelector('#inventoryTable tbody').innerHTML = invHtml.length ? invHtml.join('') : `<tr><td colspan="12" style="text-align:center; color:#888;">Không có dữ liệu tồn kho</td></tr>`;
-            document.getElementById('totalInventoryBatches').innerText = totalBatchesCount;
 
             if (invTbody) {
                 invTbody.innerHTML = invHtml.length ? invHtml.join('') : `<tr><td colspan="12" style="text-align:center; color:#888;">Không có dữ liệu tồn kho phù hợp</td></tr>`;
@@ -1659,25 +1656,21 @@ invHtml.push(`<tr class="${trClass}">
             });
         }
 
-function deleteLogEntry(index) {
-    if (!currentUser || currentUser.role !== 'ADMIN') {
-        alert("Chỉ tài khoản Quản trị (Admin) mới có quyền xóa lịch sử giao dịch!");
-        return;
-    }
-    if (confirm("Bạn có chắc chắn muốn xóa dòng lịch sử giao dịch này không?")) {
-        let logsArr = Array.isArray(logs) ? logs : Object.values(logs);
-        logsArr.splice(index, 1);
-        logs = logsArr;
-        
-        db.ref('qr_logs_v11').set(logs).then(() => {
-            renderTables();
-            alert("Đã xóa lịch sử giao dịch thành công!");
-        }).catch(err => {
-            console.error("Lỗi khi xóa lịch sử:", err);
-            alert("❌ Không thể xóa lịch sử trên cơ sở dữ liệu!");
-        });
-    }
-}
+        function deleteInventoryBatch(index) {
+            if (!currentUser || currentUser.role !== 'ADMIN') {
+                alert("Chỉ tài khoản Quản trị (Admin) mới có quyền xóa lô hàng!");
+                return;
+            }
+            if (confirm("Bạn có chắc chắn muốn xóa lô hàng này khỏi kho?")) {
+                let invArr = Array.isArray(inventory) ? inventory : Object.values(inventory);
+                invArr.splice(index, 1);
+                inventory = invArr;
+                db.ref('qr_inventory_v11').set(inventory).then(() => {
+                    renderTables();
+                    alert("Đã xóa lô hàng thành công!");
+                });
+            }
+        }
 
         function toggleSelectAll(selectAllCheckbox, tableId) {
             let checkboxes = document.querySelectorAll(`#${tableId} tbody input[type="checkbox"]`);
@@ -1789,296 +1782,6 @@ function deleteLogEntry(index) {
         function printSelectedSlip(type) {
             alert(`In phiếu ${type} thành công!`);
         }
-let key = item.barcode || item.name;
-                if (!productStockMap[key]) {
-                    productStockMap[key] = {
-                        category: item.category,
-                        name: item.name,
-                        barcode: item.barcode,
-                        storageTemp: item.storageTemp,
-                        totalQty: 0,
-                        minStock: item.minStock || 5
-                    };
-                }
-                productStockMap[key].totalQty += item.quantity;
-            });
-
-            let outOfStockCount = 0;
-            let lowStockCount = 0;
-            let reorderHtml = [];
-
-            // Duyệt qua tất cả sản phẩm đã cấu hình để kiểm tra tồn kho
-            mappedProducts.forEach(prod => {
-                let key = prod.barcode || prod.name;
-                let currentStock = productStockMap[key] ? productStockMap[key].totalQty : 0;
-                let minStock = prod.minStock || 5;
-
-                if (currentStock <= minStock) {
-                    let priority = "Thấp";
-                    let priorityClass = "";
-                    if (currentStock === 0) {
-                        outOfStockCount++;
-                        priority = "HẾT HÀNG (GẤP)";
-                        priorityClass = "color: #dc3545; font-weight: bold;";
-                    } else {
-                        lowStockCount++;
-                        priority = "SẮP HẾT";
-                        priorityClass = "color: #d97706; font-weight: bold;";
-                    }
-
-                    reorderHtml.push(`<tr>
-                        <td style="text-align: center;"><input type="checkbox" class="reorder-checkbox"></td>
-                        <td style="${priorityClass}">${priority}</td>
-                        <td><b>${prod.name}</b></td>
-                        <td>${prod.barcode}</td>
-                        <td>${prod.manufacturer || '-'}</td>
-                        <td>${prod.unit || '-'}</td>
-                        <td>${prod.spec || '-'}</td>
-                        <td><b>${currentStock}</b></td>
-                        <td>${minStock}</td>
-                        <td>${currentStock === 0 ? 'Cần nhập ngay' : 'Dưới mức tối thiểu'}</td>
-                    </tr>`);
-                }
-            });
-
-            if (tbody) {
-                tbody.innerHTML = reorderHtml.length ? reorderHtml.join('') : `<tr><td colspan="10" style="text-align:center; color:#28a745;">Tất cả sản phẩm đều đủ tồn kho, không cần đặt thêm!</td></tr>`;
-            }
-            if (document.getElementById('totalOutOfStockCount')) document.getElementById('totalOutOfStockCount').innerText = outOfStockCount;
-            if (document.getElementById('totalLowStockCount')) document.getElementById('totalLowStockCount').innerText = lowStockCount;
-        }
-
-        function exportReorderListToExcel() {
-            let table = document.getElementById('reorderTable');
-            if (!table) return;
-            let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
-            for (let row of table.rows) {
-                let rowData = [];
-                for (let cell of row.cells) {
-                    rowData.push(`"${cell.innerText.replace(/"/g, '""')}"`);
-                }
-                csvContent += rowData.join(",") + "\n";
-            }
-            let encodedUri = encodeURI(csvContent);
-            let link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", "DanhSachHangCanDatBoSung.csv");
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-
-        function printSelectedReorderSlip() {
-            let printWindow = window.open('', '_blank');
-            printWindow.document.write('<html><head><title>Phiếu Đặt Hàng</title><style>body { font-family: Arial; padding: 20px; } table { width: 100%; border-collapse: collapse; margin-top: 15px; } th, td { border: 1px solid #000; padding: 6px; text-align: center; font-size: 11pt; } th { background-color: #f2f2f2; }</style></head><body>');
-            printWindow.document.write('<h2 style="text-align:center; text-transform:uppercase;">Phiếu Đề Xuất Đặt Hàng Bổ Sung Hóa Chất / Vật Tư</h2>');
-            printWindow.document.write(`<p><b>Phòng khám:</b> Bệnh Viện Đại Học Y Dược 1 | <b>Ngày lập:</b> ${new Date().toLocaleDateString('vi-VN')}</p>`);
-            printWindow.document.write(document.getElementById('reorderTable').outerHTML);
-            printWindow.document.write('<br><div style="display:flex; justify-content:space-between; margin-top:30px; text-align:center;"><div style="width:40%;"><b>Người lập phiếu</b><br><br><br></div><div style="width:40%;"><b>Trưởng khoa / Phụ trách</b><br><br><br></div></div>');
-            printWindow.document.write('</body></html>');
-            printWindow.document.close();
-            printWindow.focus();
-            setTimeout(() => { printWindow.print(); printWindow.close(); }, 500);
-        }
-
-        function xuatBienBanBanGiao() {
-            let nguoiGiao = localStorage.getItem('qr_ten_nguoi_giao') || '...........................................';
-            let printWindow = window.open('', '_blank');
-            printWindow.document.write(`<html><head><title>Biên Bản Bàn Giao</title><style>
-                body { font-family: "Times New Roman", Times, serif; font-size: 13pt; padding: 20mm; color: #000; }
-                .center { text-align: center; }
-                .bold { font-weight: bold; }
-                table { width: 100%; border-collapse: collapse; margin-top: 15px; margin-bottom: 20px; }
-                th, td { border: 1px solid #000; padding: 6px; text-align: center; font-size: 11pt; }
-                th { background-color: #f2f2f2; }
-            </style></head><body>`);
-            
-            printWindow.document.write(`
-                <div style="display:flex; justify-content:space-between;">
-                    <div class="center bold">PHÒNG KHÁM BỆNH VIỆN ĐẠI HỌC Y DƯỢC 1<br>KHO XÉT NGHIỆM</div>
-                    <div class="center bold">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM<br>Độc lập - Tự do - Hạnh phúc</div>
-                </div>
-                <hr style="width: 40%; margin: 10px auto;">
-                <h3 class="center" style="margin-top: 25px; text-transform: uppercase;">BIÊN BẢN BÀN GIAO HÓA CHẤT / VẬT TƯ XÉT NGHIỆM</h3>
-                <p><b>Nhóm sản phẩm:</b> ${currentCategory}</p>
-                <p><b>Hôm nay, ngày</b> ${new Date().toLocaleDateString('vi-VN')} tại Kho Xét Nghiệm, chúng tôi gồm:</p>
-                <p><b>1. Bên giao:</b> Ông/Bà: <span class="bold">${nguoiGiao}</span></p>
-                <p><b>2. Bên nhận:</b> Ông/Bà: <span class="bold">${currentUser ? currentUser.name : 'Nhân viên kho'}</span></p>
-                <p>Tiến hành bàn giao số lượng nhập kho chi tiết như sau:</p>
-            `);
-
-            let sourceTable = document.getElementById('monthlyImportTable');
-            if (sourceTable) {
-                printWindow.document.write(sourceTable.outerHTML);
-            }
-
-            printWindow.document.write(`
-                <br>
-                <div style="display: flex; justify-content: space-between; text-align: center; margin-top: 30px;">
-                    <div style="width: 45%;">
-                        <p class="bold">ĐẠI DIỆN BÊN GIAO</p>
-                        <p style="font-style: italic; font-size: 10pt;">(Ký, ghi rõ họ tên)</p>
-                        <br><br><br>
-                        <p class="bold">${nguoiGiao}</p>
-                    </div>
-                    <div style="width: 45%;">
-                        <p class="bold">ĐẠI DIỆN BÊN NHẬN</p>
-                        <p style="font-style: italic; font-size: 10pt;">(Ký, ghi rõ họ tên)</p>
-                        <br><br><br>
-                        <p class="bold">${currentUser ? currentUser.name : ''}</p>
-                    </div>
-                </div>
-            `);
-
-            printWindow.document.write('</body></html>');
-            printWindow.document.close();
-            printWindow.focus();
-            setTimeout(() => { printWindow.print(); printWindow.close(); }, 500);
-        }
-
-        function luuTenNguoiGiao(val) {
-            localStorage.setItem('qr_ten_nguoi_giao', val.trim());
-        }
-
-        function exportMonthlyImportStatsToCSV() {
-            let table = document.getElementById('monthlyImportTable');
-            if (!table) return;
-            let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
-            for (let row of table.rows) {
-                let rowData = [];
-                for (let cell of row.cells) {
-                    rowData.push(`"${cell.innerText.replace(/"/g, '""')}"`);
-                }
-                csvContent += rowData.join(",") + "\n";
-            }
-            let encodedUri = encodeURI(csvContent);
-            let link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", "ThongKeNhapKho.csv");
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-
-        function exportMonthlyExportStatsToCSV() {
-            let table = document.getElementById('monthlyExportTable');
-            if (!table) return;
-            let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
-            for (let row of table.rows) {
-                let rowData = [];
-                for (let cell of row.cells) {
-                    rowData.push(`"${cell.innerText.replace(/"/g, '""')}"`);
-                }
-                csvContent += rowData.join(",") + "\n";
-            }
-            let encodedUri = encodeURI(csvContent);
-            let link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", "ThongKeXuatKho.csv");
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-
-        function exportLogsToCSV() {
-            let table = document.getElementById('logTable');
-            if (!table) return;
-            let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
-            for (let row of table.rows) {
-                let rowData = [];
-                for (let cell of row.cells) {
-                    rowData.push(`"${cell.innerText.replace(/"/g, '""')}"`);
-                }
-                csvContent += rowData.join(",") + "\n";
-            }
-            let encodedUri = encodeURI(csvContent);
-            let link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", "LichSuGiaoDich.csv");
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-
-        function downloadExcelTemplate() {
-            alert("Sử dụng cấu trúc các cột gồm: Nhóm SP, Tên SP, Barcode, Hãng SX, Máy TH, Nhiệt độ, Đơn vị, Quy cách, Tồn min, LOT mặc định, Hạn dùng mặc định.");
-        }
-
-        function importProductsFromExcel(input) {
-            alert("Tính năng đang được hỗ trợ qua đồng bộ Firebase hoặc file JSON sao lưu hệ thống.");
-        }
-
-        function exportProductsToExcel() {
-            let csvContent = "data:text/csv;charset=utf-8,\uFEFF" + "Nhóm SP,Tên SP,Barcode,Hãng SX,Máy TH,Nhiệt Độ,Đơn Vị,Quy Cách,Tồn Min\n";
-            mappedProducts.forEach(p => {
-                csvContent += `"${p.category}","${p.name}","${p.barcode}","${p.manufacturer||''}","${p.machine||''}","${p.storageTemp||''}","${p.unit||''}","${p.spec||''}","${p.minStock||0}"\n`;
-            });
-            let encodedUri = encodeURI(csvContent);
-            let link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", "DanhSachSanPham.csv");
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-
-        function exportFullDatabase() {
-            let fullData = {
-                users: userAccounts,
-                products: mappedProducts,
-                inventory: inventory,
-                logs: logs
-            };
-            let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(fullData, null, 2));
-            let downloadAnchor = document.createElement('a');
-            downloadAnchor.setAttribute("href", dataStr);
-            downloadAnchor.setAttribute("download", `Backup_Kho_Lab_${new Date().toISOString().split('T')[0]}.json`);
-            document.body.appendChild(downloadAnchor);
-            downloadAnchor.click();
-            downloadAnchor.remove();
-        }
-
-        function importFullDatabase(input) {
-            let file = input.files[0];
-            if (!file) return;
-            let reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    let json = JSON.parse(e.target.result);
-                    if (confirm("Xác nhận khôi phục toàn bộ CSDL từ file sao lưu? Dữ liệu hiện tại trên Firebase sẽ bị ghi đè!")) {
-                        Promise.all([
-                            json.users ? db.ref('qr_user_accounts_v1').set(json.users) : Promise.resolve(),
-                            json.products ? db.ref('qr_mapped_products_v7').set(json.products) : Promise.resolve(),
-                            json.inventory ? db.ref('qr_inventory_v11').set(json.inventory) : Promise.resolve(),
-                            json.logs ? db.ref('qr_logs_v11').set(json.logs) : Promise.resolve()
-                        ]).then(() => {
-                            alert("✅ Khôi phục cơ sở dữ liệu thành công!");
-                            location.reload();
-                        });
-                    }
-                } catch (err) {
-                    alert("❌ File JSON không hợp lệ!");
-                }
-            };
-            reader.readAsText(file);
-        }
-
-        function deleteInventoryBatch(index) {
-            if (!currentUser || currentUser.role !== 'ADMIN') {
-                alert("Chỉ tài khoản Quản trị (Admin) mới có quyền xóa lô tồn kho!");
-                return;
-            }
-            let invArr = Array.isArray(inventory) ? inventory : Object.values(inventory);
-            if (confirm(`Bạn có chắc chắn muốn xóa lô "${invArr[index].lot}" của sản phẩm "${invArr[index].name}" không?`)) {
-                invArr.splice(index, 1);
-                inventory = invArr;
-                db.ref('qr_inventory_v11').set(inventory).then(() => {
-                    renderTables();
-                    alert("Đã xóa lô tồn kho thành công!");
-                });
-            }
-        }
-
     </script>
 </body>
 </html>
