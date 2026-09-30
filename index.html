@@ -849,6 +849,23 @@
     <div id="printSlipArea" style="display:none;"></div>
 
     <script>
+        // --- CẤU HÌNH KẾT NỐI FIREBASE ---
+        const firebaseConfig = {
+          apiKey: "AIzaSyCODnAwFDbfixlIWQKdgZmMFWVa6M4goJc",
+          authDomain: "kho-labpkbvdhyd1.firebaseapp.com",
+          databaseURL: "https://kho-labpkbvdhyd1-default-rtdb.firebaseio.com",
+          projectId: "kho-labpkbvdhyd1",
+          storageBucket: "kho-labpkbvdhyd1.firebasestorage.app",
+          messagingSenderId: "1039878184033",
+          appId: "1:1039878184033:web:22875e1ce1f2f78c24de20",
+          measurementId: "G-GFGRSF4327"
+        };
+
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.database();
+
         let currentCategory = "NHÓM MIỄN DỊCH";
         let suggestTimeout = null;
         let currentUser = null;
@@ -2160,22 +2177,7 @@ firebase.database().ref('tenNguoiGiaoKho').on('value', (snapshot) => {
         }
     }
 });
-        // --- CẤU HÌNH KẾT NỐI FIREBASE ---
-        const firebaseConfig = {
-          apiKey: "AIzaSyCODnAwFDbfixlIWQKdgZmMFWVa6M4goJc",
-          authDomain: "kho-labpkbvdhyd1.firebaseapp.com",
-          databaseURL: "https://kho-labpkbvdhyd1-default-rtdb.firebaseio.com",
-          projectId: "kho-labpkbvdhyd1",
-          storageBucket: "kho-labpkbvdhyd1.firebasestorage.app",
-          messagingSenderId: "1039878184033",
-          appId: "1:1039878184033:web:22875e1ce1f2f78c24de20",
-          measurementId: "G-GFGRSF4327"
-        };
 
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
-        const db = firebase.database();
 
     </script>
 </body>
