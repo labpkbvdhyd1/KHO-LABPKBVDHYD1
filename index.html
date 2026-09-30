@@ -2010,23 +2010,24 @@ function exportMonthlyExportStatsToCSV() {
 
                 if (matchesSearch) {
                     totalBatches++;
-                    let status = checkExpiryAndStockStatus(item.expiry, item.qty, minStockVal);
+let minStockVal = foundMap ? (foundMap.minStock !== undefined ? foundMap.minStock : (foundMap.tonMin !== undefined ? foundMap.tonMin : 0)) : 0;
+let status = checkExpiryAndStockStatus(item.expiry, item.qty, minStockVal);
                     let adminAction = currentUser.role === 'ADMIN' ? `<button class="btn-delete" onclick="deleteBatch('${key}')">Xóa Lô</button>` : '';
 
-                    invHtml.push(`<tr class="${status.class}">
-                        <td style="text-align: center;"><input type="checkbox" class="row-checkbox" checked></td>
-                        <td><b>${item.productName}</b></td>
-                        <td>${item.barcode}</td>
-                        <td>${foundMap ? foundMap.storageTemp : '-'}</td>
-                        <td><b style="color:#0056b3;">${item.lot}</b></td>
-                        <td>${item.importTimeStr}</td>
-                        <td><span class="user-tag">${item.lastUser}</span></td>
-                        <td><b>${item.expiry}</b></td>
-                        <td><b style="font-size:12px;">${item.qty}</b> ${foundMap ? foundMap.unit : ''}</td>
-                        `<td>${minStockVal}</td>`
-                        <td>${status.text}</td>
-                        <td class="admin-only-col">${adminAction}</td>
-                    </tr>`);
+invHtml.push(`<tr class="${status ? status.class : ''}">
+    <td style="text-align: center;"><input type="checkbox" class="row-checkbox" checked></td>
+    <td><b>${item.productName}</b></td>
+    <td>${item.barcode}</td>
+    <td>${foundMap ? foundMap.storageTemp : '-'}</td>
+    <td><b>${item.lot}</b></td>
+    <td>${item.importTimeStr}</td>
+    <td><span class="user-tag">${item.lastUser}</span></td>
+    <td><b>${item.expiry}</b></td>
+    <td><b>${item.qty}</b> ${foundMap ? foundMap.unit : ''}</td>
+    <td>${minStockVal}</td>
+    <td>${status ? status.text : ''}</td>
+    <td class="admin-only-col">${adminAction}</td>
+</tr>`);
                 }
             }
             invBody.innerHTML = invHtml.length ? invHtml.join('') : `<tr><td colspan="12" style="text-align:center; color:#888;">Chưa có dữ liệu tồn kho</td></tr>`;
