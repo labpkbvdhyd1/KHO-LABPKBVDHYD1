@@ -2197,7 +2197,9 @@ window.addEventListener('DOMContentLoaded', (event) => {
           measurementId: "G-GFGRSF4327"
         };
 
-firebase.initializeApp(firebaseConfig);
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
         const db = firebase.database();
 
     </script>
