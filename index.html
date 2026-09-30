@@ -1219,7 +1219,7 @@
             if (userAccounts.some(u => u.username.toLowerCase() === username.toLowerCase())) { alert("Tên đăng nhập đã tồn tại!"); return; }
 
             userAccounts.push({ username, pass: "123456", name, role });
-            db.ref('qr_user_accounts_v1').set(userAccounts);
+            db.ref('qr_user_accounts_v1).set(userAccounts);
             
             document.getElementById('newAccUser').value = '';
             document.getElementById('newAccName').value = '';
@@ -1230,7 +1230,7 @@
         function removeUserAccount(index) {
             if (confirm(`Xóa tài khoản "${userAccounts[index].username}"?`)) {
                 userAccounts.splice(index, 1);
-                 db.ref('qr_user_accounts_v1').set(userAccounts);
+                 db.ref('qr_user_accounts_v1).set(userAccounts);
                 renderUserAccountsModal();
             }
         }
@@ -2199,72 +2199,6 @@ window.addEventListener('DOMContentLoaded', (event) => {
 
 firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
-import { getDatabase, ref, onValue, remove } from "firebase/database";
-window.thucHienXoa = function(maDinhDanh) {
-if (!confirm("Bạn có chắc chắn muốn xóa dòng dữ liệu này không?")) {
-        return;
-    }
-const db = getDatabase();
-const inventoryRef = ref(db, 'qr_inventory_v11');
-
-// Lắng nghe và tải dữ liệu lên bảng
-onValue(inventoryRef, (snapshot) => {
-    const tableBody = document.getElementById('bang-ton-kho'); // Thay bằng ID thẻ tbody của bạn
-    tableBody.innerHTML = ''; // Xóa bảng cũ trước khi render mới
-
-    if (snapshot.exists()) {
-        snapshot.forEach((childSnapshot) => {
-            // 1. LẤY MÃ ĐỊNH DANH (KEY) CỦA FIREBASE TẠI ĐÂY
-            const maDinhDanh = childSnapshot.key; 
-            const data = childSnapshot.val();
-
-            // 2. Tạo dòng HTML và nhét `maDinhDanh` vào nút Xóa
-            let row = `
-                <tr id="row-${maDinhDanh}">
-                    <td>${data.tenSanPham || ''}</td>
-                    <td>${data.lot || ''}</td>
-                    <td>
-                        <!-- Gọi hàm xóa và truyền trực tiếp mã định danh vào -->
-                        <button onclick="xoaDuLieu('${maDinhDanh}')" class="btn-xoa">Xóa</button>
-                    </td>
-                </tr>
-            `;
-            tableBody.innerHTML += row;
-        });
-    } else {
-        tableBody.innerHTML = `<tr><td colspan="12">Chưa có dữ liệu tồn kho</td></tr>`;
-    }
-});
-
-// 3. Hàm thực hiện lệnh xóa thật trên Firebase
-window.xoaDuLieu = function(maDinhDanh) {
-    if (!confirm("Bạn có chắc chắn muốn xóa dòng này không?")) return;
-
-    const itemRef = ref(db, 'qr_inventory_v11/' + maDinhDanh);
-    
-    remove(itemRef)
-        .then(() => {
-            console.log("Đã xóa vĩnh viễn trên Firebase!");
-            // Khi xóa thành công trên Firebase, dòng trên bảng sẽ tự động biến mất 
-            // nhờ cơ chế lắng nghe onValue, hoặc bạn có thể gỡ trực tiếp:
-            const element = document.getElementById(`row-${maDinhDanh}`);
-            if (element) element.remove();
-        })
-        .catch((error) => {
-            console.error("Lỗi khi xóa: ", error);
-        });
-};
-// Ví dụ đoạn code lúc bạn dùng JavaScript để tạo ra các dòng trong bảng:
-let htmlRow = `
-    <tr id="row-${item.id}">
-        <td>${item.tenSanPham}</td>
-        <td>${item.lot}</td>
-        <td>
-            <!-- Khi bấm nút này, nó sẽ gọi hàm xóa trên Firebase với mã định danh tương ứng -->
-            <button onclick="thucHienXoa('${item.id}')" class="btn-xoa">Xóa</button>
-        </td>
-    </tr>
-`;
 
     </script>
 </body>
