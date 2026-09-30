@@ -854,12 +854,7 @@
         let currentUser = null;
         let qrcodeObj = null;
 
-        let userAccounts = [];
-        let mappedProducts = [];
-        let inventory = {};
-        let logs = [];
-
-        const defaultAccounts = [
+        let defaultAccounts = [
             { username: "admin", pass: "admin123", name: "Quản Trị Viên", role: "ADMIN" },
             { username: "user", pass: "123456", name: "Nhân Viên Kho", role: "USER" },
             { username: "TUAN.BCL", pass: "024754403", name: "CK1. BẠCH CÔNG LƯU TUẤN", role: "ADMIN" },
@@ -881,56 +876,20 @@
             { username: "THAO.LT", pass: "123456", name: "KTV. LÊ NGỌC THẢO", role: "USER" }
         ];
 
-        const defaultProducts = [
+        let userAccounts = JSON.parse(localStorage.getItem('qr_user_accounts_v1')) || defaultAccounts;
+        if (!localStorage.getItem('qr_user_accounts_v1')) {
+            firebase.database().ref('qr_user_accounts_v1').set(defaultAccounts);
+        }
+
+        let mappedProducts = JSON.parse(localStorage.getItem('qr_mapped_products_v7')) || [
             { category: "NHÓM MIỄN DỊCH", name: "Reagent HBsAg (Miễn Dịch)", barcode: "8934673012345", manufacturer: "Roche", machine: "Cobas e411", storageTemp: "2-8°C", unit: "Hộp", spec: "100 test/hộp", minStock: 5, defaultLot: "LOT_MD_01", defaultExpiry: "2026-12-31" },
             { category: "NHÓM ĐÔNG MÁU", name: "Hóa chất PT/APTT (Đông Máu)", barcode: "8935001234567", manufacturer: "Sysmex", machine: "CS-1600", storageTemp: "2-8°C", unit: "Lọ", spec: "5ml/lọ", minStock: 3, defaultLot: "LOT_DM_02", defaultExpiry: "2027-05-20" },
             { category: "NHÓM SINH HÓA", name: "Reagent Glucose (Sinh Hóa)", barcode: "8935010123458", manufacturer: "Beckman Coulter", machine: "AU680", storageTemp: "15-25°C", unit: "Hộp", spec: "2x50ml", minStock: 10, defaultLot: "LOT_SH_01", defaultExpiry: "2026-10-15" },
             { category: "NHÓM VẬT TƯ TIÊU HAO", name: "Bkeo vải 4.8-A(cuộn)", barcode: "8930009110024", manufacturer: "Thiện Mỹ", machine: "Thủ công / Khác", storageTemp: "Nhiệt độ phòng (<30°C)", unit: "Cuộn", spec: "1 cuộn", minStock: 20, defaultLot: "LOT_BV_01", defaultExpiry: "2028-12-31" }
         ];
 
-        function initFirebaseSync() {
-            db.ref('qr_user_accounts_v1').on('value', (snapshot) => {
-                const data = snapshot.val();
-                if (!data) {
-                    db.ref('qr_user_accounts_v1').set(defaultAccounts);
-                    userAccounts = defaultAccounts;
-                } else {
-                    userAccounts = Array.isArray(data) ? data : Object.values(data);
-                }
-                if (document.getElementById('productModal').style.display === 'block') {
-                    renderUserAccountsModal();
-                }
-            });
-
-            db.ref('qr_mapped_products_v7').on('value', (snapshot) => {
-                const data = snapshot.val();
-                if (!data) {
-                    db.ref('qr_mapped_products_v7').set(defaultProducts);
-                    mappedProducts = defaultProducts;
-                } else {
-                    mappedProducts = Array.isArray(data) ? data : Object.values(data);
-                }
-                renderMappedProductsTable();
-                populateLabelProductSelect();
-            });
-
-            db.ref('qr_inventory_v11').on('value', (snapshot) => {
-                const data = snapshot.val();
-                inventory = data ? (Array.isArray(data) ? data : Object.values(data)) : [];
-                if (typeof renderTables === 'function') {
-                    renderTables();
-                }
-            });
-
-            db.ref('qr_logs_v11').on('value', (snapshot) => {
-                const data = snapshot.val();
-                logs = [];
-                if (data) {
-                    logs = Array.isArray(data) ? data : Object.values(data).reverse();
-                }
-                renderTables();
-            });
-        }
+        let inventory = JSON.parse(localStorage.getItem('qr_inventory_v11')) || {};
+        let logs = JSON.parse(localStorage.getItem('qr_logs_v11')) || [];
 
         function showAutoSuggest(query) {
             const box = document.getElementById('autoSuggestBox');
@@ -1024,7 +983,6 @@
         }
 
         function checkSessionLogin() {
-            initFirebaseSync();
             let active = sessionStorage.getItem('qr_active_user');
             if (active) {
                 currentUser = JSON.parse(active);
@@ -1057,15 +1015,14 @@
             if (newPass !== confirmPass) { alert("Mật khẩu mới không trùng khớp!"); return; }
             if (newPass.length < 4) { alert("Mật khẩu tối thiểu 4 ký tự!"); return; }
 
-            let accIndex = userAccounts.findIndex(u => u.username.toLowerCase() === currentUser.username.toLowerCase());
-            if (accIndex !== -1) {
-                userAccounts[accIndex].pass = newPass;
+            let acc = userAccounts.find(u => u.username.toLowerCase() === currentUser.username.toLowerCase());
+            if (acc) {
+                acc.pass = newPass;
                 currentUser.pass = newPass;
-                db.ref('qr_user_accounts_v1').set(userAccounts).then(() => {
-                    sessionStorage.setItem('qr_active_user', JSON.stringify(currentUser));
-                    alert("Đổi mật khẩu thành công!");
-                    closeChangePasswordModal();
-                });
+                firebase.database().ref('qr_user_accounts_v1').set(userAccounts);
+                sessionStorage.setItem('qr_active_user', JSON.stringify(currentUser));
+                alert("Đổi mật khẩu thành công!");
+                closeChangePasswordModal();
             }
         }
 
@@ -1219,7 +1176,7 @@
             if (userAccounts.some(u => u.username.toLowerCase() === username.toLowerCase())) { alert("Tên đăng nhập đã tồn tại!"); return; }
 
             userAccounts.push({ username, pass: "123456", name, role });
-            db.ref('qr_user_accounts_v1').set(userAccounts);
+            firebase.database().ref('qr_user_accounts_v1').set(userAccounts);
             
             document.getElementById('newAccUser').value = '';
             document.getElementById('newAccName').value = '';
@@ -1230,7 +1187,7 @@
         function removeUserAccount(index) {
             if (confirm(`Xóa tài khoản "${userAccounts[index].username}"?`)) {
                 userAccounts.splice(index, 1);
-                 db.ref('qr_user_accounts_v1').set(userAccounts);
+                firebase.database().ref('qr_user_accounts_v1').set(userAccounts);
                 renderUserAccountsModal();
             }
         }
@@ -1250,7 +1207,7 @@
 
             if (!name) { alert("Vui lòng nhập Tên sản phẩm!"); return; }
             mappedProducts.push({ category, name, barcode: barcode || name, manufacturer, machine, storageTemp, unit, spec, minStock, defaultLot: lot, defaultExpiry: expiry });
-           db.ref('qr_mapped_products_v7').set(mappedProducts);
+           firebase.database().ref('qr_mapped_products_v7').set(mappedProducts);
             renderMappedProductsTable();
             populateLabelProductSelect();
         }
@@ -1258,7 +1215,7 @@
         function deleteProductMapping(index) {
             if (confirm("Xóa sản phẩm này khỏi cấu hình?")) {
                 mappedProducts.splice(index, 1);
-                db.ref('qr_mapped_products_v7').set(mappedProducts);
+                firebase.database().ref('qr_mapped_products_v7').set(mappedProducts);
                 renderMappedProductsTable();
                 populateLabelProductSelect();
             }
@@ -1298,7 +1255,7 @@
             mappedProducts[index].defaultExpiry = document.getElementById('editProdExpiry').value;
             mappedProducts[index].minStock = parseInt(document.getElementById('editProdMinStock').value) || 0;
 
-            db.ref('qr_mapped_products_v7').set(mappedProducts);
+            firebase.database().ref('qr_mapped_products_v7').set(mappedProducts);
             renderMappedProductsTable();
             populateLabelProductSelect();
 
@@ -1386,8 +1343,9 @@
 
             logs.unshift({ category: currentCategory, timeStr: nowStr, dateISO: isoDateStr, userName: currentUser.name, productName: prodName, barcode: actualBarcode, lot: lot, expiry: expiry, type: type, qty: qty, note: note });
 
-           db.ref('qr_inventory_v11').set(inventory);
-           db.ref('qr_logs_v11').set(logs);
+            firebase.database().ref('qr_inventory_v11').set(inventory);
+           firebase.database().ref('qr_logs_v11').set(logs);
+
 
             document.getElementById('productBarcode').value = '';
             document.getElementById('quantity').value = 1;
@@ -1399,7 +1357,7 @@
             if (currentUser.role !== 'ADMIN') return;
             if (confirm("Xóa giao dịch này?")) {
                 logs.splice(index, 1);
-               db.ref('qr_logs_v11').set(logs);
+                firebase.database().ref('qr_logs_v11').set(logs);
                 renderTables();
             }
         }
@@ -1408,19 +1366,8 @@
             if (currentUser.role !== 'ADMIN') return;
             if (confirm("Xóa lô kho này?")) {
                 delete inventory[batchKey];
-                db.ref('qr_inventory_v11').set(inventory);
+                firebase.database().ref('qr_inventory_v11').set(inventory);
                 renderTables();
-            }
-        }
-
-function deleteInventoryItem(key) {
-            if (currentUser.role !== 'ADMIN') return;
-            if (confirm("Bạn có chắc chắn muốn xóa lô hàng tồn kho này không?")) {
-                if (inventory[key]) {
-                    delete inventory[key];
-                    db.ref('qr_inventory_v11').set(inventory);
-                    renderTables();
-                }
             }
         }
 
@@ -1947,24 +1894,27 @@ function exportMonthlyExportStatsToCSV() {
         }
 
         function importFullDatabase(input) {
-            let file = input.files[0];
-            if (!file) return;
-            let reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    let db = JSON.parse(e.target.result);
-                    if (db.userAccounts) db.ref('qr_user_accounts_v1').set(db.userAccounts);
-                    if (db.mappedProducts) db.ref('qr_mapped_products_v7').set(db.mappedProducts);
-                    if (db.inventory) db.ref('qr_inventory_v11').set(db.inventory);
-                    if (db.logs) db.ref('qr_logs_v11').set(db.logs);
-                    alert("Khôi phục CSDL thành công! Hệ thống sẽ tải lại trang.");
-                    location.reload();
-                } catch (err) {
-                    alert("File không hợp lệ!");
-                }
-            };
-            reader.readAsText(file);
+    let file = input.files[0];
+    if (!file) return;
+    let reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            let db = JSON.parse(e.target.result);
+            
+            // Sửa lại dùng firebase.database().ref(...) thay cho db.ref(...)
+            if (db.userAccounts) firebase.database().ref('qr_user_accounts_v1').set(db.userAccounts);
+            if (db.mappedProducts) firebase.database().ref('qr_mapped_products_v7').set(db.mappedProducts);
+            if (db.inventory) firebase.database().ref('qr_inventory_v11').set(db.inventory);
+            if (db.logs) firebase.database().ref('qr_logs_v11').set(db.logs);
+            
+            alert('Khôi phục CSDL thành công! Hệ thống sẽ tải lại trang.');
+            location.reload();
+        } catch (err) {
+            alert('File không hợp lệ!');
         }
+    };
+    reader.readAsText(file);
+}
 
         function downloadExcelTemplate() {
             let data = [
@@ -2011,7 +1961,7 @@ function exportMonthlyExportStatsToCSV() {
                         }
                     }
 
-                    db.ref('qr_mapped_products_v7').set(mappedProducts);
+                    firebase.database().ref('qr_mapped_products_v7').set(mappedProducts);
                     renderMappedProductsTable();
                     populateLabelProductSelect();
                     alert(`Đã nhập thành công ${count} sản phẩm từ file Excel!`);
@@ -2033,42 +1983,54 @@ function exportMonthlyExportStatsToCSV() {
             XLSX.writeFile(wb, `DanhSach_SanPham_${new Date().toISOString().split('T')[0]}.xlsx`);
         }
 
-function renderTables() {
-            // 1. Render Tồn Kho (Tab 2)
-            const invTbody = document.querySelector('#inventoryTable tbody');
-            const searchInv = (document.getElementById('searchInvInput').value || '').toLowerCase();
-            let invCount = 0;
-            let invHtml = [];
+        function renderTables() {
+            if (!currentUser) return;
 
-            let invArray = Array.isArray(inventory) ? inventory : Object.values(inventory);
-            invArray.forEach((item, idx) => {
-                if (item.category === currentCategory || !currentCategory) {
-                    if (!searchInv || (item.productName && item.productName.toLowerCase().includes(searchInv)) || (item.barcode && item.barcode.toLowerCase().includes(searchInv)) || (item.lot && item.lot.toLowerCase().includes(searchInv))) {
-                        let statusObj = checkExpiryAndStockStatus(item);
-                        invCount++;
-                        invHtml.push(`
-                            <tr class="${statusObj.rowClass}">
-                                <td style="text-align: center;"><input type="checkbox" class="row-checkbox" value="${idx}"></td>
-                                <td class="text-left">${item.productName}</td>
-                                <td>${item.barcode}</td>
-                                <td>${item.storageTemp || '-'}</td>
-                                <td><b>${item.lot}</b></td>
-                                <td>${item.importTimeStr || '-'}</td>
-                                <td>${item.lastUser || '-'}</td>
-                                <td>${item.expiry}</td>
-                                <td><b>${item.qty}</b></td>
-                                <td>${statusObj.minStock}</td>
-                                <td>${statusObj.statusHtml}</td>
-                                <td class="admin-only-col">
-                                    ${currentUser && currentUser.role === 'ADMIN' ? `<button class="btn-delete" onclick="deleteInventoryItem('${idx}')">Xóa</button>` : ''}
-                                </td>
-                            </tr>
-                        `);
-                    }
+            // 1. Render Bảng Tồn Kho
+            const invBody = document.getElementById('inventoryTable').querySelector('tbody');
+            let invHtml = [];
+            let totalBatches = 0;
+
+            const searchInvKey = document.getElementById('searchInvInput') ? document.getElementById('searchInvInput').value.trim().toLowerCase() : '';
+            const filterInvFrom = document.getElementById('filterInvFrom').value;
+            const filterInvTo = document.getElementById('filterInvTo').value;
+
+            for (let key in inventory) {
+                let item = inventory[key];
+                if (item.category !== currentCategory || item.qty <= 0) continue;
+
+                if (filterInvFrom && item.importDateISO < filterInvFrom) continue;
+                if (filterInvTo && item.importDateISO > filterInvTo) continue;
+
+                let foundMap = mappedProducts.find(p => p.barcode === item.barcode || p.name === item.productName);
+                const matchesSearch = !searchInvKey || 
+                    (item.productName && item.productName.toLowerCase().includes(searchInvKey)) ||
+                    (item.barcode && item.barcode.toLowerCase().includes(searchInvKey)) ||
+                    (item.lot && item.lot.toLowerCase().includes(searchInvKey));
+
+                if (matchesSearch) {
+                    totalBatches++;
+                    let status = checkExpiryAndStockStatus(item.expiry, item.qty, minStockVal);
+                    let adminAction = currentUser.role === 'ADMIN' ? `<button class="btn-delete" onclick="deleteBatch('${key}')">Xóa Lô</button>` : '';
+
+                    invHtml.push(`<tr class="${status.class}">
+                        <td style="text-align: center;"><input type="checkbox" class="row-checkbox" checked></td>
+                        <td><b>${item.productName}</b></td>
+                        <td>${item.barcode}</td>
+                        <td>${foundMap ? foundMap.storageTemp : '-'}</td>
+                        <td><b style="color:#0056b3;">${item.lot}</b></td>
+                        <td>${item.importTimeStr}</td>
+                        <td><span class="user-tag">${item.lastUser}</span></td>
+                        <td><b>${item.expiry}</b></td>
+                        <td><b style="font-size:12px;">${item.qty}</b> ${foundMap ? foundMap.unit : ''}</td>
+                        `<td>${minStockVal}</td>`
+                        <td>${status.text}</td>
+                        <td class="admin-only-col">${adminAction}</td>
+                    </tr>`);
                 }
-            });
-            invTbody.innerHTML = invHtml.length ? invHtml.join('') : `<tr><td colspan="12" style="text-align: center;">Không có dữ liệu tồn kho</td></tr>`;
-            document.getElementById('totalInventoryBatches').innerText = invCount;
+            }
+            invBody.innerHTML = invHtml.length ? invHtml.join('') : `<tr><td colspan="12" style="text-align:center; color:#888;">Chưa có dữ liệu tồn kho</td></tr>`;
+            document.getElementById('totalInventoryBatches').innerText = totalBatches;
 
             // 2. Render Thống Kê Nhập
             const impBody = document.getElementById('monthlyImportTable').querySelector('tbody');
@@ -2135,53 +2097,65 @@ function renderTables() {
             expBody.innerHTML = expHtml.length ? expHtml.join('') : `<tr><td colspan="4" style="text-align:center; color:#888;">Chưa có dữ liệu xuất kho</td></tr>`;
 
             // 4. Render Lịch Sử
- const logTbody = document.querySelector('#logTable tbody');
-            const searchLog = (document.getElementById('searchLogInput').value || '').toLowerCase();
-            let totalImp = 0;
-            let totalExp = 0;
+            const logBody = document.getElementById('logTable').querySelector('tbody');
             let logHtml = [];
+            let totalImp = 0, totalExp = 0;
+            const searchLogKey = document.getElementById('searchLogInput') ? document.getElementById('searchLogInput').value.trim().toLowerCase() : '';
+            const filterLogFrom = document.getElementById('filterLogFrom').value;
+            const filterLogTo = document.getElementById('filterLogTo').value;
 
-            logs.forEach((log, idx) => {
-                if (log.type === 'NHẬP') totalImp += log.qty;
-                if (log.type === 'XUẤT') totalExp += log.qty;
+            logs.forEach((l, index) => {
+                if (l.category === currentCategory) {
+                    if (l.type === 'NHẬP') totalImp += l.qty;
+                    if (l.type === 'XUẤT') totalExp += l.qty;
 
-                if (!searchLog || (log.productName && log.productName.toLowerCase().includes(searchLog)) || (log.barcode && log.barcode.toLowerCase().includes(searchLog))) {
-                    logHtml.push(`
-                        <tr>
-                            <td style="text-align: center;"><input type="checkbox" class="row-checkbox" value="${idx}"></td>
-                            <td>${log.timeStr}</td>
-                            <td>${log.userName}</td>
-                            <td class="text-left">${log.productName}</td>
-                            <td>${log.barcode}</td>
-                            <td>${log.lot}</td>
-                            <td>${log.expiry}</td>
-                            <td><span style="color: ${log.type === 'NHẬP' ? 'green' : 'orange'}; font-weight: bold;">${log.type}</span></td>
-                            <td><b>${log.qty}</b></td>
-                            <td>${log.note || ''}</td>
-                            <td class="admin-only-col">
-                                ${currentUser && currentUser.role === 'ADMIN' ? `<button class="btn-delete" onclick="deleteLog(${idx})">Xóa</button>` : ''}
-                            </td>
-                        </tr>
-                    `);
+                    if (filterLogFrom && l.dateISO < filterLogFrom) return;
+                    if (filterLogTo && l.dateISO > filterLogTo) return;
+
+                    const matchesSearch = !searchLogKey || 
+                        (l.productName && l.productName.toLowerCase().includes(searchLogKey)) ||
+                        (l.userName && l.userName.toLowerCase().includes(searchLogKey)) ||
+                        (l.barcode && l.barcode.toLowerCase().includes(searchLogKey)) ||
+                        (l.lot && l.lot.toLowerCase().includes(searchLogKey)) ||
+                        (l.note && l.note.toLowerCase().includes(searchLogKey));
+
+                    if (matchesSearch) {
+                        let adminAction = currentUser.role === 'ADMIN' ? `<button class="btn-delete" onclick="deleteLog(${index})">Xóa</button>` : '-';
+                        let typeBadge = l.type === 'NHẬP' ? `<span style="color:green; font-weight:bold;">NHẬP (+)</span>` : `<span style="color:orange; font-weight:bold;">XUẤT (-)</span>`;
+
+                        logHtml.push(`<tr>
+                            <td style="text-align: center;"><input type="checkbox" class="row-checkbox" checked></td>
+                            <td>${l.timeStr}</td>
+                            <td><span class="user-tag">${l.userName}</span></td>
+                            <td><b>${l.productName}</b></td>
+                            <td>${l.barcode}</td>
+                            <td><b style="color:#0056b3;">${l.lot}</b></td>
+                            <td><b>${l.expiry}</b></td>
+                            <td>${typeBadge}</td>
+                            <td><b>${l.qty}</b></td>
+                            <td>${l.note || '-'}</td>
+                            <td class="admin-only-col">${adminAction}</td>
+                        </tr>`);
+                    }
                 }
             });
-            logTbody.innerHTML = logHtml.length ? logHtml.join('') : `<tr><td colspan="11" style="text-align: center;">Chưa có lịch sử giao dịch</td></tr>`;
+
+            logBody.innerHTML = logHtml.length ? logHtml.join('') : `<tr><td colspan="11" style="text-align:center; color:#888;">Chưa có lịch sử giao dịch</td></tr>`;
             document.getElementById('totalImport').innerText = totalImp;
             document.getElementById('totalExport').innerText = totalExp;
         }
-
-// Lưu tên người giao vào db.ref khi gõ
+// Lưu tên người giao vào db.ref  khi gõ
 function luuTenNguoiGiao(ten) {
-    db.ref('tenNguoiGiaoKho', ten);
+    firebase.database().ref('tenNguoiGiaoKho').set(ten);
 }
 
-// Tự động điền lại tên người giao khi tải trang
-window.addEventListener('DOMContentLoaded', (event) => {
-    const savedName = db.ref('tenNguoiGiaoKho');
-    if (savedName) {
+// Lắng nghe dữ liệu đồng bộ thời gian thực khi mở trang
+firebase.database().ref('tenNguoiGiaoKho').on('value', (snapshot) => {
+    const serverTen = snapshot.val();
+    if (serverTen !== null) {
         const inputNguoiGiao = document.getElementById('txtNguoiGiao');
-        if (inputNguoiGiao) {
-            inputNguoiGiao.value = savedName;
+        if (inputNguoiGiao && inputNguoiGiao.value !== serverTen) {
+            inputNguoiGiao.value = serverTen;
         }
     }
 });
