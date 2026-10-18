@@ -614,6 +614,48 @@ table.data-table th { background-color: #f2f2f2 !important; font-weight: bold; -
             onTypeChange();
         });
 
+        function checkSessionLogin() {
+            let active = sessionStorage.getItem('qr_active_user');
+            if (active) {
+                currentUser = JSON.parse(active);
+                let overlay = document.getElementById('loginOverlay');
+                if (overlay) overlay.style.display = 'none';
+                applyUserPermissions();
+            } else {
+                let overlay = document.getElementById('loginOverlay');
+                if (overlay) overlay.style.display = 'flex';
+            }
+        }
+
+        function executeLogin() {
+            const userInp = document.getElementById('loginUsername').value.trim();
+            const passInp = document.getElementById('loginPassword').value.trim();
+            let account = userAccounts.find(u => u.username.toLowerCase() === userInp.toLowerCase() && u.pass === passInp);
+            if (account) {
+                currentUser = account;
+                sessionStorage.setItem('qr_active_user', JSON.stringify(currentUser));
+                applyUserPermissions();
+                let overlay = document.getElementById('loginOverlay');
+                if (overlay) overlay.style.display = 'none';
+            } else {
+                alert("Tài khoản hoặc mật khẩu không chính xác!");
+            }
+        }
+
+        function executeLogout() {
+            sessionStorage.removeItem('qr_active_user');
+            location.reload();
+        }
+
+        function applyUserPermissions() {
+            if (!currentUser) return;
+            let userDisp = document.getElementById('currentUserDisplay');
+            if (userDisp) userDisp.innerHTML = `👤 ${currentUser.name} <span class="${currentUser.role === 'ADMIN' ? 'admin-tag' : 'user-tag'}">${currentUser.role}</span>`;
+            let userInput = document.getElementById('currentUserInput');
+            if (userInput) userInput.value = `${currentUser.name} (${currentUser.role})`;
+            renderTables();
+        }
+
         function onTypeChange() {
             let typeSelect = document.getElementById('type');
             if (typeSelect) {
@@ -657,21 +699,30 @@ table.data-table th { background-color: #f2f2f2 !important; font-weight: bold; -
             let t = (term || '').trim().toLowerCase();
             let displayDiv = document.getElementById('productNameDisplay');
             if (!t) {
-                displayDiv.innerText = "Chưa quét / Chưa nhận diện sản phẩm";
-                displayDiv.style.color = "#007bff";
+                if (displayDiv) {
+                    displayDiv.innerText = "Chưa quét / Chưa nhận diện sản phẩm";
+                    displayDiv.style.color = "#007bff";
+                }
                 return;
             }
             let res = findProductByTerm(t);
             if (res) {
-                displayDiv.innerText = `[${res.product.category}] ${res.product.name}`;
-                displayDiv.style.color = "#28a745";
+                if (displayDiv) {
+                    displayDiv.innerText = `[${res.product.category}] ${res.product.name}`;
+                    displayDiv.style.color = "#28a745";
+                }
                 currentCategory = res.product.category;
-                document.getElementById('currentCategoryDisplay').innerText = "ĐANG CHỌN: " + currentCategory;
-                if (res.matchedLot) document.getElementById('lotNumber').value = res.matchedLot;
-                if (res.matchedExpiry) document.getElementById('expiryDate').value = formatExpiryDisplay(res.matchedExpiry);
+                let catDisp = document.getElementById('currentCategoryDisplay');
+                if (catDisp) catDisp.innerText = "ĐANG CHỌN: " + currentCategory;
+                let lotInput = document.getElementById('lotNumber');
+                if (lotInput && res.matchedLot) lotInput.value = res.matchedLot;
+                let expInput = document.getElementById('expiryDate');
+                if (expInput && res.matchedExpiry) expInput.value = formatExpiryDisplay(res.matchedExpiry);
             } else {
-                displayDiv.innerText = `Chưa nhận diện mã (${t})`;
-                displayDiv.style.color = "#dc3545";
+                if (displayDiv) {
+                    displayDiv.innerText = `Chưa nhận diện mã (${t})`;
+                    displayDiv.style.color = "#dc3545";
+                }
             }
         }
 
@@ -717,43 +768,6 @@ table.data-table th { background-color: #f2f2f2 !important; font-weight: bold; -
             alert("Lưu giao dịch thành công!");
         }
 
-        function executeLogin() {
-            const userInp = document.getElementById('loginUsername').value.trim();
-            const passInp = document.getElementById('loginPassword').value.trim();
-            let account = userAccounts.find(u => u.username.toLowerCase() === userInp.toLowerCase() && u.pass === passInp);
-            if (account) {
-                currentUser = account;
-                sessionStorage.setItem('qr_active_user', JSON.stringify(currentUser));
-                applyUserPermissions();
-                document.getElementById('loginOverlay').style.display = 'none';
-            } else {
-                alert("Tài khoản hoặc mật khẩu không chính xác!");
-            }
-        }
-
-        function executeLogout() {
-            sessionStorage.removeItem('qr_active_user');
-            location.reload();
-        }
-
-        function checkSessionLogin() {
-            let active = sessionStorage.getItem('qr_active_user');
-            if (active) {
-                currentUser = JSON.parse(active);
-                document.getElementById('loginOverlay').style.display = 'none';
-                applyUserPermissions();
-            } else {
-                document.getElementById('loginOverlay').style.display = 'flex';
-            }
-        }
-
-        function applyUserPermissions() {
-            if (!currentUser) return;
-            document.getElementById('currentUserDisplay').innerHTML = `👤 ${currentUser.name} <span class="${currentUser.role === 'ADMIN' ? 'admin-tag' : 'user-tag'}">${currentUser.role}</span>`;
-            document.getElementById('currentUserInput').value = `${currentUser.name} (${currentUser.role})`;
-            renderTables();
-        }
-
         function openTab(evt, tabId) {
             let panes = document.getElementsByClassName("tab-pane");
             for (let p of panes) p.classList.remove("active");
@@ -771,10 +785,10 @@ table.data-table th { background-color: #f2f2f2 !important; font-weight: bold; -
             renderTables();
         }
 
-        function openProductModal() { document.getElementById('productModal').style.display = 'block'; }
-        function closeProductModal() { document.getElementById('productModal').style.display = 'none'; }
-        function openChangePasswordModal() { document.getElementById('changePasswordModal').style.display = 'block'; }
-        function closeChangePasswordModal() { document.getElementById('changePasswordModal').style.display = 'none'; }
+        function openProductModal() { let m = document.getElementById('productModal'); if (m) m.style.display = 'block'; }
+        function closeProductModal() { let m = document.getElementById('productModal'); if (m) m.style.display = 'none'; }
+        function openChangePasswordModal() { let m = document.getElementById('changePasswordModal'); if (m) m.style.display = 'block'; }
+        function closeChangePasswordModal() { let m = document.getElementById('changePasswordModal'); if (m) m.style.display = 'none'; }
         function executeChangePassword() { alert("Đổi mật khẩu thành công!"); closeChangePasswordModal(); }
         function resetFilter(type) { renderTables(); }
         function toggleSelectAll(master, tableId) {}
@@ -789,8 +803,10 @@ table.data-table th { background-color: #f2f2f2 !important; font-weight: bold; -
         function luuTenNguoiGiao(val) {}
         function renderTables() {
             if (!currentUser) return;
-            const invBody = document.getElementById('inventoryTable').querySelector('tbody');
-            invBody.innerHTML = `<tr><td colspan="10" style="text-align:center;">Dữ liệu đồng bộ trực tuyến qua Firebase Realtime Database</td></tr>`;
+            const invBody = document.querySelector('#inventoryTable tbody');
+            if (invBody) {
+                invBody.innerHTML = `<tr><td colspan="10" style="text-align:center;">Dữ liệu đồng bộ trực tuyến qua Firebase Realtime Database</td></tr>`;
+            }
         }
         function renderMappedProductsTable() {}
         function renderReorderTable() {}
