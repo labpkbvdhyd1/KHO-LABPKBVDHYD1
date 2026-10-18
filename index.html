@@ -808,7 +808,33 @@ table.data-table th { background-color: #f2f2f2 !important; font-weight: bold; -
                 invBody.innerHTML = `<tr><td colspan="10" style="text-align:center;">Dữ liệu đồng bộ trực tuyến qua Firebase Realtime Database</td></tr>`;
             }
         }
-        function renderMappedProductsTable() {}
+        function renderMappedProductsTable() {
+            const tbody = document.querySelector('#mappedProductsTable tbody');
+            if (!tbody) return;
+
+            let htmlRows = [];
+            mappedProducts.forEach((p, index) => {
+                let subHtml = "";
+                if (p.subItems && p.subItems.length > 0) {
+                    subHtml = "<br><div style='font-size:9.5px; color:#004085; margin-top:2px;'><b>Bộ phụ:</b><br>" + 
+                        p.subItems.map(s => `• Mã: <b>${s.barcode}</b> | LOT: <b>${s.lot}</b> | Hạn: <b>${formatExpiryDisplay(s.expiry)}</b>`).join('<br>') + 
+                        "</div>";
+                }
+
+                htmlRows.push(`<tr>
+                    <td><b>${p.category || 'KHÁC'}</b></td>
+                    <td><b>${p.name}</b></td>
+                    <td><b style="color:#0056b3;">Chính: ${p.barcode}</b>${subHtml}</td>
+                    <td>${p.manufacturer || '-'}</td>
+                    <td>
+                        <button class="btn-edit" onclick="alert('Tính năng sửa đang ở chế độ rút gọn')">✏️ Sửa</button>
+                        <button class="btn-delete" onclick="deleteProductMapping(${index})">Xóa</button>
+                    </td>
+                </tr>`);
+            });
+
+            tbody.innerHTML = htmlRows.length ? htmlRows.join('') : `<tr><td colspan="5" style="text-align:center; color:#888;">Không có sản phẩm nào</td></tr>`;
+        }
         function renderReorderTable() {}
 
         // --- TÍNH NĂNG BẤM PHÍM ESC ĐỂ ĐÓNG MODAL ---
