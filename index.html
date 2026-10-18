@@ -3,558 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hệ Thống Quản Lý Kho Phân Nhóm Xét Nghiệm</title>
-    <!-- THƯ VIỆN BÊN NGOÀI -->
-    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <!-- FIREBASE COMPAT SDK -->
+    <title>Hệ Thống Quản Lý Kho Phân Nhóm Hóa Chất</title>
+    <!-- Thư viện Firebase & SheetJS (Excel) -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-/* --- CSS TĂNG CỠ CHỮ LOT & HẠN DÙNG TO GẤP ĐÔI --- */
-.sub-mapping-dropdown {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    background: #fff;
-    border: 1px solid #007bff;
-    border-top: none;
-    max-height: 250px;
-    overflow-y: auto;
-    z-index: 1005;
-    box-shadow: 0 6px 12px rgba(0,0,0,0.2);
-    border-radius: 0 0 6px 6px;
-    display: none;
-}
-.sub-mapping-option {
-    padding: 10px 12px;
-    cursor: pointer;
-    font-size: 13px;
-    border-bottom: 1px solid #eee;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-.sub-mapping-option:hover {
-    background-color: #007bff;
-    color: white;
-}
-.sub-mapping-option:hover span, .sub-mapping-option:hover b {
-    color: #fff !important;
-}
-.big-lot-expiry {
-    font-size: 15px !important;
-    font-weight: bold !important;
-    color: #004085;
-}
-#productModal table th:nth-child(1), #productModal table td:nth-child(1) { width: 50px; } 
-#productModal table th:nth-child(2), #productModal table td:nth-child(2) { width: 100px; } 
-#productModal table th:nth-child(3), #productModal table td:nth-child(3) { width: 40px; }  
-#productModal table th:nth-child(4), #productModal table td:nth-child(4) { width: 220px; } 
-#productModal table th:nth-child(5), #productModal table td:nth-child(5) { width: 35px; text-align: center; } 
-#productModal table td:nth-child(4), 
-#productModal table th:nth-child(4) {
-    width: 250px;
-    max-width: 250px;
-}
-.group-checkbox-container {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    max-height: 95px;
-    overflow-y: auto;
-    padding: 2px 4px;
-}
-.group-checkbox-container label {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-direction: row-reverse;
-    width: 100%;
-    font-size: 11px;
-    font-weight: normal;
-    margin-bottom: 2px;
-    white-space: nowrap;
-}
-.group-checkbox-container input[type="checkbox"] {
-    margin-right: 0;
-    cursor: pointer;
-}
-#type option[value="NHẬP"] { background-color: #28a745; color: white; }
-#type option[value="XUẤT"] { background-color: #fd7e14; color: white; }
-#type { font-weight: bold; }
-.status-bar-container { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 10px; font-weight: bold; }
-.status-bars { display: flex; gap: 3px; width: 65px; height: 10px; }
-.status-bar { flex: 1; background-color: #e2e8f0; border-radius: 2px; transition: background-color 0.3s; }
-.status-bar.green { background-color: #28a745; }
-.status-bar.yellow { background-color: #ffc107; }
-.status-bar.orange { background-color: #fd7e14; }
-.status-bar.red { background-color: #dc3545; }
-
-* { box-sizing: border-box; }
-html, body { height: 100vh; margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f6f9; overflow: hidden; }
-
-.login-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 32, 64, 0.85); backdrop-filter: blur(8px); z-index: 9999; display: flex; align-items: center; justify-content: center; }
-.login-card { background: #ffffff; padding: 25px 30px; border-radius: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); width: 100%; max-width: 380px; text-align: center; }
-.login-card h2 { margin-top: 0; color: #004085; font-size: 18px; margin-bottom: 5px; }
-.login-card p { font-size: 12px; color: #666; margin-bottom: 20px; }
-.login-card .form-group { text-align: left; margin-bottom: 12px; }
-.login-card label { font-size: 12px; color: #333; }
-.login-card input { width: 100%; padding: 8px 10px; border: 1px solid #cccccc; border-radius: 5px; font-size: 13px; }
-.btn-login { width: 100%; background-color: #007bff; color: white; border: none; padding: 10px; border-radius: 5px; font-weight: bold; font-size: 14px; cursor: pointer; margin-top: 10px; }
-.btn-login:hover { background-color: #0056b3; }
-
-.app-layout { display: flex; height: 100vh; width: 100vw; }
-.sidebar-menu { width: 220px; min-width: 220px; background-color: rgba(0, 64, 133, 0.95); padding: 12px 8px; display: flex; flex-direction: column; box-shadow: 2px 0 8px rgba(0,0,0,0.15); z-index: 10; backdrop-filter: blur(5px); }
-.sidebar-title { color: #ffffff; font-size: 12px; font-weight: bold; text-transform: uppercase; text-align: center; padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.2); margin-bottom: 8px; letter-spacing: 0.5px; }
-.category-list { display: flex; flex-direction: column; gap: 6px; flex: 1; }
-.menu-btn { background-color: #17a2b8; color: white; border: none; padding: 9px 8px; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 11px; text-align: left; transition: all 0.2s ease; display: flex; align-items: center; gap: 6px; }
-.menu-btn:hover { background-color: #138496; }
-.menu-btn.active { background-color: #ffc107; color: #212529; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-.sidebar-footer { margin-top: auto; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.2); display: flex; flex-direction: column; gap: 8px; }
-.btn-admin-sidebar { background-color: #6c757d; color: white; border: 1px solid rgba(255,255,255,0.3); padding: 8px 6px; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 11px; width: 100%; text-align: left; display: flex; align-items: center; gap: 5px; }
-.btn-admin-sidebar:hover { background-color: #5a6268; }
-.sidebar-watermark { color: #ffffff; font-style: italic; font-size: 10px; text-align: right; opacity: 0.85; padding-right: 2px; }
-
-.main-content { flex: 1; padding: 10px 15px; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-.top-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; background: rgba(255, 255, 255, 0.95); padding: 6px 12px; border-radius: 6px; border: 1px solid #ced4da; }
-.top-header h2 { font-size: 14px; margin: 0; color: #333; }
-.user-account-bar { font-size: 11px; font-weight: bold; color: #0056b3; display: flex; align-items: center; gap: 8px; }
-.btn-change-pass { background-color: #ffc107; color: #212529; border: none; padding: 3px 8px; border-radius: 4px; cursor: pointer; font-size: 10px; font-weight: bold; width: auto; }
-.btn-change-pass:hover { background-color: #e0a800; }
-.btn-logout { background-color: #dc3545; color: white; border: none; padding: 3px 8px; border-radius: 4px; cursor: pointer; font-size: 10px; font-weight: bold; width: auto; }
-.btn-logout:hover { background-color: #c82333; }
-
-.tab-container { display: flex; flex-wrap: nowrap; gap: 2px; border-bottom: 2px solid #007bff; background: rgba(233, 236, 239, 0.9); padding: 4px 4px 0 4px; border-radius: 6px 6px 0 0; overflow-x: auto; }
-.tab-btn { flex: 1; background-color: #e2e8f0; border: 1px solid #cbd5e1; border-bottom: none; padding: 6px 4px; border-radius: 5px 5px 0 0; font-size: 10px; font-weight: bold; color: #475569; cursor: pointer; transition: all 0.2s; white-space: nowrap; text-align: center; overflow: hidden; text-overflow: ellipsis; }
-.tab-btn:hover { background-color: #cbd5e1; }
-.tab-btn.active { background-color: #007bff; color: white; border-color: #007bff; }
-.tab-btn-reorder { background-color: #dc3545 !important; color: white !important; border-color: #dc3545 !important; }
-.tab-btn-reorder.active { background-color: #a71d2a !important; border-color: #a71d2a !important; box-shadow: 0 0 8px rgba(220, 53, 69, 0.6); }
-
-.tab-content-wrapper { flex: 1; background: rgba(255, 255, 255, 0.95); border: 1px solid #ced4da; border-top: none; padding: 12px; border-radius: 0 0 6px 6px; overflow-y: auto; position: relative; }
-.tab-pane { display: none; height: 100%; }
-.tab-pane.active { display: block; }
-
-.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
-.form-group { margin-bottom: 8px; position: relative; }
-label { font-weight: bold; display: block; margin-bottom: 3px; font-size: 11px; color: #444; }
-input, select, textarea, button { width: 100%; padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px; }
-textarea { resize: vertical; height: 45px; }
-button { background-color: #28a745; color: white; border: none; font-weight: bold; cursor: pointer; }
-button:hover { background-color: #218838; }
-
-.action-bar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 8px; background: #f8f9fa; padding: 6px; border-radius: 4px; border: 1px solid #e9ecef; }
-.action-bar label { font-size: 11px; margin-bottom: 0; }
-.action-bar input[type="date"], .action-bar input[type="month"] { width: auto; padding: 3px 6px; font-size: 11px; }
-.action-bar input[type="text"] { width: 220px; padding: 4px 8px; font-size: 11px; display: inline-block; }
-.btn-export { background-color: #007bff; width: auto; padding: 4px 8px; font-size: 11px; margin: 0; }
-.btn-print-slip { background-color: #17a2b8; width: auto; padding: 4px 8px; font-size: 11px; margin: 0; }
-.btn-filter { background-color: #6c757d; width: auto; padding: 4px 8px; font-size: 11px; margin: 0; }
-.btn-reset-filter { background-color: #ffc107; color: #333; width: auto; padding: 4px 8px; font-size: 11px; margin: 0; }
-.btn-delete { background-color: #dc3545; color: white; border: none; padding: 2px 6px; border-radius: 3px; cursor: pointer; font-size: 10px; width: auto; }
-.btn-edit { background-color: #ffc107; color: #212529; border: none; padding: 2px 6px; border-radius: 3px; cursor: pointer; font-size: 10px; width: auto; margin-right: 3px; }
-
-table { width: 100%; border-collapse: collapse; font-size: 11px; }
-th, td { border: 1px solid #ddd; padding: 5px 6px; text-align: left; }
-th { background-color: #f2f2f2; position: sticky; top: 0; z-index: 1; }
-
-.expired { background-color: #f8d7da !important; color: #721c24; font-weight: bold; }
-.low-stock { background-color: #ffe1b3 !important; color: #d97706; font-weight: bold; }
-.out-of-stock { background-color: #f8d7da !important; color: #dc3545; font-weight: bold; }
-
-.modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); }
-.modal-content { background-color: #fefefe; margin: 2% auto; padding: 15px; border: 1px solid #888; width: 95%; max-width: 1200px; border-radius: 8px; max-height: 95vh; overflow-y: auto; }
-.modal-content-small { max-width: 600px; }
-.close { color: #aaa; float: right; font-size: 24px; font-weight: bold; cursor: pointer; }
-
-.product-display { background-color: #e9ecef; padding: 6px; border-radius: 4px; font-weight: bold; color: #007bff; font-size: 12px; border: 1px solid #ced4da; }
-.summary-box { display: flex; gap: 10px; margin-bottom: 8px; }
-.stat-card { flex: 1; padding: 6px; border-radius: 4px; text-align: center; color: white; font-weight: bold; font-size: 12px; }
-.bg-import { background-color: #28a745; }
-.bg-export { background-color: #ffc107; color: #333; }
-.bg-danger { background-color: #dc3545; }
-.bg-warning { background-color: #fd7e14; }
-
-.user-tag { background-color: #e2e8f0; color: #2d3748; padding: 1px 4px; border-radius: 3px; font-size: 10px; font-weight: bold; }
-.admin-tag { background-color: #ffd700; color: #000; padding: 1px 5px; border-radius: 3px; font-size: 10px; font-weight: bold; }
-
-.time-group-header, .product-group-header { background-color: #e8f4fd !important; color: #004085; font-weight: bold; cursor: pointer; transition: background 0.2s; }
-.time-group-header:hover, .product-group-header:hover { background-color: #d0e8fc !important; }
-.time-subgroup-header { background-color: #f1f8ff !important; color: #1d6fa5; font-weight: bold; cursor: pointer; padding-left: 15px !important; }
-.time-subgroup-header:hover { background-color: #e1f0fe !important; }
-.toggle-icon { display: inline-block; width: 18px; text-align: center; font-weight: bold; margin-right: 5px; }
-
-.sub-item-row { display: flex; gap: 6px; margin-bottom: 6px; align-items: center; background: #f8f9fa; padding: 6px; border-radius: 4px; border: 1px solid #e9ecef; }
-.sub-item-row input { flex: 1.5; margin-bottom: 0; font-size: 11px; padding: 4px 6px; }
-.sub-item-row input.lot-input { flex: 1; }
-.sub-item-row input.date-input { flex: 1.2; }
-.btn-remove-sub { background-color: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; font-size: 11px; width: auto; font-weight: bold; }
-
-.product-label { width: 40mm; min-height: 30mm; padding: 4mm; margin: 0 auto; border: none; box-sizing: border-box; }
-.product-label .product-name { font-size: 14px; font-weight: bold; margin-bottom: 6px; color: #000; width: 100%; }
-.product-label .barcode-svg { width: 100%; height: auto; }
-.product-label .qrcode-div { margin: 6px auto; display: flex; justify-content: center; }
-.product-label .product-price { font-size: 14px; font-weight: bold; margin-top: 6px; color: #000; width: 100%; }
-.product-label .product-subinfo { font-size: 10px; color: #444; margin-top: 4px; width: 100%; }
-
-@media print {
-    @page { size: A4 landscape; margin: 8mm; }
-    body * { visibility: hidden !important; }
-    #printSlipArea, #printSlipArea * { visibility: visible !important; }
-    #printSlipArea { position: absolute; left: 0; top: 0; width: 100%; background: white; }
-    .no-print { display: none; }
-    .page-sheet { page-break-after: always; break-after: page; height: 194mm; position: relative; box-sizing: border-box; display: flex; flex-direction: column; }
-}
-
-.sheet { width: 280mm; min-height: 190mm; margin: 0 auto; background: white; box-sizing: border-box; font-family: "Times New Roman", Times, serif; font-size: 10pt; color: #000; padding: 10mm; position: relative; }
-.sheet .title-section { text-align: center; margin-bottom: 8px; }
-.sheet .title-section h2 { margin: 0; font-size: 13pt; text-transform: uppercase; }
-.sheet .title-section h3 { margin: 2px 0; font-size: 10.5pt; text-transform: uppercase; }
-table.data-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
-table.data-table th, table.data-table td { border: 1px solid #000; padding: 3px 2px; text-align: center; vertical-align: middle; font-size: 9pt; }
-table.data-table th { background-color: #f2f2f2 !important; font-weight: bold; -webkit-print-color-adjust: exact; }
-.text-left { text-align: left !important; padding-left: 5px !important; }
-.signature-section { display: flex; justify-content: space-between; text-align: center; margin-top: 15px; font-size: 9.5pt; }
-.signature-box { width: 30%; }
-.signature-box p { margin: 2px 0; }
-.signature-space { height: 45px; }
+        body { font-family: Arial, sans-serif; margin: 0; padding: 10px; background: #f4f6f9; }
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); }
+        .modal-content { background-color: #fff; margin: 3% auto; padding: 20px; width: 90%; max-width: 1000px; border-radius: 8px; max-height: 90vh; overflow-y: auto; }
+        .close { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
+        .close:hover { color: #000; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #ddd; padding: 8px; font-size: 12px; }
+        th { background-color: #007bff; color: white; }
+        button { padding: 6px 12px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; }
+        button:hover { opacity: 0.9; }
+        .btn-edit { background-color: #ffc107; color: #333; margin-right: 4px; }
+        .btn-delete { background-color: #dc3545; }
+        input, select { padding: 6px; font-size: 12px; border: 1px solid #ccc; border-radius: 4px; }
     </style>
 </head>
-<body onload="checkSessionLogin()">
+<body>
 
-    <!-- OVERLAY ĐĂNG NHẬP -->
-    <div id="loginOverlay" class="login-overlay">
-        <div class="login-card">
-            <h2>ĐĂNG NHẬP HỆ THỐNG KHO</h2>
-            <p>Phòng Khám Bệnh Viện Đại Học Y Dược 1</p>
-            <div class="form-group">
-                <label>Tên đăng nhập:</label>
-                <input type="text" id="loginUsername" placeholder="Nhập tên đăng nhập...">
-            </div>
-            <div class="form-group">
-                <label>Mật khẩu:</label>
-                <input type="password" id="loginPassword" placeholder="Nhập mật khẩu..." onkeypress="if(event.key==='Enter') executeLogin()">
-            </div>
-            <button class="btn-login" onclick="executeLogin()">ĐĂNG NHẬP</button>
-        </div>
-    </div>
+    <h2>Hệ Thống Quản Lý Kho Phân Nhóm Hóa Chất</h2>
+    
+    <!-- Nút mở modal cấu hình quản lý sản phẩm -->
+    <button onclick="openProductModal()" style="background-color: #28a745; font-size: 14px; padding: 10px 15px;">⚙️ Mở Quản Lý Sản Phẩm & Đa Barcode</button>
 
-    <!-- GIAO DIỆN CHÍNH -->
-    <div class="app-layout">
-        <aside class="sidebar-menu">
-            <div class="sidebar-title">DANH MỤC NHÓM HÓA CHẤT</div>
-            <div class="category-list">
-                <button class="menu-btn active" onclick="switchCategory('NHÓM MIỄN DỊCH', this)">🧪 NHÓM MIỄN DỊCH</button>
-                <button class="menu-btn" onclick="switchCategory('NHÓM HUYẾT HỌC - ĐÔNG MÁU', this)">🩸 NHÓM HUYẾT HỌC - ĐÔNG MÁU</button>
-                <button class="menu-btn" onclick="switchCategory('NHÓM SINH HÓA', this)">🔬 NHÓM SINH HÓA</button>
-                <button class="menu-btn" onclick="switchCategory('NHÓM VẬT TƯ TIÊU HAO', this)">📦 NHÓM VẬT TƯ TIÊU HAO</button>
-                <button class="menu-btn" onclick="switchCategory('NHÓM SHPT (PCR)', this)">🧬 NHÓM SHPT (PCR)</button>
-            </div>
-            <div class="sidebar-footer">
-                <button id="btnAdminConfig" class="btn-admin-sidebar" onclick="openProductModal()">⚙️ Quản Lý Sản Phẩm & Đa Barcode</button>
-                <div class="sidebar-watermark">Made by Bạch Công Lưu Tuấn</div>
-            </div>
-        </aside>
-
-        <main class="main-content">
-            <div class="top-header">
-                <h2>HỆ THỐNG QUẢN LÝ XUẤT NHẬP HÓA CHẤT - PHÒNG KHÁM BỆNH VIỆN ĐẠI HỌC Y DƯỢC 1</h2>
-                <div class="user-account-bar">
-                    <span id="currentCategoryDisplay" style="color:#0056b3; margin-right: 15px;">ĐANG CHỌN: NHÓM MIỄN DỊCH</span>
-                    <span id="currentUserDisplay">👤 Chưa đăng nhập</span>
-                    <button class="btn-change-pass" onclick="openChangePasswordModal()">🔑 Đổi mật khẩu</button>
-                    <button class="btn-logout" onclick="executeLogout()">Đăng xuất</button>
-                </div>
-            </div>
-
-            <div class="tab-container">
-                <button class="tab-btn active" onclick="openTab(event, 'tab1')">1. Thông Tin Nhập - Xuất</button>
-                <button class="tab-btn" onclick="openTab(event, 'tab2')">2. Tồn Kho & Cảnh Báo</button>
-                <button class="tab-btn" onclick="openTab(event, 'tab3')">3. Thống Kê Nhập</button>
-                <button class="tab-btn" onclick="openTab(event, 'tab4')">4. Thống Kê Xuất</button>
-                <button class="tab-btn" onclick="openTab(event, 'tab5')">5. Lịch Sử & Ghi Chú</button>
-                <button class="tab-btn" onclick="openTab(event, 'tabBarcode')">6. Tạo & In Tem Mã Vạch / QR</button>
-                <button class="tab-btn tab-btn-reorder" onclick="openTab(event, 'tabReorder')">🚨 7. Hàng Cần Đặt Bổ Sung</button>
-            </div>
-
-            <div class="tab-content-wrapper">
-                <!-- TAB 1 -->
-                <div id="tab1" class="tab-pane active">
-                    <h3>1. Thông Tin Nhập - Xuất</h3>
-                    <div class="form-grid">
-                        <div>
-                            <div class="form-group">
-                                <label>👤 Người thực hiện:</label>
-                                <input type="text" id="currentUserInput" readonly style="background:#e9ecef; font-weight:bold;">
-                            </div>
-                            <div class="form-group">
-                                <label>Sản Phẩm Nhận Diện:</label>
-                                <div id="productNameDisplay" class="product-display">Chưa quét / Chưa nhận diện sản phẩm</div>
-                            </div>
-                            <div class="form-group">
-                                <label>Loại Giao Dịch:</label>
-                                <select id="type" onchange="onTypeChange()" style="font-weight: bold;">
-                                    <option value="NHẬP" style="background-color: #28a745; color: white;">Nhập Kho (+)</option>
-                                    <option value="XUẤT" style="background-color: #fd7e14; color: white;">Xuất Kho (-)</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div>
-                            <div class="form-group">
-                                <label>Mã Sản Phẩm / Barcode:</label>
-                                <input type="text" id="productBarcode" placeholder="Quét mã, gõ tên hoặc LOT..." oninput="resolveProductAndAutoFillSuperPro(this.value)" onfocus="resolveProductAndAutoFillSuperPro(this.value)" autocomplete="off">
-                                <div id="autoSuggestBox" class="autocomplete-suggestions"></div>
-                            </div>
-                            <div class="form-group">
-                                <label>Số Lô (LOT):</label>
-                                <input type="text" id="lotNumber" placeholder="Nhập số lô...">
-                            </div>
-                            <div class="form-group">
-                                <label>Hạn Sử Dụng (Tháng / Năm):</label>
-                                <input type="month" id="expiryDate">
-                            </div>
-                            <div class="form-group">
-                                <label>Số Lượng:</label>
-                                <input type="number" id="quantity" value="1" min="1">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>Ghi Chú:</label>
-                        <textarea id="noteText" placeholder="Lý do xuất/nhập..."></textarea>
-                    </div>
-                    <div style="display: flex; gap: 10px; margin-top: 10px; align-items: center; flex-wrap: wrap;">
-                        <button onclick="saveTransaction()" style="flex: 2; padding: 8px; font-size: 13px;">Lưu Giao Dịch</button>
-                        <label style="display: flex; align-items: center; gap: 5px; font-weight: bold; cursor: pointer; background: #e9ecef; padding: 6px 10px; border-radius: 4px; border: 1px solid #ced4da; margin: 0;">
-                           <input type="checkbox" id="autoSaveCheckbox" style="width: auto; margin: 0;"> ⚡ Auto lưu khi quét máy quét
-                        </label>
-                        <button onclick="printSelectedSlip('NHẬP')" class="btn-print-slip" style="flex: 1; background-color: #28a745;">📄 Phiếu Nhập</button>
-                        <button onclick="printSelectedSlip('XUẤT')" class="btn-print-slip" style="flex: 1; background-color: #ffc107; color: #212529;">📄 Phiếu Xuất</button>
-                    </div>
-                </div>
-
-                <!-- TAB 2 -->
-                <div id="tab2" class="tab-pane">
-                    <h3>2. Tồn Kho Theo Lô & Cảnh Báo</h3>
-                    <div class="action-bar">
-                        <input type="text" id="searchInvInput" placeholder="🔍 Tìm kiếm tồn kho..." oninput="renderTables()">
-                        <label>Tháng từ:</label> <input type="month" id="filterInvFrom">
-                        <label>Đến:</label> <input type="month" id="filterInvTo">
-                        <button class="btn-filter" onclick="renderTables()">Lọc</button>
-                        <button class="btn-reset-filter" onclick="resetFilter('inv')">Tất cả</button>
-                        <button class="btn-export" onclick="exportInventoryToCSV()">📥 Tải Excel Tồn Kho</button>
-                        <button class="btn-print-slip" onclick="printTableSelection('inventoryTable')">📄 Xuất Phiếu</button>
-                        <div style="font-size: 11px; font-weight: bold; color: #004085; align-self: center; margin-left: auto;">
-                            📦 Tổng lô tồn: <span id="totalInventoryBatches">0</span>
-                        </div>
-                    </div>
-                    <table id="inventoryTable">
-                        <thead>
-                            <tr>
-                                <th style="width: 35px; text-align: center;"><input type="checkbox" id="selectAllInv" onclick="toggleSelectAll(this, 'inventoryTable')"></th>
-                                <th>Sản Phẩm</th>
-                                <th>LOT</th>
-                                <th>Hạn Sử Dụng</th>
-                                <th>Tồn Kho</th>
-                                <th>Tồn Min</th>
-                                <th>Tồn Max</th>
-                                <th>Quy Cách</th>
-                                <th>Trạng Thái</th>
-                                <th class="admin-only-col">Thao Tác</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-
-                <!-- TAB 3 -->
-                <div id="tab3" class="tab-pane">
-                    <h3>3. Thống Kê Nhập Kho</h3>
-                    <div class="action-bar">
-                        <input type="text" id="searchImpInput" placeholder="🔍 Tìm kiếm thống kê nhập..." oninput="renderTables()">
-                        <label>Tháng từ:</label> <input type="month" id="filterImpFrom">
-                        <label>Đến:</label> <input type="month" id="filterImpTo">
-                        <button class="btn-filter" onclick="renderTables()">Lọc</button>
-                        <button class="btn-reset-filter" onclick="resetFilter('imp')">Tất cả</button>
-                        <button class="btn-export" onclick="exportMonthlyImportStatsToCSV()">📥 Tải Excel</button>
-                        <button class="btn-print-slip" onclick="printTableSelection('monthlyImportTable')">📄 Xuất Phiếu</button>
-                        <button onclick="xuatBienBanBanGiao()" style="background-color: #28a745; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 11px;">🖨️ Biên Bản Bàn Giao</button>
-                        <input type="text" id="txtNguoiGiao" placeholder="Tên người giao..." style="width: 150px; padding: 4px;" oninput="luuTenNguoiGiao(this.value)">
-                    </div>
-                    <table id="monthlyImportTable">
-                        <thead>
-                            <tr>
-                                <th style="width: 35px; text-align: center;"><input type="checkbox" id="selectAllImp" onclick="toggleSelectAll(this, 'monthlyImportTable')"></th>
-                                <th>Thời Gian / Kỳ</th>
-                                <th>Tên Sản Phẩm</th>
-                                <th>LOT</th>
-                                <th>Hạn Sử Dụng</th>
-                                <th>Quy Cách</th>
-                                <th>Tình Trạng</th>
-                                <th>Nhiệt Độ</th>
-                                <th>Tổng SL Nhập</th>
-                                <th>Thao Tác</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-
-                <!-- TAB 4 -->
-                <div id="tab4" class="tab-pane">
-                    <h3>4. Thống Kê Xuất Kho</h3>
-                    <div class="action-bar">
-                        <input type="text" id="searchExpInput" placeholder="🔍 Tìm kiếm xuất..." oninput="renderTables()">
-                        <button class="btn-export" onclick="exportMonthlyExportStatsToCSV()">📥 Tải Excel</button>
-                    </div>
-                    <table id="monthlyExportTable">
-                        <thead>
-                            <tr>
-                                <th style="width: 35px; text-align: center;"><input type="checkbox" id="selectAllExp" onclick="toggleSelectAll(this, 'monthlyExportTable')"></th>
-                                <th>Thời Gian / Kỳ</th>
-                                <th>Tên Sản Phẩm (Barcode)</th>
-                                <th>Tổng SL Xuất</th>
-                                <th class="admin-only-col">Thao Tác</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-
-                <!-- TAB 5 -->
-                <div id="tab5" class="tab-pane">
-                    <h3>5. Lịch Sử Giao Dịch & Ghi Chú</h3>
-                    <div class="summary-box">
-                        <div class="stat-card bg-import">Tổng Nhập: <span id="totalImport">0</span></div>
-                        <div class="stat-card bg-export">Tổng Xuất: <span id="totalExport">0</span></div>
-                    </div>
-                    <table id="logTable">
-                        <thead>
-                            <tr>
-                                <th style="width: 35px; text-align: center;"><input type="checkbox" id="selectAllLog" onclick="toggleSelectAll(this, 'logTable')"></th>
-                                <th>Sản Phẩm</th>
-                                <th>LOT</th>
-                                <th>Hạn Sử Dụng</th>
-                                <th>Loại</th>
-                                <th>SL</th>
-                                <th>Ghi Chú</th>
-                                <th>Thời Gian</th>
-                                <th>Người TH</th>
-                                <th class="admin-only-col">Thao Tác</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-
-                <!-- TAB 6 -->
-                <div id="tabBarcode" class="tab-pane">
-                    <h3>6. Tạo & In Tem Mã Vạch / QR Code</h3>
-                    <div class="form-grid">
-                        <div>
-                            <div class="form-group">
-                                <label>Chọn Sản Phẩm:</label>
-                                <select id="labelProductSelect" onchange="autoFillLabelData()"><option value="">-- Chọn sản phẩm --</option></select>
-                            </div>
-                            <div class="form-group"><label>Tên Hiển Thị:</label><input type="text" id="lblProdName" oninput="generateBarcodeLabel()"></div>
-                            <div class="form-group"><label>Mã Barcode / QR:</label><input type="text" id="lblProdBarcode" oninput="generateBarcodeLabel()"></div>
-                        </div>
-                        <div>
-                            <div class="form-group"><label>LOT:</label><input type="text" id="lblProdLot" oninput="generateBarcodeLabel()"></div>
-                            <div class="form-group"><label>Hạn Sử Dụng:</label><input type="month" id="lblProdExpiry" oninput="generateBarcodeLabel()"></div>
-                            <button onclick="window.print()" style="background-color: #007bff; margin-top: 15px;">🖨️ In Tem</button>
-                        </div>
-                    </div>
-                    <div id="printArea">
-                        <div class="product-label">
-                            <div class="product-name" id="lblDisplayTitle">Tên SP</div>
-                            <svg id="barcodeCanvas" class="barcode-svg" style="display:none;"></svg>
-                            <div id="qrcodeCanvas" class="qrcode-div"></div>
-                            <div class="product-subinfo" id="lblDisplaySubinfo"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- TAB 7 -->
-                <div id="tabReorder" class="tab-pane">
-                    <h3 style="color: #dc3545;">🚨 7. Hàng Cần Đặt Bổ Sung</h3>
-                    <div class="summary-box">
-                        <div class="stat-card bg-danger">Hết Hàng: <span id="totalOutOfStockCount">0</span></div>
-                        <div class="stat-card bg-warning">Sắp Hết: <span id="totalLowStockCount">0</span></div>
-                    </div>
-                    <table id="reorderTable">
-                        <thead>
-                            <tr>
-                                <th>Tên Sản Phẩm</th>
-                                <th>LOT</th>
-                                <th>Hạn Sử Dụng</th>
-                                <th>Tồn Hiện Tại</th>
-                                <th>SL Cần Đặt</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-            </div>
-        </main>
-    </div>
-
-    <!-- MODAL ĐỔI MẬT KHẨU -->
-    <div id="changePasswordModal" class="modal">
-        <div class="modal-content modal-content-small">
-            <span class="close" onclick="closeChangePasswordModal()">&times;</span>
-            <h3 style="text-align:center;">🔑 ĐỔI MẬT KHẨU</h3>
-            <div class="form-group"><label>Mật khẩu hiện tại:</label><input type="password" id="oldPassword"></div>
-            <div class="form-group"><label>Mật khẩu mới:</label><input type="password" id="newPassword"></div>
-            <button onclick="executeChangePassword()" style="background-color: #007bff;">Cập Nhật</button>
-        </div>
-    </div>
-
-<!-- MODAL CẤU HÌNH ADMIN -->
+    <!-- MODAL QUẢN LÝ SẢN PHẨM -->
     <div id="productModal" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeProductModal()">&times;</span>
             
             <details style="background: #f8f9fa; padding: 8px; border-radius: 4px; border: 1px solid #dee2e6; margin-bottom: 10px;">
-                <summary style="cursor: pointer; font-weight: bold; color: #004085; font-size: 13px; outline: none;">
-                    📊 Quản Lý Danh Mục Sản Phẩm Từ Excel (Bấm để ẩn/hiện)
-                </summary>
-                <div style="margin-top: 10px;">
-                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                        <button onclick="downloadExcelTemplate()" style="width: auto; background-color: #17a2b8;">📄 Tải Excel Mẫu</button>
-                        <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" style="display: none;" onchange="importProductsFromExcel(this)">
-                        <button onclick="document.getElementById('excelFileInput').click()" style="width: auto; background-color: #28a745;">📂 Chọn File Excel Tải Lên</button>
-                        <button onclick="exportProductsToExcel()" style="width: auto; background-color: #007bff;">📤 Xuất Danh Sách Sản Phẩm (Excel)</button>
-                    </div>
+                <summary style="cursor: pointer; font-weight: bold; color: #004085; font-size: 13px;">📊 Quản Lý Danh Mục Sản Phẩm Từ Excel</summary>
+                <div style="margin-top: 10px; display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button onclick="downloadExcelTemplate()" style="background-color: #17a2b8;">📄 Tải Excel Mẫu</button>
+                    <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" style="display: none;" onchange="importProductsFromExcel(this)">
+                    <button onclick="document.getElementById('excelFileInput').click()" style="background-color: #28a745;">📂 Chọn File Excel Tải Lên</button>
+                    <button onclick="exportProductsToExcel()" style="background-color: #007bff;">📤 Xuất Danh Sách Sản Phẩm (Excel)</button>
                 </div>
             </details>
             
-            <details class="backup-section" style="background: #f8f9fa; padding: 8px; border-radius: 4px; border: 1px solid #dee2e6; margin-bottom: 10px;">
-                <summary style="cursor: pointer; font-weight: bold; color: #004085; font-size: 13px; outline: none;">
-                    💾 Sao Lưu & Khôi Phục Dữ Liệu (Backup / Restore) (Bấm để ẩn/hiện)
-                </summary>
-                <div style="margin-top: 10px;">
-                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                        <button onclick="exportFullDatabase()" style="width: auto; background-color: #007bff;">📥 Tải File Sao Lưu (.json)</button>
-                        <input type="file" id="importDbFileInput" accept=".json" style="display: none;" onchange="importFullDatabase(this)">
-                        <button onclick="document.getElementById('importDbFileInput').click()" style="width: auto; background-color: #ffc107; color: #333;">📤 Khôi Phục CSDL Từ File</button>
-                    </div>
+            <details style="background: #f8f9fa; padding: 8px; border-radius: 4px; border: 1px solid #dee2e6; margin-bottom: 10px;">
+                <summary style="cursor: pointer; font-weight: bold; color: #004085; font-size: 13px;">💾 Sao Lưu & Khôi Phục Dữ Liệu (Backup / Restore)</summary>
+                <div style="margin-top: 10px; display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button onclick="exportFullDatabase()" style="background-color: #007bff;">📥 Tải File Sao Lưu (.json)</button>
+                    <input type="file" id="importDbFileInput" accept=".json" style="display: none;" onchange="importFullDatabase(this)">
+                    <button onclick="document.getElementById('importDbFileInput').click()" style="background-color: #ffc107; color: #333;">📤 Khôi Phục CSDL Từ File</button>
                 </div>
             </details>
 
             <hr style="margin: 10px 0;">
 
-            <!-- THANH TÌM KIẾM SẢN PHẨM -->
-            <div style="background: #f8f9fa; padding: 12px; border-radius: 6px; border: 1px solid #dee2e6; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <div style="background: #f8f9fa; padding: 10px; border-radius: 6px; border: 1px solid #dee2e6; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
                 <h3 style="margin: 0; font-size: 14px; color: #004085;">Danh Sách Sản Phẩm & Phân Nhóm Kho</h3>
-                <input type="text" id="searchMappedProductsInput" placeholder="🔍 Tìm nhanh tên, barcode..." oninput="renderMappedProductsTable()" style="width: 280px; padding: 6px 10px; font-size: 12px; border: 1px solid #007bff; border-radius: 4px; background: #fff;">
+                <input type="text" id="searchMappedProductsInput" placeholder="🔍 Tìm nhanh tên, barcode..." oninput="renderMappedProductsTable()" style="width: 250px;">
             </div>
 
-            <!-- FORM NHẬP LIỆU THÊM MỚI SẢN PHẨM -->
             <div style="display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap;">
                 <select id="newProdCategory" style="flex: 1.5;">
                     <option value="NHÓM MIỄN DỊCH">NHÓM MIỄN DỊCH</option>
@@ -569,11 +76,10 @@ table.data-table th { background-color: #f2f2f2 !important; font-weight: bold; -
                 <input type="text" id="newProdMinStock" placeholder="Tồn min" style="flex: 0.8;">
                 <input type="text" id="newProdLot" placeholder="LOT mặc định" style="flex: 1;">
                 <input type="month" id="newProdExpiry" style="flex: 1.2;">
-                <button onclick="addProductMapping()" style="margin-top: 0; flex: 1; background-color: #28a745;">Thêm Mới</button>
+                <button onclick="addProductMapping()" style="background-color: #28a745; flex: 1;">Thêm Mới</button>
             </div>
 
-            <!-- BẢNG HIỂN THỊ DANH SÁCH MAP SẢN PHẨM -->
-            <div style="max-height: 480px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px;">
+            <div style="max-height: 450px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px;">
                 <table id="mappedProductsTable">
                     <thead>
                         <tr>
@@ -591,25 +97,16 @@ table.data-table th { background-color: #f2f2f2 !important; font-weight: bold; -
         </div>
     </div>
 
-    <div id="printSlipArea" style="display:none;"></div>
-
-<script>
+    <!-- SCRIPT DUY NHẤT ĐỂ TRÁNH XUNG ĐỘT -->
+    <script>
         let currentCategory = "NHÓM MIỄN DỊCH";
-        let suggestTimeout = null;
-        let currentUser = null;
-        let qrcodeObj = null;
-
-        let defaultAccounts = [
-            { username: "admin", pass: "admin123", name: "Quản Trị Viên", role: "ADMIN" },
-            { username: "TUAN.BCL", pass: "024754403", name: "CK1. BẠCH CÔNG LƯU TUẤN", role: "ADMIN" }
-        ];
-
+        let currentUser = { name: "Quản Trị Viên", role: "ADMIN" };
+        let toggledProductGroups = {};
         let userAccounts = [];
         let mappedProducts = [];
         let inventory = {};
         let logs = [];
 
-        // CẤU HÌNH FIREBASE REALTIME DATABASE
         const firebaseConfig = {
           apiKey: "AIzaSyCODnAwFDbfixlIWQKdgZmMFWVa6M4goJc",
           authDomain: "kho-labpkbvdhyd1.firebaseapp.com",
@@ -621,151 +118,49 @@ table.data-table th { background-color: #f2f2f2 !important; font-weight: bold; -
           measurementId: "G-GFGRSF4327"
         };
 
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
+        if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
         const db = firebase.database();
 
-        // HÀM LẮNG NGHE VÀ ĐỒNG BỘ THỜI GIAN THỰC TỪ FIREBASE
-        function initFirebaseSync() {
-            db.ref('users').on('value', (snapshot) => {
-                let val = snapshot.val();
-                if (val) {
-                    userAccounts = val;
-                } else {
-                    db.ref('users').set(defaultAccounts);
-                    userAccounts = defaultAccounts;
-                }
-            });
-
+        window.addEventListener('DOMContentLoaded', () => {
             db.ref('mappedProducts').on('value', (snapshot) => {
                 let val = snapshot.val();
                 if (val) {
                     mappedProducts = Array.isArray(val) ? val : Object.values(val);
                 } else {
-                    let defaultProds = [
-                        { category: "NHÓM MIỄN DỊCH", name: "Reagent HBsAg", barcode: "8934673012345", stt: 1, subItems: [], manufacturer: "Roche", machine: "Cobas e411", storageTemp: "2-8°C", unit: "Hộp", spec: "100 test/hộp", minStock: 5, defaultLot: "LOT_01", defaultExpiry: "2026-12" }
+                    mappedProducts = [
+                        { category: "NHÓM MIỄN DỊCH", name: "Reagent HBsAg", barcode: "8934673012345", stt: 1, subItems: [], manufacturer: "Roche", minStock: 5, defaultLot: "LOT_01", defaultExpiry: "2026-12" }
                     ];
-                    db.ref('mappedProducts').set(defaultProds);
-                    mappedProducts = defaultProds;
+                    db.ref('mappedProducts').set(mappedProducts);
                 }
                 renderMappedProductsTable();
             });
-
-            db.ref('inventory').on('value', (snapshot) => {
-                inventory = snapshot.val() || {};
-                renderTables();
-            });
-
-            db.ref('logs').on('value', (snapshot) => {
-                let val = snapshot.val();
-                logs = val ? (Array.isArray(val) ? val : Object.values(val)) : [];
-                renderTables();
-            });
-        }
-
-        window.addEventListener('DOMContentLoaded', () => {
-            initFirebaseSync();
-            checkSessionLogin();
-            onTypeChange();
         });
-
-        function checkSessionLogin() {
-            let active = sessionStorage.getItem('qr_active_user');
-            if (active) {
-                currentUser = JSON.parse(active);
-                let overlay = document.getElementById('loginOverlay');
-                if (overlay) overlay.style.display = 'none';
-                applyUserPermissions();
-            } else {
-                let overlay = document.getElementById('loginOverlay');
-                if (overlay) overlay.style.display = 'flex';
-            }
-        }
-
-        function executeLogin() {
-            const userInp = document.getElementById('loginUsername').value.trim();
-            const passInp = document.getElementById('loginPassword').value.trim();
-            let account = userAccounts.find(u => u.username.toLowerCase() === userInp.toLowerCase() && u.pass === passInp);
-            if (account) {
-                currentUser = account;
-                sessionStorage.setItem('qr_active_user', JSON.stringify(currentUser));
-                applyUserPermissions();
-                let overlay = document.getElementById('loginOverlay');
-                if (overlay) overlay.style.display = 'none';
-            } else {
-                alert("Tài khoản hoặc mật khẩu không chính xác!");
-            }
-        }
-
-        function executeLogout() {
-            sessionStorage.removeItem('qr_active_user');
-            location.reload();
-        }
-
-        function applyUserPermissions() {
-            if (!currentUser) return;
-            let userDisp = document.getElementById('currentUserDisplay');
-            if (userDisp) userDisp.innerHTML = `👤 ${currentUser.name} <span class="${currentUser.role === 'ADMIN' ? 'admin-tag' : 'user-tag'}">${currentUser.role}</span>`;
-            let userInput = document.getElementById('currentUserInput');
-            if (userInput) userInput.value = `${currentUser.name} (${currentUser.role})`;
-            renderTables();
-        }
-
-        function onTypeChange() {
-            let typeSelect = document.getElementById('type');
-            if (typeSelect) {
-                if (typeSelect.value === 'NHẬP') {
-                    typeSelect.style.backgroundColor = '#28a745';
-                    typeSelect.style.color = 'white';
-                } else {
-                    typeSelect.style.backgroundColor = '#fd7e14';
-                    typeSelect.style.color = 'white';
-                }
-            }
-        }
 
         function formatExpiryDisplay(expiryStr) {
             if (!expiryStr) return '-';
             let cleanStr = expiryStr.trim();
             if (cleanStr.length >= 7 && cleanStr.includes('-')) {
                 let parts = cleanStr.split('-');
-                if (parts.length >= 2) {
-                    if (parts[0].length === 4) return `${parts[0]}-${parts[1]}`;
-                }
+                if (parts.length >= 2 && parts[0].length === 4) return `${parts[0]}-${parts[1]}`;
             }
             return cleanStr;
         }
 
-        function findProductByTerm(term) {
-            let t = (term || '').trim().toLowerCase();
-            if (!t) return null;
-            for (let p of mappedProducts) {
-                if (p.barcode && p.barcode.toLowerCase() === t) return { product: p, matchedLot: p.defaultLot, matchedExpiry: p.defaultExpiry };
-                if (p.name && p.name.toLowerCase() === t) return { product: p, matchedLot: p.defaultLot, matchedExpiry: p.defaultExpiry };
-                if (p.subItems && Array.isArray(p.subItems)) {
-                    let foundSub = p.subItems.find(sub => sub.barcode && sub.barcode.toLowerCase() === t);
-                    if (foundSub) return { product: p, matchedLot: foundSub.lot, matchedExpiry: foundSub.expiry };
-                }
-            }
-            return null;
+        function toggleProductGroup(cat) {
+            toggledProductGroups[cat] = toggledProductGroups[cat] !== undefined ? !toggledProductGroups[cat] : true;
+            renderMappedProductsTable();
         }
 
-function renderMappedProductsTable() {
+        function renderMappedProductsTable() {
             const tbody = document.querySelector('#mappedProductsTable tbody');
             if (!tbody) return;
 
             const searchInput = document.getElementById('searchMappedProductsInput');
             const searchKey = searchInput ? searchInput.value.trim().toLowerCase() : '';
 
-            let isAdmin = (currentUser && currentUser.role === 'ADMIN');
-            let isUser = (currentUser && currentUser.role === 'USER');
-            let allowedGroups = currentUser.assignedGroups || [];
-
             let groups = {};
             mappedProducts.forEach((p, idx) => {
                 let cat = p.category || "KHÁC";
-                if (isUser && allowedGroups.length > 0 && !allowedGroups.includes(cat)) return;
                 if (!groups[cat]) groups[cat] = [];
                 groups[cat].push({ product: p, originalIndex: idx });
             });
@@ -775,13 +170,12 @@ function renderMappedProductsTable() {
                 let catProds = groups[cat];
                 catProds.sort((a, b) => (a.product.stt || 999) - (b.product.stt || 999));
 
-                let isOpen = toggledProductGroups[cat] !== undefined ? toggledProductGroups[cat] : false;
+                let isOpen = toggledProductGroups[cat] !== undefined ? toggledProductGroups[cat] : true;
                 let icon = isOpen ? '▼' : '▶';
 
-                // Bảng quản lý gốc có 5 cột nên dùng colspan="5"
                 htmlRows.push(`
                     <tr class="product-group-header" onclick="toggleProductGroup('${cat}')">
-                        <td colspan="5" style="padding: 8px 10px; background-color: #e8f4fd; cursor: pointer; font-weight: bold;">
+                        <td colspan="6" style="padding: 8px 10px; background-color: #e8f4fd; cursor: pointer; font-weight: bold;">
                             <span class="toggle-icon">${icon}</span> 📂 <b>${cat}</b> <span style="font-size:10px; font-weight:normal; color:#555;">(Số lượng sản phẩm: ${catProds.length})</span>
                         </td>
                     </tr>
@@ -792,9 +186,7 @@ function renderMappedProductsTable() {
                         const matchesSearch = !searchKey || 
                             (p.name && p.name.toLowerCase().includes(searchKey)) ||
                             (p.barcode && p.barcode.toLowerCase().includes(searchKey)) ||
-                            (p.category && p.category.toLowerCase().includes(searchKey)) ||
-                            (p.manufacturer && p.manufacturer.toLowerCase().includes(searchKey)) ||
-                            (p.defaultLot && p.defaultLot.toLowerCase().includes(searchKey));
+                            (p.manufacturer && p.manufacturer.toLowerCase().includes(searchKey));
 
                         if (matchesSearch) {
                             let subHtml = "";
@@ -804,16 +196,10 @@ function renderMappedProductsTable() {
                                     "</div>";
                             }
 
-                            let infoDetails = `
-                                <div style="font-size: 11px; color: #444; margin-top: 4px;">
-                                    Máy: <b>${p.machine || '-'}</b> | Nhiệt độ: <b>${p.storageTemp || '-'}</b> | ĐVT: <b>${p.unit || '-'}</b> | Quy cách: <b>${p.spec || '-'}</b><br>
-                                    Tồn Min: <b>${p.minStock || 0}</b> | Tồn Max: <b>${p.maxStock || 0}</b> | LOT Mặc định: <b style="color:#0056b3;">${p.defaultLot || '-'}</b> | Hạn: <b style="color:#0056b3;">${formatExpiryDisplay(p.defaultExpiry) || '-'}</b>
-                                </div>
-                            `;
-
                             htmlRows.push(`<tr>
                                 <td style="text-align: center;"><b>${p.stt || (itemIdx + 1)}</b></td>
-                                <td><b>${p.name}</b>${infoDetails}</td>
+                                <td><b>${p.category}</b></td>
+                                <td><b>${p.name}</b></td>
                                 <td><b style="color:#0056b3;">Chính: ${p.barcode}</b>${subHtml}</td>
                                 <td>${p.manufacturer || '-'}</td>
                                 <td>
@@ -826,58 +212,107 @@ function renderMappedProductsTable() {
                 }
             }
 
-            tbody.innerHTML = htmlRows.length ? htmlRows.join('') : `<tr><td colspan="5" style="text-align:center; color:#888;">Không tìm thấy sản phẩm phù hợp</td></tr>`;
+            tbody.innerHTML = htmlRows.length ? htmlRows.join('') : `<tr><td colspan="6" style="text-align:center; color:#888;">Không tìm thấy sản phẩm phù hợp</td></tr>`;
         }
 
-        function deleteProductMapping(index) {
-            if (confirm("Xóa sản phẩm này khỏi cấu hình?")) {
-                mappedProducts.splice(index, 1);
-                db.ref('mappedProducts').set(mappedProducts);
-            }
+        function downloadExcelTemplate() {
+            let data = [
+                ["Nhóm Hóa Chất", "Tên Sản Phẩm", "Barcode", "Hãng Sản Xuất", "Máy Thực Hiện", "Nhiệt Độ Bảo Quản", "Đơn Vị Tính", "Quy Cách", "Tồn Min", "LOT Mặc Định", "Hạn Sử Dụng Mặc Định"],
+                ["NHÓM MIỄN DỊCH", "Reagent HBsAg", "8934673012345", "Roche", "Cobas e411", "2-8°C", "Hộp", "100 test/hộp", 5, "LOT123", "2026-12"]
+            ];
+            let ws = XLSX.utils.aoa_to_sheet(data);
+            let wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "MauImport");
+            XLSX.writeFile(wb, "Mau_Import_SanPham.xlsx");
         }
 
-        function openTab(evt, tabId) {
-            let panes = document.getElementsByClassName("tab-pane");
-            for (let p of panes) p.classList.remove("active");
-            let btns = document.getElementsByClassName("tab-btn");
-            for (let b of btns) b.classList.remove("active");
-            document.getElementById(tabId).classList.add("active");
-            evt.currentTarget.classList.add("active");
+        function exportProductsToExcel() {
+            let data = [["Nhóm Hóa Chất", "Tên Sản Phẩm", "Barcode", "Hãng Sản Xuất", "Tồn Min", "LOT Mặc Định", "Hạn Sử Dụng Mặc Định"]];
+            mappedProducts.forEach(p => {
+                data.push([p.category, p.name, p.barcode, p.manufacturer, p.minStock, p.defaultLot, p.defaultExpiry]);
+            });
+            let ws = XLSX.utils.aoa_to_sheet(data);
+            let wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "DanhSachSanPham");
+            XLSX.writeFile(wb, `DanhSach_SanPham.xlsx`);
         }
 
-        function switchCategory(cat, btn) {
-            currentCategory = cat;
-            document.getElementById('currentCategoryDisplay').innerText = "ĐANG CHỌN: " + cat;
-            document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            renderTables();
+        function importProductsFromExcel(input) {
+            let file = input.files[0];
+            if (!file) return;
+            let reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    let data = new Uint8Array(e.target.result);
+                    let workbook = XLSX.read(data, { type: 'array' });
+                    let sheetName = workbook.SheetNames[0];
+                    let rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1 });
+
+                    if (rows.length <= 1) { alert("File không có dữ liệu!"); return; }
+
+                    let count = 0;
+                    for (let i = 1; i < rows.length; i++) {
+                        let row = rows[i];
+                        if (row.length > 0 && row[1]) {
+                            let cat = row[0] || "NHÓM MIỄN DỊCH";
+                            let catProds = mappedProducts.filter(p => p.category === cat);
+                            let nextStt = catProds.length > 0 ? Math.max(...catProds.map(p => p.stt || 0)) + 1 : 1;
+
+                            mappedProducts.push({
+                                category: cat,
+                                name: row[1],
+                                barcode: row[2] ? String(row[2]) : row[1],
+                                stt: nextStt,
+                                subItems: [],
+                                manufacturer: row[3] || "",
+                                minStock: parseInt(row[8]) || 0,
+                                defaultLot: row[9] ? String(row[9]) : "",
+                                defaultExpiry: formatExpiryDisplay(row[10] ? String(row[10]) : "")
+                            });
+                            count++;
+                        }
+                    }
+
+                    db.ref('mappedProducts').set(mappedProducts);
+                    renderMappedProductsTable();
+                    alert(`Đã nhập thành công ${count} sản phẩm từ file Excel!`);
+                } catch (err) { alert("Lỗi đọc file Excel!"); }
+            };
+            reader.readAsArrayBuffer(file);
         }
 
-        function openProductModal() { let m = document.getElementById('productModal'); if (m) m.style.display = 'block'; }
-        function closeProductModal() { let m = document.getElementById('productModal'); if (m) m.style.display = 'none'; }
-        function openChangePasswordModal() { let m = document.getElementById('changePasswordModal'); if (m) m.style.display = 'block'; }
-        function closeChangePasswordModal() { let m = document.getElementById('changePasswordModal'); if (m) m.style.display = 'none'; }
-        function executeChangePassword() { alert("Đổi mật khẩu thành công!"); closeChangePasswordModal(); }
-        function renderTables() {
-            if (!currentUser) return;
-            const invBody = document.querySelector('#inventoryTable tbody');
-            if (invBody) {
-                invBody.innerHTML = `<tr><td colspan="10" style="text-align:center;">Dữ liệu đồng bộ trực tuyến qua Firebase Realtime Database</td></tr>`;
-            }
+        function exportFullDatabase() {
+            let fullDb = { userAccounts, mappedProducts, inventory, logs };
+            let blob = new Blob([JSON.stringify(fullDb, null, 2)], { type: 'application/json' });
+            let a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `Backup_CSDL_Kho.json`;
+            a.click();
         }
 
-        document.addEventListener('keydown', function(event) {
-            if (event.key === 'Escape') {
-                const productModal = document.getElementById('productModal');
-                const changePassModal = document.getElementById('changePasswordModal');
-                if (changePassModal && changePassModal.style.display === 'block') {
-                    closeChangePasswordModal();
-                } else if (productModal && productModal.style.display === 'block') {
-                    closeProductModal();
-                }
-            }
-        });
-function addProductMapping() {
+        function importFullDatabase(input) {
+            let file = input.files[0];
+            if (!file) return;
+            let reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    let backupData = JSON.parse(e.target.result);
+                    let updates = {};
+                    if (backupData.userAccounts) updates['users'] = backupData.userAccounts;
+                    if (backupData.mappedProducts) updates['mappedProducts'] = backupData.mappedProducts;
+
+                    db.ref().update(updates, (error) => {
+                        if (!error) {
+                            alert("Khôi phục CSDL thành công!");
+                            location.reload();
+                        }
+                    });
+                } catch (err) { alert("File backup không hợp lệ!"); }
+            };
+            reader.readAsText(file);
+        }
+
+        function addProductMapping() {
             const category = document.getElementById('newProdCategory').value;
             const name = document.getElementById('newProdName').value.trim();
             const barcode = document.getElementById('newProdBarcode').value.trim();
@@ -910,6 +345,21 @@ function addProductMapping() {
                 renderMappedProductsTable();
             }
         }
+
+        function openEditProductLotModal(index) {
+            let p = mappedProducts[index];
+            if (!p) return;
+            let newName = prompt("Nhập tên mới cho sản phẩm:", p.name);
+            if (newName !== null && newName.trim() !== "") {
+                p.name = newName.trim();
+                db.ref('mappedProducts').set(mappedProducts);
+                renderMappedProductsTable();
+                alert("Cập nhật thành công!");
+            }
+        }
+
+        function openProductModal() { document.getElementById('productModal').style.display = 'block'; }
+        function closeProductModal() { document.getElementById('productModal').style.display = 'none'; }
     </script>
 </body>
 </html>
