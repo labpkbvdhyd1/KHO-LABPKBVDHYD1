@@ -536,9 +536,7 @@ table.data-table th { background-color: #f2f2f2 !important; font-weight: bold; -
 
     <div id="printSlipArea" style="display:none;"></div>
 
-    <script>
-
-
+<script>
         let currentCategory = "NHÓM MIỄN DỊCH";
         let suggestTimeout = null;
         let currentUser = null;
@@ -554,7 +552,24 @@ table.data-table th { background-color: #f2f2f2 !important; font-weight: bold; -
         let inventory = {};
         let logs = [];
 
-        // ĐỒNG BỘ THỜI GIAN THỰC TỪ FIREBASE
+        // CẤU HÌNH FIREBASE REALTIME DATABASE
+        const firebaseConfig = {
+          apiKey: "AIzaSyCODnAwFDbfixlIWQKdgZmMFWVa6M4goJc",
+          authDomain: "kho-labpkbvdhyd1.firebaseapp.com",
+          databaseURL: "https://kho-labpkbvdhyd1-default-rtdb.firebaseio.com",
+          projectId: "kho-labpkbvdhyd1",
+          storageBucket: "kho-labpkbvdhyd1.firebasestorage.app",
+          messagingSenderId: "1039878184033",
+          appId: "1:1039878184033:web:22875e1ce1f2f78c24de20",
+          measurementId: "G-GFGRSF4327"
+        };
+
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.database();
+
+        // HÀM LẮNG NGHE VÀ ĐỒNG BỘ THỜI GIAN THỰC TỪ FIREBASE
         function initFirebaseSync() {
             db.ref('users').on('value', (snapshot) => {
                 let val = snapshot.val();
@@ -599,6 +614,19 @@ table.data-table th { background-color: #f2f2f2 !important; font-weight: bold; -
             onTypeChange();
         });
 
+        function onTypeChange() {
+            let typeSelect = document.getElementById('type');
+            if (typeSelect) {
+                if (typeSelect.value === 'NHẬP') {
+                    typeSelect.style.backgroundColor = '#28a745';
+                    typeSelect.style.color = 'white';
+                } else {
+                    typeSelect.style.backgroundColor = '#fd7e14';
+                    typeSelect.style.color = 'white';
+                }
+            }
+        }
+
         function formatExpiryDisplay(expiryStr) {
             if (!expiryStr) return '-';
             let cleanStr = expiryStr.trim();
@@ -609,12 +637,6 @@ table.data-table th { background-color: #f2f2f2 !important; font-weight: bold; -
                 }
             }
             return cleanStr;
-        }
-
-        function getSortedProductsForCategory(cat) {
-            let prods = mappedProducts.filter(p => p.category === cat);
-            prods.sort((a, b) => (a.stt || 999) - (b.stt || 999));
-            return prods;
         }
 
         function findProductByTerm(term) {
@@ -634,9 +656,7 @@ table.data-table th { background-color: #f2f2f2 !important; font-weight: bold; -
         function resolveProductAndAutoFillSuperPro(term) {
             let t = (term || '').trim().toLowerCase();
             let displayDiv = document.getElementById('productNameDisplay');
-            let dropDiv = document.getElementById('subMappingDropdown');
             if (!t) {
-                if (dropDiv) dropDiv.style.display = 'none';
                 displayDiv.innerText = "Chưa quét / Chưa nhận diện sản phẩm";
                 displayDiv.style.color = "#007bff";
                 return;
@@ -687,7 +707,6 @@ table.data-table th { background-color: #f2f2f2 !important; font-weight: bold; -
 
             logs.unshift({ category: currentCategory, timeStr: nowStr, dateISO: isoDateStr, userName: currentUser.name, productName: prodName, barcode: actualBarcode, lot: lot, expiry: expiry, type: type, qty: qty, note: note });
 
-            // LƯU TRỰC TIẾP LÊN FIREBASE REALTIME DATABASE
             db.ref('inventory').set(inventory);
             db.ref('logs').set(logs);
 
@@ -768,11 +787,6 @@ table.data-table th { background-color: #f2f2f2 !important; font-weight: bold; -
         function autoFillLabelData() {}
         function generateBarcodeLabel() {}
         function luuTenNguoiGiao(val) {}
-
-        function checkExpiryAndStockStatus(expiryStr, currentQty, minStock, maxStock) {
-            return { text: "KHO ĐẦY ✅", class: "" };
-        }
-
         function renderTables() {
             if (!currentUser) return;
             const invBody = document.getElementById('inventoryTable').querySelector('tbody');
@@ -780,84 +794,19 @@ table.data-table th { background-color: #f2f2f2 !important; font-weight: bold; -
         }
         function renderMappedProductsTable() {}
         function renderReorderTable() {}
-<script>
-        // CẤU HÌNH FIREBASE REALTIME DATABASE
-        const firebaseConfig = {
-          apiKey: "AIzaSyCODnAwFDbfixlIWQKdgZmMFWVa6M4goJc",
-          authDomain: "kho-labpkbvdhyd1.firebaseapp.com",
-          databaseURL: "https://kho-labpkbvdhyd1-default-rtdb.firebaseio.com",
-          projectId: "kho-labpkbvdhyd1",
-          storageBucket: "kho-labpkbvdhyd1.firebasestorage.app",
-          messagingSenderId: "1039878184033",
-          appId: "1:1039878184033:web:22875e1ce1f2f78c24de20",
-          measurementId: "G-GFGRSF4327"
-        };
 
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
-        const db = firebase.database();
-
-        // HÀM LẮNG NGHE VÀ ĐỒNG BỘ THỜI GIAN THỰC TỪ FIREBASE
-        function initFirebaseSync() {
-            db.ref('users').on('value', (snapshot) => {
-                let val = snapshot.val();
-                if (val) {
-                    userAccounts = val;
-                } else {
-                    db.ref('users').set(defaultAccounts);
-                    userAccounts = defaultAccounts;
-                }
-                if (typeof renderUserAccountsModal === 'function') renderUserAccountsModal();
-            });
-
-            db.ref('mappedProducts').on('value', (snapshot) => {
-                let val = snapshot.val();
-                if (val) {
-                    mappedProducts = val;
-                } else {
-                    db.ref('mappedProducts').set(mappedProducts);
-                }
-                if (typeof renderMappedProductsTable === 'function') renderMappedProductsTable();
-                if (typeof populateLabelProductSelect === 'function') populateLabelProductSelect();
-            });
-
-            db.ref('inventory').on('value', (snapshot) => {
-                inventory = snapshot.val() || {};
-                if (typeof renderTables === 'function') renderTables();
-            });
-
-            db.ref('logs').on('value', (snapshot) => {
-                let val = snapshot.val();
-                logs = val ? (Array.isArray(val) ? val : Object.values(val)) : [];
-                if (typeof renderTables === 'function') renderTables();
-            });
-        }
-
-        // TỰ ĐỘNG KHỞI ĐỘNG ĐỒNG BỘ KHI TẢI TRANG
-        window.addEventListener('DOMContentLoaded', () => {
-            initFirebaseSync();
-            checkSessionLogin();
-            onTypeChange();
-        });
-
-        // --- TÍNH NĂNG BẤM PHÍM ESC ĐỂ ĐÓNG MODAL QUẢN LÝ SẢN PHẨM ---
+        // --- TÍNH NĂNG BẤM PHÍM ESC ĐỂ ĐÓNG MODAL ---
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
                 const productModal = document.getElementById('productModal');
-                const editModal = document.getElementById('editProductLotModal');
                 const changePassModal = document.getElementById('changePasswordModal');
-
-                if (editModal && editModal.style.display === 'block') {
-                    closeEditProductLotModal();
-                } else if (changePassModal && changePassModal.style.display === 'block') {
+                if (changePassModal && changePassModal.style.display === 'block') {
                     closeChangePasswordModal();
                 } else if (productModal && productModal.style.display === 'block') {
                     closeProductModal();
                 }
             }
         });
-    </script>
     </script>
 </body>
 </html>
