@@ -514,23 +514,80 @@ table.data-table th { background-color: #f2f2f2 !important; font-weight: bold; -
         </div>
     </div>
 
-    <!-- MODAL QUẢN LÝ SẢN PHẨM -->
+<!-- MODAL CẤU HÌNH ADMIN -->
     <div id="productModal" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeProductModal()">&times;</span>
-            <h3>Quản Lý Sản Phẩm & Đa Barcode</h3>
-            <table id="mappedProductsTable">
-                <thead>
-                    <tr>
-                        <th>Nhóm SP</th>
-                        <th>Tên SP</th>
-                        <th>Barcode Chính & Phụ</th>
-                        <th>Hãng SX</th>
-                        <th>Thao Tác</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
+            
+            <details style="background: #f8f9fa; padding: 8px; border-radius: 4px; border: 1px solid #dee2e6; margin-bottom: 10px;">
+                <summary style="cursor: pointer; font-weight: bold; color: #004085; font-size: 13px; outline: none;">
+                    📊 Quản Lý Danh Mục Sản Phẩm Từ Excel (Bấm để ẩn/hiện)
+                </summary>
+                <div style="margin-top: 10px;">
+                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                        <button onclick="downloadExcelTemplate()" style="width: auto; background-color: #17a2b8;">📄 Tải Excel Mẫu</button>
+                        <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" style="display: none;" onchange="importProductsFromExcel(this)">
+                        <button onclick="document.getElementById('excelFileInput').click()" style="width: auto; background-color: #28a745;">📂 Chọn File Excel Tải Lên</button>
+                        <button onclick="exportProductsToExcel()" style="width: auto; background-color: #007bff;">📤 Xuất Danh Sách Sản Phẩm (Excel)</button>
+                    </div>
+                </div>
+            </details>
+            
+            <details class="backup-section" style="background: #f8f9fa; padding: 8px; border-radius: 4px; border: 1px solid #dee2e6; margin-bottom: 10px;">
+                <summary style="cursor: pointer; font-weight: bold; color: #004085; font-size: 13px; outline: none;">
+                    💾 Sao Lưu & Khôi Phục Dữ Liệu (Backup / Restore) (Bấm để ẩn/hiện)
+                </summary>
+                <div style="margin-top: 10px;">
+                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                        <button onclick="exportFullDatabase()" style="width: auto; background-color: #007bff;">📥 Tải File Sao Lưu (.json)</button>
+                        <input type="file" id="importDbFileInput" accept=".json" style="display: none;" onchange="importFullDatabase(this)">
+                        <button onclick="document.getElementById('importDbFileInput').click()" style="width: auto; background-color: #ffc107; color: #333;">📤 Khôi Phục CSDL Từ File</button>
+                    </div>
+                </div>
+            </details>
+
+            <hr style="margin: 10px 0;">
+
+            <!-- THANH TÌM KIẾM SẢN PHẨM -->
+            <div style="background: #f8f9fa; padding: 12px; border-radius: 6px; border: 1px solid #dee2e6; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <h3 style="margin: 0; font-size: 14px; color: #004085;">Danh Sách Sản Phẩm & Phân Nhóm Kho</h3>
+                <input type="text" id="searchMappedProductsInput" placeholder="🔍 Tìm nhanh tên, barcode..." oninput="renderMappedProductsTable()" style="width: 280px; padding: 6px 10px; font-size: 12px; border: 1px solid #007bff; border-radius: 4px; background: #fff;">
+            </div>
+
+            <!-- FORM NHẬP LIỆU THÊM MỚI SẢN PHẨM -->
+            <div style="display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap;">
+                <select id="newProdCategory" style="flex: 1.5;">
+                    <option value="NHÓM MIỄN DỊCH">NHÓM MIỄN DỊCH</option>
+                    <option value="NHÓM HUYẾT HỌC - ĐÔNG MÁU">NHÓM HUYẾT HỌC - ĐÔNG MÁU</option>
+                    <option value="NHÓM SINH HÓA">NHÓM SINH HÓA</option>
+                    <option value="NHÓM VẬT TƯ TIÊU HAO">NHÓM VẬT TƯ TIÊU HAO</option>
+                    <option value="NHÓM SHPT (PCR)">NHÓM SHPT (PCR)</option>
+                </select>
+                <input type="text" id="newProdName" placeholder="Tên SP..." style="flex: 2;">
+                <input type="text" id="newProdBarcode" placeholder="Barcode chính..." style="flex: 1.5;">
+                <input type="text" id="newProdManufacturer" placeholder="Hãng SX..." style="flex: 1.2;">
+                <input type="text" id="newProdMinStock" placeholder="Tồn min" style="flex: 0.8;">
+                <input type="text" id="newProdLot" placeholder="LOT mặc định" style="flex: 1;">
+                <input type="month" id="newProdExpiry" style="flex: 1.2;">
+                <button onclick="addProductMapping()" style="margin-top: 0; flex: 1; background-color: #28a745;">Thêm Mới</button>
+            </div>
+
+            <!-- BẢNG HIỂN THỊ DANH SÁCH MAP SẢN PHẨM -->
+            <div style="max-height: 480px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px;">
+                <table id="mappedProductsTable">
+                    <thead>
+                        <tr>
+                            <th style="width: 50px; text-align: center;">STT</th>
+                            <th>Nhóm SP</th>
+                            <th>Tên SP</th>
+                            <th>Barcode Chính & Phụ</th>
+                            <th>Hãng SX</th>
+                            <th>Thao Tác</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -584,7 +641,7 @@ table.data-table th { background-color: #f2f2f2 !important; font-weight: bold; -
             db.ref('mappedProducts').on('value', (snapshot) => {
                 let val = snapshot.val();
                 if (val) {
-                    mappedProducts = val;
+                    mappedProducts = Array.isArray(val) ? val : Object.values(val);
                 } else {
                     let defaultProds = [
                         { category: "NHÓM MIỄN DỊCH", name: "Reagent HBsAg", barcode: "8934673012345", stt: 1, subItems: [], manufacturer: "Roche", machine: "Cobas e411", storageTemp: "2-8°C", unit: "Hộp", spec: "100 test/hộp", minStock: 5, defaultLot: "LOT_01", defaultExpiry: "2026-12" }
@@ -592,19 +649,18 @@ table.data-table th { background-color: #f2f2f2 !important; font-weight: bold; -
                     db.ref('mappedProducts').set(defaultProds);
                     mappedProducts = defaultProds;
                 }
-                if (typeof renderMappedProductsTable === 'function') renderMappedProductsTable();
-                if (typeof populateLabelProductSelect === 'function') populateLabelProductSelect();
+                renderMappedProductsTable();
             });
 
             db.ref('inventory').on('value', (snapshot) => {
                 inventory = snapshot.val() || {};
-                if (typeof renderTables === 'function') renderTables();
+                renderTables();
             });
 
             db.ref('logs').on('value', (snapshot) => {
                 let val = snapshot.val();
                 logs = val ? (Array.isArray(val) ? val : Object.values(val)) : [];
-                if (typeof renderTables === 'function') renderTables();
+                renderTables();
             });
         }
 
@@ -695,77 +751,89 @@ table.data-table th { background-color: #f2f2f2 !important; font-weight: bold; -
             return null;
         }
 
-        function resolveProductAndAutoFillSuperPro(term) {
-            let t = (term || '').trim().toLowerCase();
-            let displayDiv = document.getElementById('productNameDisplay');
-            if (!t) {
-                if (displayDiv) {
-                    displayDiv.innerText = "Chưa quét / Chưa nhận diện sản phẩm";
-                    displayDiv.style.color = "#007bff";
+function renderMappedProductsTable() {
+            const tbody = document.querySelector('#mappedProductsTable tbody');
+            if (!tbody) return;
+
+            const searchInput = document.getElementById('searchMappedProductsInput');
+            const searchKey = searchInput ? searchInput.value.trim().toLowerCase() : '';
+
+            let isAdmin = (currentUser && currentUser.role === 'ADMIN');
+            let isUser = (currentUser && currentUser.role === 'USER');
+            let allowedGroups = currentUser.assignedGroups || [];
+
+            let groups = {};
+            mappedProducts.forEach((p, idx) => {
+                let cat = p.category || "KHÁC";
+                if (isUser && allowedGroups.length > 0 && !allowedGroups.includes(cat)) return;
+                if (!groups[cat]) groups[cat] = [];
+                groups[cat].push({ product: p, originalIndex: idx });
+            });
+
+            let htmlRows = [];
+            for (let cat in groups) {
+                let catProds = groups[cat];
+                catProds.sort((a, b) => (a.product.stt || 999) - (b.product.stt || 999));
+
+                let isOpen = toggledProductGroups[cat] !== undefined ? toggledProductGroups[cat] : false;
+                let icon = isOpen ? '▼' : '▶';
+
+                // Bảng quản lý gốc có 5 cột nên dùng colspan="5"
+                htmlRows.push(`
+                    <tr class="product-group-header" onclick="toggleProductGroup('${cat}')">
+                        <td colspan="5" style="padding: 8px 10px; background-color: #e8f4fd; cursor: pointer; font-weight: bold;">
+                            <span class="toggle-icon">${icon}</span> 📂 <b>${cat}</b> <span style="font-size:10px; font-weight:normal; color:#555;">(Số lượng sản phẩm: ${catProds.length})</span>
+                        </td>
+                    </tr>
+                `);
+
+                if (isOpen) {
+                    catProds.forEach(({ product: p, originalIndex: index }, itemIdx) => {
+                        const matchesSearch = !searchKey || 
+                            (p.name && p.name.toLowerCase().includes(searchKey)) ||
+                            (p.barcode && p.barcode.toLowerCase().includes(searchKey)) ||
+                            (p.category && p.category.toLowerCase().includes(searchKey)) ||
+                            (p.manufacturer && p.manufacturer.toLowerCase().includes(searchKey)) ||
+                            (p.defaultLot && p.defaultLot.toLowerCase().includes(searchKey));
+
+                        if (matchesSearch) {
+                            let subHtml = "";
+                            if (p.subItems && p.subItems.length > 0) {
+                                subHtml = "<br><div style='font-size:9.5px; color:#004085; margin-top:2px;'><b>Bộ phụ:</b><br>" + 
+                                    p.subItems.map(s => `• Mã: <b>${s.barcode}</b> | LOT: <b>${s.lot}</b> | Hạn: <b>${formatExpiryDisplay(s.expiry)}</b>`).join('<br>') + 
+                                    "</div>";
+                            }
+
+                            let infoDetails = `
+                                <div style="font-size: 11px; color: #444; margin-top: 4px;">
+                                    Máy: <b>${p.machine || '-'}</b> | Nhiệt độ: <b>${p.storageTemp || '-'}</b> | ĐVT: <b>${p.unit || '-'}</b> | Quy cách: <b>${p.spec || '-'}</b><br>
+                                    Tồn Min: <b>${p.minStock || 0}</b> | Tồn Max: <b>${p.maxStock || 0}</b> | LOT Mặc định: <b style="color:#0056b3;">${p.defaultLot || '-'}</b> | Hạn: <b style="color:#0056b3;">${formatExpiryDisplay(p.defaultExpiry) || '-'}</b>
+                                </div>
+                            `;
+
+                            htmlRows.push(`<tr>
+                                <td style="text-align: center;"><b>${p.stt || (itemIdx + 1)}</b></td>
+                                <td><b>${p.name}</b>${infoDetails}</td>
+                                <td><b style="color:#0056b3;">Chính: ${p.barcode}</b>${subHtml}</td>
+                                <td>${p.manufacturer || '-'}</td>
+                                <td>
+                                    <button class="btn-edit" onclick="openEditProductLotModal(${index})">✏️ Sửa</button>
+                                    <button class="btn-delete" onclick="deleteProductMapping(${index})">Xóa</button>
+                                </td>
+                            </tr>`);
+                        }
+                    });
                 }
-                return;
             }
-            let res = findProductByTerm(t);
-            if (res) {
-                if (displayDiv) {
-                    displayDiv.innerText = `[${res.product.category}] ${res.product.name}`;
-                    displayDiv.style.color = "#28a745";
-                }
-                currentCategory = res.product.category;
-                let catDisp = document.getElementById('currentCategoryDisplay');
-                if (catDisp) catDisp.innerText = "ĐANG CHỌN: " + currentCategory;
-                let lotInput = document.getElementById('lotNumber');
-                if (lotInput && res.matchedLot) lotInput.value = res.matchedLot;
-                let expInput = document.getElementById('expiryDate');
-                if (expInput && res.matchedExpiry) expInput.value = formatExpiryDisplay(res.matchedExpiry);
-            } else {
-                if (displayDiv) {
-                    displayDiv.innerText = `Chưa nhận diện mã (${t})`;
-                    displayDiv.style.color = "#dc3545";
-                }
-            }
+
+            tbody.innerHTML = htmlRows.length ? htmlRows.join('') : `<tr><td colspan="5" style="text-align:center; color:#888;">Không tìm thấy sản phẩm phù hợp</td></tr>`;
         }
 
-        function saveTransaction() {
-            if (!currentUser) { alert("Vui lòng đăng nhập!"); return; }
-            const barcodeTerm = document.getElementById('productBarcode').value.trim();
-            const type = document.getElementById('type').value;
-            const lot = document.getElementById('lotNumber').value.trim() || "KHONG_CO_LOT";
-            const expiry = formatExpiryDisplay(document.getElementById('expiryDate').value);
-            const qty = parseInt(document.getElementById('quantity').value);
-            const note = document.getElementById('noteText').value.trim();
-
-            if (!barcodeTerm || !expiry || isNaN(qty) || qty <= 0) { alert("Vui lòng nhập đầy đủ thông tin!"); return; }
-
-            let res = findProductByTerm(barcodeTerm);
-            let prodName = res ? res.product.name : `SP_${barcodeTerm}`;
-            let actualBarcode = res ? res.product.barcode : barcodeTerm;
-
-            const batchKey = `${currentCategory}_${actualBarcode}_${lot}`;
-            const now = new Date();
-            const nowStr = now.toLocaleTimeString('vi-VN') + ' ' + now.toLocaleDateString('vi-VN');
-            const isoDateStr = now.toISOString().split('T')[0];
-
-            if (type === 'NHẬP') {
-                if (!inventory[batchKey]) {
-                    inventory[batchKey] = { category: currentCategory, productName: prodName, barcode: actualBarcode, lot: lot, importTimeStr: nowStr, importDateISO: isoDateStr, lastUser: currentUser.name, expiry: expiry, qty: 0 };
-                }
-                inventory[batchKey].qty += qty;
-            } else if (type === 'XUẤT') {
-                if (!inventory[batchKey] || inventory[batchKey].qty < qty) { alert("Không đủ tồn kho để xuất!"); return; }
-                inventory[batchKey].qty -= qty;
+        function deleteProductMapping(index) {
+            if (confirm("Xóa sản phẩm này khỏi cấu hình?")) {
+                mappedProducts.splice(index, 1);
+                db.ref('mappedProducts').set(mappedProducts);
             }
-
-            logs.unshift({ category: currentCategory, timeStr: nowStr, dateISO: isoDateStr, userName: currentUser.name, productName: prodName, barcode: actualBarcode, lot: lot, expiry: expiry, type: type, qty: qty, note: note });
-
-            db.ref('inventory').set(inventory);
-            db.ref('logs').set(logs);
-
-            document.getElementById('productBarcode').value = '';
-            document.getElementById('quantity').value = 1;
-            document.getElementById('noteText').value = '';
-            renderTables();
-            alert("Lưu giao dịch thành công!");
         }
 
         function openTab(evt, tabId) {
@@ -790,17 +858,6 @@ table.data-table th { background-color: #f2f2f2 !important; font-weight: bold; -
         function openChangePasswordModal() { let m = document.getElementById('changePasswordModal'); if (m) m.style.display = 'block'; }
         function closeChangePasswordModal() { let m = document.getElementById('changePasswordModal'); if (m) m.style.display = 'none'; }
         function executeChangePassword() { alert("Đổi mật khẩu thành công!"); closeChangePasswordModal(); }
-        function resetFilter(type) { renderTables(); }
-        function toggleSelectAll(master, tableId) {}
-        function printSelectedSlip(type) { window.print(); }
-        function xuatBienBanBanGiao() { window.print(); }
-        function printTableSelection(tableId) { window.print(); }
-        function exportInventoryToCSV() {}
-        function exportMonthlyImportStatsToCSV() {}
-        function exportMonthlyExportStatsToCSV() {}
-        function autoFillLabelData() {}
-        function generateBarcodeLabel() {}
-        function luuTenNguoiGiao(val) {}
         function renderTables() {
             if (!currentUser) return;
             const invBody = document.querySelector('#inventoryTable tbody');
@@ -808,36 +865,7 @@ table.data-table th { background-color: #f2f2f2 !important; font-weight: bold; -
                 invBody.innerHTML = `<tr><td colspan="10" style="text-align:center;">Dữ liệu đồng bộ trực tuyến qua Firebase Realtime Database</td></tr>`;
             }
         }
-        function renderMappedProductsTable() {
-            const tbody = document.querySelector('#mappedProductsTable tbody');
-            if (!tbody) return;
 
-            let htmlRows = [];
-            mappedProducts.forEach((p, index) => {
-                let subHtml = "";
-                if (p.subItems && p.subItems.length > 0) {
-                    subHtml = "<br><div style='font-size:9.5px; color:#004085; margin-top:2px;'><b>Bộ phụ:</b><br>" + 
-                        p.subItems.map(s => `• Mã: <b>${s.barcode}</b> | LOT: <b>${s.lot}</b> | Hạn: <b>${formatExpiryDisplay(s.expiry)}</b>`).join('<br>') + 
-                        "</div>";
-                }
-
-                htmlRows.push(`<tr>
-                    <td><b>${p.category || 'KHÁC'}</b></td>
-                    <td><b>${p.name}</b></td>
-                    <td><b style="color:#0056b3;">Chính: ${p.barcode}</b>${subHtml}</td>
-                    <td>${p.manufacturer || '-'}</td>
-                    <td>
-                        <button class="btn-edit" onclick="alert('Tính năng sửa đang ở chế độ rút gọn')">✏️ Sửa</button>
-                        <button class="btn-delete" onclick="deleteProductMapping(${index})">Xóa</button>
-                    </td>
-                </tr>`);
-            });
-
-            tbody.innerHTML = htmlRows.length ? htmlRows.join('') : `<tr><td colspan="5" style="text-align:center; color:#888;">Không có sản phẩm nào</td></tr>`;
-        }
-        function renderReorderTable() {}
-
-        // --- TÍNH NĂNG BẤM PHÍM ESC ĐỂ ĐÓNG MODAL ---
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
                 const productModal = document.getElementById('productModal');
@@ -849,6 +877,39 @@ table.data-table th { background-color: #f2f2f2 !important; font-weight: bold; -
                 }
             }
         });
+function addProductMapping() {
+            const category = document.getElementById('newProdCategory').value;
+            const name = document.getElementById('newProdName').value.trim();
+            const barcode = document.getElementById('newProdBarcode').value.trim();
+            const manufacturer = document.getElementById('newProdManufacturer').value.trim();
+            const minStock = parseInt(document.getElementById('newProdMinStock').value) || 0;
+            const lot = document.getElementById('newProdLot').value.trim();
+            const expiry = formatExpiryDisplay(document.getElementById('newProdExpiry').value);
+
+            if (!name) { alert("Vui lòng nhập Tên sản phẩm!"); return; }
+
+            let catProds = mappedProducts.filter(p => p.category === category);
+            let nextStt = catProds.length > 0 ? Math.max(...catProds.map(p => p.stt || 0)) + 1 : 1;
+
+            mappedProducts.push({
+                category, name, barcode: barcode || name, stt: nextStt, subItems: [],
+                manufacturer, minStock, defaultLot: lot, defaultExpiry: expiry
+            });
+
+            db.ref('mappedProducts').set(mappedProducts);
+            renderMappedProductsTable();
+            document.getElementById('newProdName').value = '';
+            document.getElementById('newProdBarcode').value = '';
+            alert("Thêm sản phẩm mới thành công!");
+        }
+
+        function deleteProductMapping(index) {
+            if (confirm("Xóa sản phẩm này khỏi cấu hình?")) {
+                mappedProducts.splice(index, 1);
+                db.ref('mappedProducts').set(mappedProducts);
+                renderMappedProductsTable();
+            }
+        }
     </script>
 </body>
 </html>
