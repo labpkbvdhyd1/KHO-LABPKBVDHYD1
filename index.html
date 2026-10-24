@@ -4081,15 +4081,14 @@ function uniqueConfigsLengthIsOne() {
 }
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCODnAwFDbfixlIWQKdgZmMFWVa6M4goJc",
-  authDomain: "kho-labpkbvdhyd1.firebaseapp.com",
-  databaseURL: "https://kho-labpkbvdhyd1-default-rtdb.firebaseio.com",
-  projectId: "kho-labpkbvdhyd1",
-  storageBucket: "kho-labpkbvdhyd1.firebasestorage.app",
-  messagingSenderId: "1039878184033",
-  appId: "1:1039878184033:web:22875e1ce1f2f78c24de20",
-  measurementId: "G-GFGRSF4327"
-};
+    apiKey: "AIzaSyAHd_GtzmkyVaRejptE7AOmgHDmD6cV1oA",
+    authDomain: "labpkbvdhyd1-4bf6c.firebaseapp.com",
+    projectId: "labpkbvdhyd1-4bf6c",
+    storageBucket: "labpkbvdhyd1-4bf6c.firebasestorage.app",
+    messagingSenderId: "223915800109",
+    appId: "1:223915800109:web:14e2885d5126c0c0c9aaa4",
+    measurementId: "G-8YK8RNK43P"
+  };
 
 // Khởi tạo Firebase
 if (!firebase.apps.length) {
@@ -4168,15 +4167,13 @@ window.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
-// --- HÀM ĐỒNG BỘ TOÀN DIỆN LÊN FIREBASE ---
-
 // --- HÀM LÀM SẠCH KEY AN TOÀN CHO FIREBASE ---
 function sanitizeKey(keyStr) {
     if (!keyStr) return "unknown_key";
     return String(keyStr).replace(/[.#$\[\]\/]/g, '_');
 }
 
-// --- HÀM ĐỒNG BỘ TOÀN DIỆN ĐÃ ĐƯỢC CHUẨN HÓA ---
+// --- CÁC HÀM ĐỒNG BỘ TOÀN DIỆN LÊN FIREBASE ---
 function saveProductsToCloud(prodData) {
     localStorage.setItem('qr_mapped_products_v7', JSON.stringify(prodData));
     db.ref('kho_xet_nghiem/qr_mapped_products_v7').set(prodData)
@@ -4185,14 +4182,10 @@ function saveProductsToCloud(prodData) {
 
 function saveInventoryToCloud(invData) {
     localStorage.setItem('qr_inventory_v11', JSON.stringify(invData));
-    
-    // Chuẩn hóa toàn bộ key bên trong kho trước khi đẩy lên mây
     let safeInvData = {};
     for (let k in invData) {
-        let safeKey = sanitizeKey(k);
-        safeInvData[safeKey] = invData[k];
+        safeInvData[sanitizeKey(k)] = invData[k];
     }
-
     db.ref('kho_xet_nghiem/qr_inventory_v11').set(safeInvData)
       .catch((error) => console.error("Lỗi đồng bộ tồn kho: ", error));
 }
@@ -4203,7 +4196,7 @@ function saveLogsToCloud(logsData) {
       .catch((error) => console.error("Lỗi đồng bộ lịch sử: ", error));
 }
 
-// --- LẮNG NGHE TẤT CẢ DỮ LIỆU THỜI GIAN THỰC TỪ CÁC MÁY KHÁC ---
+// --- DUY NHẤT MỘT KHỐI LẮNG NGHE THỜI GIAN THỰC ONLINE ---
 window.addEventListener('DOMContentLoaded', () => {
     // 1. Lắng nghe sản phẩm
     db.ref('kho_xet_nghiem/qr_mapped_products_v7').on('value', (snapshot) => {
@@ -4212,6 +4205,7 @@ window.addEventListener('DOMContentLoaded', () => {
             mappedProducts = cloudProducts;
             localStorage.setItem('qr_mapped_products_v7', JSON.stringify(cloudProducts));
             if (typeof renderMappedProductsTable === 'function') renderMappedProductsTable();
+            if (typeof populateLabelProductSelect === 'function') populateLabelProductSelect();
         }
     });
 
