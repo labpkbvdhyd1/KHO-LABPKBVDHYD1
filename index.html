@@ -12,7 +12,50 @@
     <!-- FIREBASE COMPAT SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-    <style>
+<style>
+/* Định dạng chữ to gấp đôi và nổi bật cho LOT và Date ở Tab 5 */
+.lot-date-highlight-tab5 {
+    font-size: 15px !important;
+    font-weight: bold !important;
+    background-color: #e2e8f0;
+    color: #004085 !important;
+    padding: 2px 6px;
+    border-radius: 4px;
+    display: inline-block;
+}
+/* Định dạng chữ to gấp đôi và màu sắc nổi bật cho LOT và Date ở Tab 3 */
+.lot-date-highlight-tab3 {
+    font-size: 15px !important;
+    font-weight: bold !important;
+    color: #004085 !important;
+    background-color: #e2e8f0;
+    padding: 2px 6px;
+    border-radius: 4px;
+    display: inline-block;
+}
+/* Định dạng chữ to gấp đôi cho LOT và Date ở Tab 2 */
+.lot-highlight-tab2 {
+    font-size: 15px !important;
+    font-weight: bold !important;
+    padding: 2px 6px;
+    border-radius: 4px;
+    display: inline-block;
+    margin: 2px 0;
+}
+/* Màu sắc phân biệt khi có nhiều LOT/Date khác nhau trên cùng một sản phẩm */
+.lot-style-1 { background-color: #e2e8f0; color: #004085; border: 1px solid #cbd5e1; }
+.lot-style-2 { background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+.lot-style-3 { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+.lot-style-4 { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+/* Phóng to và tạo điểm nhấn cho LOT và Date ở Tab 4 */
+.lot-date-highlight {
+    font-size: 15px !important;
+    font-weight: bold !important;
+    color: #004085 !important;
+    background-color: #e2e8f0;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
 /* --- CSS TĂNG CỠ CHỮ LOT & HẠN DÙNG TO GẤP ĐÔI --- */
 .sub-mapping-dropdown {
     position: absolute;
@@ -544,6 +587,12 @@
                     <span id="currentCategoryDisplay" style="color:#0056b3; margin-right: 15px;">ĐANG CHỌN: NHÓM MIỄN DỊCH</span>
                     <span id="currentUserDisplay">👤 Chưa đăng nhập</span>
                     <button class="btn-change-pass" onclick="openChangePasswordModal()">🔑 Đổi mật khẩu</button>
+<!-- Bộ chọn Theme giao diện -->
+    <div style="display: inline-block; margin-left: 10px; vertical-align: middle;">
+        <select id="themeSelector" onchange="changeTheme(this.value)" style="padding: 4px 8px; border-radius: 6px; font-weight: bold; background: #fff; color: #333; cursor: pointer; border: 1px solid #ccc;">
+            <option value="default">🎨 Giao diện Mặc định</option>
+        </select>
+    </div>
                     <button class="btn-logout" onclick="executeLogout()">Đăng xuất</button>
                 </div>
             </div>
@@ -570,7 +619,7 @@
                             </div>
                             <div class="form-group">
                                 <label>Sản Phẩm Nhận Diện:</label>
-                                <div id="productNameDisplay" class="product-display">Chưa quét / Chưa nhận diện sản phẩm</div>
+                                <div id="productNameDisplay" class="product-display" style="font-size: 1em; font-weight: bold; color: #d9534f;">Chưa quét / Chưa nhận diện sản phẩm</div>
                             </div>
                             <div class="form-group">
                                 <label>Loại Giao Dịch:</label>
@@ -810,37 +859,44 @@
                     </div>
                 </div>
 
-                <!-- TAB 7: HÀNG CẦN ĐẶT BỔ SUNG -->
-                <div id="tabReorder" class="tab-pane">
-                    <h3 style="color: #dc3545;">🚨 7. Danh Sách Sản Phẩm Cần Đặt Bổ Sung Về Kho</h3>
-                    <div class="summary-box">
-                        <div class="stat-card bg-danger">Hết Hàng (Cần Đặt Gấp): <span id="totalOutOfStockCount">0</span></div>
-                        <div class="stat-card bg-warning">Sắp Hết (Cần Đặt Bổ Sung): <span id="totalLowStockCount">0</span></div>
-                    </div>
-                    <div class="action-bar">
-                        <input type="text" id="searchReorderInput" placeholder="🔍 Tìm kiếm hàng cần đặt..." oninput="renderReorderTable()">
-                        <button class="btn-export" style="background-color: #dc3545;" onclick="exportReorderListToExcel()">📥 Xuất File Đề Xuất Đặt Hàng (Excel)</button>
-                        <button class="btn-print-slip" style="background-color: #dc3545;" onclick="printSelectedReorderSlip()">📄 Xuất Phiếu Hàng Cần Đặt</button>
-                    </div>
-                    <table id="reorderTable">
-                        <thead>
-                            <tr>
-                                <th style="width: 35px; text-align: center;"><input type="checkbox" id="selectAllReorder" onclick="toggleSelectAll(this, 'reorderTable')"></th>
-                                <th>Tên Sản Phẩm</th>
-                                <th>LOT</th>
-                                <th>Hạn Sử Dụng</th>
-                                <th>Đơn Vị</th>
-                                <th>Quy Cách</th>
-                                <th>Tồn Hiện Tại</th>
-                                <th>Tồn Max</th>
-                                <th style="background-color: #e8f4fd; color: #0056b3;">📦 SL Cần Đặt (Hộp Chẵn)</th>
-                                <th>Mức Cảnh Báo</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-            </div>
+<!-- TAB 7: HÀNG CẦN ĐẶT BỔ SUNG -->
+<div id="tabReorder" class="tab-pane">
+    <h3 style="color: #dc3545; text-align: center; margin-bottom: 12px; font-weight: bold;">🚨 7. Danh Sách Sản Phẩm Cần Đặt Bổ Sung Về Kho</h3>
+    <div class="summary-box">
+        <div class="stat-card bg-danger">Hết Hàng (Cần Đặt Gấp): <span id="totalOutOfStockCount">0</span></div>
+        <div class="stat-card bg-warning">Sắp Hết (Cần Đặt Bổ Sung): <span id="totalLowStockCount">0</span></div>
+    </div>
+    
+    <!-- Thanh thao tác căn chỉnh gọn gàng -->
+    <div class="action-bar" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+        <input type="text" id="searchReorderInput" placeholder="🔍 Tìm kiếm hàng cần đặt..." oninput="renderReorderTable()" style="flex: 1; min-width: 240px; padding: 6px 10px; font-size: 12px;">
+        <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+            <button class="btn-export" style="background-color: #dc3545; padding: 6px 12px; font-size: 11px;" onclick="exportReorderListToExcel()">📥 Xuất Excel Đặt Hàng</button>
+            <button class="btn-print-slip" style="background-color: #17a2b8; padding: 6px 12px; font-size: 11px;" onclick="printSelectedReorderSlip()">📄 Xuất Phiếu Hàng Cần Đặt</button>
+        </div>
+    </div>
+
+    <!-- Bảng dữ liệu với cột THỰC NHẬN nằm ngay sau SL CẦN ĐẶT -->
+    <div style="overflow-x: auto;">
+<table id="reorderTable" style="width: 100%; font-size: 11.5px; border-collapse: collapse; text-align: center;">
+    <thead>
+        <tr style="background-color: #f2f2f2;">
+            <th style="width: 35px; text-align: center;"><input type="checkbox" id="selectAllReorder" onclick="toggleSelectAll(this, 'reorderTable')"></th>
+            <th style="text-align: left; padding-left: 8px;">Tên Sản Phẩm</th>
+            <th>LOT</th>
+            <th>Hạn Sử Dụng</th>
+            <th>Đơn Vị</th>
+            <th>Quy Cách</th>
+            <th>Tồn Hiện Tại</th>
+            <th>Tồn Max</th>
+            <th style="background-color: #e8f4fd; color: #0056b3;">📦 SL Cần Đặt (Hộp Chẵn)</th>
+            <th>Mức Cảnh Báo</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+    </div>
+</div>
         </main>
     </div>
 
@@ -1243,7 +1299,7 @@ let mappedProducts = JSON.parse(localStorage.getItem('qr_mapped_products_v7')) |
     // --- CẤU HÌNH NHÓM SHPT (PCR) - HÓA CHẤT TÁCH CHIẾT & CÁC THÀNH PHẦN HIỂN THỊ ĐỘC LẬP ---
     { 
         category: "NHÓM SHPT (PCR)", 
-        name: "Hóa Chất Tách Chiết (Bộ Kit)", 
+        name: "Maga Serum DNA/RNA Co-Extraction", 
         barcode: "PCR_TACH_CHIET_01", 
         stt: 1, 
         manufacturer: "BIOER", 
@@ -1256,11 +1312,26 @@ let mappedProducts = JSON.parse(localStorage.getItem('qr_mapped_products_v7')) |
         defaultLot: "9999", 
         defaultExpiry: "2027-12"
     },
+{ 
+    category: "NHÓM SHPT (PCR)", 
+    name: "RL (Tách chiết)", 
+    barcode: "SUB_RL", 
+    stt: 2, 
+    manufacturer: "BIOER", 
+    machine: "BIOER (Máy tách chiết)", 
+    storageTemp: "Nhiệt độ phòng (<30°C)", 
+    unit: "Chai", 
+    spec: "Thành phần Kit", 
+    minStock: 2, 
+    maxStock: 12, 
+    defaultLot: "9999", 
+    defaultExpiry: "2027-12"
+},
     { 
         category: "NHÓM SHPT (PCR)", 
         name: "WB1 (Tách chiết)", 
         barcode: "SUB_WB1", 
-        stt: 2, 
+        stt: 3, 
         manufacturer: "BIOER", 
         machine: "BIOER (Máy tách chiết)", 
         storageTemp: "Nhiệt độ phòng (<30°C)", 
@@ -1275,7 +1346,7 @@ let mappedProducts = JSON.parse(localStorage.getItem('qr_mapped_products_v7')) |
         category: "NHÓM SHPT (PCR)", 
         name: "WB2 (Tách chiết)", 
         barcode: "SUB_WB2", 
-        stt: 3, 
+        stt: 4, 
         manufacturer: "BIOER", 
         machine: "BIOER (Máy tách chiết)", 
         storageTemp: "Nhiệt độ phòng (<30°C)", 
@@ -1290,7 +1361,7 @@ let mappedProducts = JSON.parse(localStorage.getItem('qr_mapped_products_v7')) |
         category: "NHÓM SHPT (PCR)", 
         name: "Tip Comb (Tách chiết)", 
         barcode: "SUB_Tip Comb", 
-        stt: 4, 
+        stt: 5, 
         manufacturer: "BIOER", 
         machine: "BIOER (Máy tách chiết)", 
         storageTemp: "Nhiệt độ phòng (<30°C)", 
@@ -1305,7 +1376,7 @@ let mappedProducts = JSON.parse(localStorage.getItem('qr_mapped_products_v7')) |
         category: "NHÓM SHPT (PCR)", 
         name: "Deep Well Plate (Tách chiết)", 
         barcode: "SUB_Deep Well", 
-        stt: 5, 
+        stt: 6, 
         manufacturer: "BIOER", 
         machine: "BIOER (Máy tách chiết)", 
         storageTemp: "Nhiệt độ phòng (<30°C)", 
@@ -1320,7 +1391,7 @@ let mappedProducts = JSON.parse(localStorage.getItem('qr_mapped_products_v7')) |
         category: "NHÓM SHPT (PCR)", 
         name: "Nước xử lý DEPC EB(Tách chiết)", 
         barcode: "SUB_Lọ DEPC", 
-        stt: 6, 
+        stt: 7, 
         manufacturer: "BIOER", 
         machine: "BIOER (Máy tách chiết)", 
         storageTemp: "Nhiệt độ phòng (<30°C)", 
@@ -1335,7 +1406,7 @@ let mappedProducts = JSON.parse(localStorage.getItem('qr_mapped_products_v7')) |
         category: "NHÓM SHPT (PCR)", 
         name: "Ethanol (Tách chiết)", 
         barcode: "SUB_Chai Ethanol", 
-        stt: 7, 
+        stt: 8, 
         manufacturer: "BIOER", 
         machine: "BIOER (Máy tách chiết)", 
         storageTemp: "Nhiệt độ phòng (<30°C)", 
@@ -1350,7 +1421,7 @@ let mappedProducts = JSON.parse(localStorage.getItem('qr_mapped_products_v7')) |
         category: "NHÓM SHPT (PCR)", 
         name: "Protein K (Tách chiết)", 
         barcode: "SUB_Typ Protein K", 
-        stt: 8, 
+        stt: 9, 
         manufacturer: "BIOER", 
         machine: "BIOER (Máy tách chiết)", 
         storageTemp: "2-8°C", 
@@ -1365,7 +1436,7 @@ let mappedProducts = JSON.parse(localStorage.getItem('qr_mapped_products_v7')) |
         category: "NHÓM SHPT (PCR)", 
         name: "Magbead (Tách chiết)", 
         barcode: "SUB_Typ Magbead", 
-        stt: 9, 
+        stt: 10, 
         manufacturer: "BIOER", 
         machine: "BIOER (Máy tách chiết)", 
         storageTemp: "2-8°C", 
@@ -1579,77 +1650,190 @@ let mappedProducts = JSON.parse(localStorage.getItem('qr_mapped_products_v7')) |
             }
         }
 
-        function onBarcodeManualInput(val) {
-            clearTimeout(suggestTimeout);
-            suggestTimeout = setTimeout(() => {
-                let codeVal = val.trim();
-                showAutoSuggest(codeVal);
-                resolveProductAndAutoFill(codeVal);
-                const autoSaveCb = document.getElementById('autoSaveCheckbox');
-                if (codeVal && autoSaveCb && autoSaveCb.checked) {
-                    let res = findProductByTerm(codeVal);
-                    if (res) {
-                        setTimeout(() => {
-                            saveTransactionSilent();
-                        }, 100);
-                    }
-                }
-            }, 200);
-        }
-
-        function saveTransactionSilent() {
-            if (!currentUser) return;
-
-            if (currentUser.role !== 'ADMIN') {
-                let allowedGroups = currentUser.assignedGroups || [];
-                if (allowedGroups.length > 0 && !allowedGroups.includes(currentCategory)) {
-                    return; 
-                }
+function onBarcodeManualInput(val) {
+    clearTimeout(suggestTimeout);
+    suggestTimeout = setTimeout(() => {
+        let codeVal = val.trim();
+        
+        // --- QUY TẮC MỚI: NẾU GÕ THỦ CÔNG (ĐỘ DÀI < 8 KÝ TỰ) THÌ KHÔNG TỰ ĐỘNG GỢI Ý/NHẬN DIỆN ---
+        // Ngoại trừ trường hợp quét máy quét barcode (thường mã dài hoặc có định dạng đặc biệt)
+        // Nếu bạn gõ tay chữ "GA" (2 ký tự), hệ thống sẽ bỏ qua, không nhảy sang sản phẩm khác nữa.
+        if (codeVal.length > 0 && codeVal.length < 8 && !codeVal.startsWith("01") && !codeVal.includes("PCR")) {
+            const displayDiv = document.getElementById('productNameDisplay');
+            if (displayDiv) {
+                displayDiv.innerText = `Đang nhập... (${codeVal.length}/8 ký tự)`;
+                displayDiv.style.color = "#6c757d";
             }
+            const dropDiv = document.getElementById('subMappingDropdown');
+            if (dropDiv) dropDiv.style.display = 'none';
+            return; // Dừng lại, không chạy tìm kiếm thông minh khi chưa đủ 8 ký tự gõ tay
+        }
+        // -------------------------------------------------------------------------------------
+
+        showAutoSuggest(codeVal);
+        
+        const saveButton = document.querySelector('button[onclick="saveTransaction()"]');
+        const displayDiv = document.getElementById('productNameDisplay');
+        const lotInput = document.getElementById('lotNumber');
+        const expiryInput = document.getElementById('expiryDate');
+
+        // Tìm kiếm sản phẩm trong danh sách đã Map từ Tab Quản Lý
+        let res = findProductByTerm(codeVal);
+
+        if (!res) {
+            displayDiv.innerHTML = `<span style="color: red; font-weight: bold;">⚠️ CẢNH BÁO: Sản phẩm chưa được MAP trong hệ thống!</span>`;
+            displayDiv.style.color = "#dc3545";
             
-            const barcodeTerm = document.getElementById('productBarcode').value.trim();
-            const type = document.getElementById('type').value;
-            const lot = document.getElementById('lotNumber').value.trim() || "KHONG_CO_LOT";
-            const expiry = formatExpiryDisplay(document.getElementById('expiryDate').value);
-            const qty = parseInt(document.getElementById('quantity').value) || 1;
-            const note = document.getElementById('noteText').value.trim();
-
-            if (!barcodeTerm || !expiry) return;
-
-            let res = findProductByTerm(barcodeTerm);
-            let prodName = res ? res.product.name : `SP_${barcodeTerm}`;
-            let actualBarcode = res ? res.product.barcode : barcodeTerm;
-
-            const batchKey = `${currentCategory}_${actualBarcode}_${lot}`;
-            const now = new Date();
-            const nowStr = now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' ' + now.toLocaleDateString('vi-VN');
-            const isoDateStr = now.toISOString().split('T')[0];
-
-            if (type === 'NHẬP') {
-                if (!inventory[batchKey]) {
-                    inventory[batchKey] = { category: currentCategory, productName: prodName, barcode: actualBarcode, lot: lot, importTimeStr: nowStr, importDateISO: isoDateStr, lastUser: currentUser.name, expiry: expiry, qty: 0 };
-                }
-                inventory[batchKey].qty += qty;
-            } else if (type === 'XUẤT') {
-                if (!inventory[batchKey] || inventory[batchKey].qty < qty) {
-                    return;
-                }
-                inventory[batchKey].qty -= qty;
+            if (saveButton) {
+                saveButton.disabled = true;
+                saveButton.style.opacity = '0.5';
+                saveButton.style.cursor = 'not-allowed';
             }
 
-            logs.unshift({ category: currentCategory, timeStr: nowStr, dateISO: isoDateStr, userName: currentUser.name, productName: prodName, barcode: actualBarcode, lot: lot, expiry: expiry, type: type, qty: qty, note: note });
+            if (lotInput) { lotInput.value = ''; lotInput.readOnly = false; lotInput.style.backgroundColor = '#fff'; }
+            if (expiryInput) { expiryInput.value = ''; expiryInput.readOnly = false; expiryInput.style.backgroundColor = '#fff'; }
+        } else {
+            let p = res.product;
+            displayDiv.innerHTML = `[${p.category}] ${p.name}`;
+            displayDiv.style.color = "#28a745";
 
-            localStorage.setItem('qr_inventory_v11', JSON.stringify(inventory));
-            localStorage.setItem('qr_logs_v11', JSON.stringify(logs));
+            if (saveButton) {
+                saveButton.disabled = false;
+                saveButton.style.opacity = '1';
+                saveButton.style.cursor = 'pointer';
+            }
 
-            document.getElementById('productBarcode').value = '';
-            document.getElementById('quantity').value = 1;
-            document.getElementById('productNameDisplay').innerText = "Chưa quét / Chưa nhận diện sản phẩm";
-            document.getElementById('productNameDisplay').style.color = "#007bff";
+            if (lotInput) {
+                lotInput.value = res.matchedLot || p.defaultLot || '';
+                lotInput.readOnly = true;
+                lotInput.style.backgroundColor = '#e9ecef';
+            }
+            if (expiryInput) {
+                expiryInput.value = formatExpiryDisplay(res.matchedExpiry || p.defaultExpiry || '');
+                expiryInput.readOnly = true;
+                expiryInput.style.backgroundColor = '#e9ecef';
+            }
+
+            currentCategory = p.category;
+            document.getElementById('currentCategoryDisplay').innerText = "ĐANG CHỌN: " + currentCategory;
             
-            renderTables();
-            showAutoSaveNotification(`✅ Đã Auto Lưu thành công: ${prodName} (${type})`);
+            let btns = document.querySelectorAll('.sidebar-menu .menu-btn');
+            btns.forEach(b => {
+                if (b.innerText.includes(p.category.replace('NHÓM ', ''))) {
+                    b.classList.add('active');
+                } else {
+                    b.classList.remove('active');
+                }
+            });
         }
+        
+        const autoSaveCb = document.getElementById('autoSaveCheckbox');
+        if (codeVal && autoSaveCb && autoSaveCb.checked && !isSaving && res) {
+            saveTransactionSilent();
+            let barcodeInput = document.getElementById('productBarcode');
+            if (barcodeInput) {
+                barcodeInput.value = '';
+                barcodeInput.focus();
+            }
+        }
+    }, 100);
+}
+let isSaving = false; // Biến khóa chống lặp
+
+function saveTransactionSilent() {
+    // 1. Nếu đang trong thời gian khóa hoặc chưa đăng nhập thì chặn ngay
+    if (!currentUser || isSaving) return; 
+
+    const barcodeInput = document.getElementById('productBarcode');
+    
+    // >>> DÁN ĐOẠN LẮNG NGHE PHÍM ENTER VÀO NGAY ĐÂY <<<
+    if (!barcodeInput.hasListener) {
+        barcodeInput.hasListener = true; // Đánh dấu để không bị gán trùng lặp
+        barcodeInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                saveTransactionSilent(); 
+                
+                // Reset sạch ô input lập tức và trả lại focus
+                this.value = '';
+                this.blur();
+                setTimeout(() => {
+                    this.focus();
+                }, 50);
+            }
+        });
+    }
+
+    const barcodeTerm = barcodeInput.value.trim();
+    if (!barcodeTerm) return;
+
+    // ... (giữ nguyên các đoạn code phía dưới của hàm saveTransactionSilent)
+
+    // 2. Bật khóa VÀ RESET NGAY LẬP TỨC Ô BARCODE 
+    // Thao tác này giúp xóa sạch chuỗi mã và triệt tiêu hoàn toàn các ký tự Enter/dư thừa dội vào từ máy quét
+    isSaving = true; 
+    barcodeInput.value = ''; 
+    document.getElementById('autoSuggestBox').style.display = 'none';
+
+    if (currentUser.role !== 'ADMIN') {
+        let allowedGroups = currentUser.assignedGroups || [];
+        if (allowedGroups.length > 0 && !allowedGroups.includes(currentCategory)) {
+            isSaving = false; 
+            return; 
+        }
+    }
+    
+    const type = document.getElementById('type').value;
+    const lot = document.getElementById('lotNumber').value.trim() || "KHONG_CO_LOT";
+    const expiry = formatExpiryDisplay(document.getElementById('expiryDate').value);
+    const qty = parseInt(document.getElementById('quantity').value) || 1;
+    const note = document.getElementById('noteText').value.trim();
+
+    if (!expiry) {
+        isSaving = false;
+        return;
+    }
+
+    let res = findProductByTerm(barcodeTerm);
+    let prodName = res ? res.product.name : `SP_${barcodeTerm}`;
+    let actualBarcode = res ? res.product.barcode : barcodeTerm;
+
+    const batchKey = `${currentCategory}_${actualBarcode}_${lot}`;
+    const now = new Date();
+    const nowStr = now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' ' + now.toLocaleDateString('vi-VN');
+    const isoDateStr = now.toISOString().split('T')[0];
+
+    if (type === 'NHẬP') {
+        if (!inventory[batchKey]) {
+            inventory[batchKey] = { category: currentCategory, productName: prodName, barcode: actualBarcode, lot: lot, importTimeStr: nowStr, importDateISO: isoDateStr, lastUser: currentUser.name, expiry: expiry, qty: 0 };
+        }
+        inventory[batchKey].qty += qty;
+    } else if (type === 'XUẤT') {
+        if (!inventory[batchKey] || inventory[batchKey].qty < qty) {
+            isSaving = false;
+            return;
+        }
+        inventory[batchKey].qty -= qty;
+    }
+
+    logs.unshift({ category: currentCategory, timeStr: nowStr, dateISO: isoDateStr, userName: currentUser.name, productName: prodName, barcode: actualBarcode, lot: lot, expiry: expiry, type: type, qty: qty, note: note });
+
+    localStorage.setItem('qr_inventory_v11', JSON.stringify(inventory));
+    localStorage.setItem('qr_logs_v11', JSON.stringify(logs));
+
+    document.getElementById('quantity').value = 1;
+    document.getElementById('productNameDisplay').innerText = "Chưa quét / Chưa nhận diện sản phẩm";
+    document.getElementById('productNameDisplay').style.color = "#007bff";
+    
+    renderTables();
+    showAutoSaveNotification(`✅ Đã Auto Lưu thành công: ${prodName} (${type})`);
+
+    // 3. Giữ trạng thái khóa trong 1.2 giây để chờ máy quét sẵn sàng cho mã sản phẩm tiếp theo
+    setTimeout(() => {
+        isSaving = false;
+        barcodeInput.focus(); // Tự động đưa con trỏ chuột quay lại ô barcode để quét liên tục
+    }, 2200);
+}
 
         function showAutoSaveNotification(message) {
             let oldToast = document.getElementById('autoSaveToast');
@@ -2393,31 +2577,59 @@ function saveTransaction() {
     
     const barcodeTerm = document.getElementById('productBarcode').value.trim();
     const type = document.getElementById('type').value;
-    const lot = document.getElementById('lotNumber').value.trim() || "9999";
+    const lot = document.getElementById('lotNumber').value.trim();
     const expiry = formatExpiryDisplay(document.getElementById('expiryDate').value);
     const qty = parseInt(document.getElementById('quantity').value);
     const note = document.getElementById('noteText').value.trim();
 
-    if (!barcodeTerm || !expiry || isNaN(qty) || qty <= 0) { alert("Vui lòng nhập đầy đủ thông tin!"); return; }
+    if (!barcodeTerm || isNaN(qty) || qty <= 0) { alert("Vui lòng nhập đầy đủ thông tin!"); return; }
 
+    // KIỂM TRA SẢN PHẨM: Bắt buộc phải có trong danh mục đã Map mới được phép nhập/xuất
     let res = findProductByTerm(barcodeTerm);
-    let prod = res ? res.product : null;
-    let prodName = prod ? prod.name : `SP_${barcodeTerm}`;
-    let actualBarcode = prod ? prod.barcode : barcodeTerm;
+    if (!res) {
+        alert("⚠️ CẢNH BÁO: Sản phẩm chưa được MAP trong hệ thống! Không cho phép lưu kho.");
+        return; 
+    }
 
-    // Định mức thành phần cấu tạo nên 1 Hộp Tách Chiết
+    // === ĐIỀU KIỆN: XUẤT > 2 BẮT BUỘC NHẬP GHI CHÚ ===
+  // === ĐIỀU KIỆN: XUẤT BẮT BUỘC NHẬP GHI CHÚ ===
+    // Ngoại lệ (Không bắt buộc nhập ghi chú khi xuất):
+    // 1. Nhóm SHPT (PCR)
+    // 2. Tên sản phẩm chứa từ "test"
+    // 3. Tên sản phẩm chứa từ "găng tay" hoặc "giấy cuộn" / "khăn giấy" VÀ số lượng xuất <= 5
+    let prodNameCheck = res && res.product ? res.product.name.toLowerCase() : "";
+    let isTestProduct = prodNameCheck.includes("test");
+    let isGloveOrPaper = prodNameCheck.includes("găng tay") || prodNameCheck.includes("giấy cuộn") || prodNameCheck.includes("khăn giấy");
+
+    // Nếu không thuộc nhóm ngoại lệ VÀ (Loại là XUẤT VÀ SL > 2) HOẶC (Là Găng tay/Giấy cuộn nhưng xuất > 5) thì bắt buộc nhập ghi chú
+    let needsNote = false;
+    if (currentCategory !== "NHÓM SHPT (PCR)" && !isTestProduct) {
+        if (isGloveOrPaper) {
+            if (type === 'XUẤT' && qty > 5 && !note) needsNote = true; // Găng tay/Giấy cuộn: xuất > 5 mới cần ghi chú
+        } else {
+            if (type === 'XUẤT' && qty > 2 && !note) needsNote = true; // Sản phẩm thông thường khác: xuất > 2 là cần ghi chú
+        }
+    }
+
+    if (needsNote) {
+        alert("⚠️ Số lượng xuất vượt mức cho phép mà không có lý do! Vui lòng nhập lý do cụ thể vào ô Ghi Chú trước khi lưu.");
+        document.getElementById('noteText').focus(); // Tự động đưa con trỏ chuột vào ô ghi chú
+        return; // Chặn không cho lưu giao dịch
+    }
+    // ==============================================================================================
+
+    let prod = res.product;
+    let prodName = prod.name;
+    let actualBarcode = prod.barcode;
+
     const tachChietComponents = {
-        "WB1 (Tách chiết)": 1,
-        "WB2 (Tách chiết)": 2,
-        "Tip Comb (Tách chiết)": 6,
-        "Deep Well Plate (Tách chiết)": 6,
-        "Nước xử lý DEPC EB(Tách chiết)": 2,
-        "Ethanol (Tách chiết)": 1,
-        "Protein K (Tách chiết)": 2,
-        "Magbead (Tách chiết)": 2
+        "RL (Tách chiết)": 2, "WB1 (Tách chiết)": 1, "WB2 (Tách chiết)": 2,
+        "Tip Comb (Tách chiết)": 6, "Deep Well Plate (Tách chiết)": 6,
+        "Nước xử lý DEPC EB(Tách chiết)": 2, "Ethanol (Tách chiết)": 1,
+        "Protein K (Tách chiết)": 2, "Magbead (Tách chiết)": 2
     };
 
-    let isMainKit = (prodName === "Hóa Chất Tách Chiết (Bộ Kit)" || actualBarcode === "PCR_TACH_CHIET_01");
+    let isMainKit = (prodName === "Maga Serum DNA/RNA Co-Extraction" || actualBarcode === "PCR_TACH_CHIET_01");
     let isSubComponent = tachChietComponents[prodName] !== undefined;
 
     const now = new Date();
@@ -2425,15 +2637,13 @@ function saveTransaction() {
     const isoDateStr = now.toISOString().split('T')[0];
 
     if (isMainKit) {
-        // --- XỬ LÝ KHI NHẬP/XUẤT HỘP TỔNG CHÍNH ---
         let batchKey = `${currentCategory}_PCR_TACH_CHIET_01_${lot}`;
         if (!inventory[batchKey]) {
-            inventory[batchKey] = { category: currentCategory, productName: "Hóa Chất Tách Chiết (Bộ Kit)", barcode: "PCR_TACH_CHIET_01", lot: lot, importTimeStr: nowStr, importDateISO: isoDateStr, lastUser: currentUser.name, expiry: expiry, qty: 0 };
+            inventory[batchKey] = { category: currentCategory, productName: "Maga Serum DNA/RNA Co-Extraction", barcode: "PCR_TACH_CHIET_01", lot: lot, importTimeStr: nowStr, importDateISO: isoDateStr, lastUser: currentUser.name, expiry: expiry, qty: 0 };
         }
 
         if (type === 'NHẬP') {
             inventory[batchKey].qty += qty;
-            // Tự động cộng dồn toàn bộ linh kiện con theo định mức hộp
             for (let subName in tachChietComponents) {
                 let subQtyToAdd = qty * tachChietComponents[subName];
                 let subKey = `${currentCategory}_SUB_${subName}_${lot}`;
@@ -2443,9 +2653,8 @@ function saveTransaction() {
                 inventory[subKey].qty += subQtyToAdd;
             }
         } else if (type === 'XUẤT') {
-            if (inventory[batchKey].qty < qty) { alert("Không đủ tồn kho Hóa Chất Tách Chiết (Bộ Kit) để xuất!"); return; }
+            if (inventory[batchKey].qty < qty) { alert("Không đủ tồn kho Maga Serum DNA/RNA Co-Extraction để xuất!"); return; }
             inventory[batchKey].qty -= qty;
-            // Tự động trừ lùi toàn bộ linh kiện con
             for (let subName in tachChietComponents) {
                 let subQtyToSub = qty * tachChietComponents[subName];
                 let subKey = `${currentCategory}_SUB_${subName}_${lot}`;
@@ -2454,9 +2663,7 @@ function saveTransaction() {
                 }
             }
         }
-
     } else if (isSubComponent) {
-        // --- XỬ LÝ KHI NHẬP/XUẤT TỪNG MÓN LINH KIỆN CON LẺ ---
         let subKey = `${currentCategory}_SUB_${prodName}_${lot}`;
         if (!inventory[subKey]) {
             inventory[subKey] = { category: currentCategory, productName: prodName, barcode: actualBarcode, lot: lot, importTimeStr: nowStr, importDateISO: isoDateStr, lastUser: currentUser.name, expiry: expiry, qty: 0 };
@@ -2464,30 +2671,20 @@ function saveTransaction() {
 
         let kitBatchKey = `${currentCategory}_PCR_TACH_CHIET_01_${lot}`;
         if (!inventory[kitBatchKey]) {
-            inventory[kitBatchKey] = { category: currentCategory, productName: "Hóa Chất Tách Chiết (Bộ Kit)", barcode: "PCR_TACH_CHIET_01", lot: lot, importTimeStr: nowStr, importDateISO: isoDateStr, lastUser: currentUser.name, expiry: expiry, qty: 0 };
+            inventory[kitBatchKey] = { category: currentCategory, productName: "Maga Serum DNA/RNA Co-Extraction", barcode: "PCR_TACH_CHIET_01", lot: lot, importTimeStr: nowStr, importDateISO: isoDateStr, lastUser: currentUser.name, expiry: expiry, qty: 0 };
         }
 
         let requiredPerBox = tachChietComponents[prodName];
 
         if (type === 'NHẬP') {
             inventory[subKey].qty += qty;
-            // Tự động quy đổi tăng số lượng hộp tổng dựa trên lượng linh kiện nhập vào
-            let addedBoxes = Math.floor(qty / requiredPerBox);
-            if (addedBoxes > 0) {
-                inventory[kitBatchKey].qty += addedBoxes;
-            }
         } else if (type === 'XUẤT') {
             if (inventory[subKey].qty < qty) { alert(`Không đủ tồn kho ${prodName} để xuất!`); return; }
             inventory[subKey].qty -= qty;
-            // Tự động trừ lùi số lượng hộp tổng dựa trên lượng linh kiện xuất đi
             let subbedBoxes = Math.floor(qty / requiredPerBox);
-            if (subbedBoxes > 0 && inventory[kitBatchKey].qty >= subbedBoxes) {
-                inventory[kitBatchKey].qty -= subbedBoxes;
-            }
+            if (subbedBoxes > 0 && inventory[kitBatchKey].qty >= subbedBoxes) { inventory[kitBatchKey].qty -= subbedBoxes; }
         }
-
     } else {
-        // --- XỬ LÝ CHO CÁC SẢN PHẨM THÔNG THƯỜNG KHÁC ---
         const batchKey = `${currentCategory}_${actualBarcode}_${lot}`;
         if (type === 'NHẬP') {
             if (!inventory[batchKey]) {
@@ -2505,11 +2702,12 @@ function saveTransaction() {
     localStorage.setItem('qr_inventory_v11', JSON.stringify(inventory));
     localStorage.setItem('qr_logs_v11', JSON.stringify(logs));
 
-    document.getElementById('productBarcode').value = '';
-    document.getElementById('quantity').value = 1;
-    document.getElementById('noteText').value = '';
+    // --- RESET TOÀN BỘ GIAO DIỆN VÀ KHÓA NÚT LƯU SAU KHI LƯU THÀNH CÔNG ---
+    resetTab1FormState();
+
     renderTables();
-    alert("Lưu giao dịch và đồng bộ kho thành công!");
+    alert("✅ Lưu giao dịch và đồng bộ kho thành công!");
+    document.getElementById('productBarcode').focus();
 }
 
         function deleteLog(index) {
@@ -2935,65 +3133,70 @@ function checkExpiryAndStockStatus(expiryStr, currentQty, minStock, maxStock) {
             printArea.style.display = 'none';
         }
 
-        function printSelectedReorderSlip() {
-            let checkboxes = document.querySelectorAll(`#reorderTable tbody .row-checkbox:checked`);
-            if (checkboxes.length === 0) {
-                alert("Vui lòng tích chọn ít nhất một sản phẩm cần đặt bổ sung!");
-                return;
-            }
+function printSelectedReorderSlip() {
+    let checkboxes = document.querySelectorAll(`#reorderTable tbody .row-checkbox:checked`);
+    if (checkboxes.length === 0) {
+        alert("Vui lòng tích chọn ít nhất một sản phẩm cần đặt bổ sung!");
+        return;
+    }
 
-            let rowsHtml = '';
-            checkboxes.forEach((cb, index) => {
-                let tr = cb.closest('tr');
-                let tds = tr.querySelectorAll('td');
-                rowsHtml += `
-                    <tr>
-                        <td>${index + 1}</td>
-                        <td class="text-left">${tds[1].innerText}</td>
-                        <td>${tds[4].innerText}</td>
-                        <td>${tds[5].innerText}</td>
-                        <td><b>${tds[6].innerText}</b></td>
-                        <td style="font-weight: bold; color: #0056b3;">${tds[8].innerText}</td>
+    let rowsHtml = '';
+    checkboxes.forEach((cb, index) => {
+        let tr = cb.closest('tr');
+        let tds = tr.querySelectorAll('td');
+        // tds[1]: Tên sản phẩm, tds[4]: Đơn Vị, tds[5]: Quy Cách, tds[6]: Tồn Hiện Tại, tds[8]: SL Cần Đặt
+        rowsHtml += `
+            <tr>
+                <td style="text-align: center;">${index + 1}</td>
+               <td class="text-left" style="padding-left: 6px; font-size: 13px; font-weight: bold; line-height: 1;">${tds[1].innerText}</td>
+                <td style="text-align: center;">${tds[4].innerText}</td>
+                <td style="text-align: center;">${tds[5].innerText}</td>
+                <td style="text-align: center;"><b>${tds[6].innerText}</b></td>
+                <td style="text-align: center; font-size: 10px; font-weight: bold; color: #0056b3;">${tds[8].innerText}</td>
+                <td style="text-align: center; height: 25px;"></td> <!-- Cột Thực Nhận để trống cho phiếu in -->
+            </tr>
+        `;
+    });
+
+    let slipContent = `
+        <div style="font-family: Arial, sans-serif; padding: 20px; width: 750px; margin: 0 auto;">
+            <h2 style="text-align: center; margin-bottom: 5px; color: #dc3545; font-size: 13pt;">PHÒNG KHÁM BỆNH VIỆN ĐẠI HỌC Y DƯỢC 1</h2>
+            <h3 style="text-align: center; margin-top: 0; text-transform: uppercase; color: #dc3545; font-size: 11.5pt;">PHIẾU ĐỀ XUẤT ĐẶT HÀNG BỔ SUNG & THỰC NHẬN</h3>
+            <p style="font-size: 10.5pt; margin: 4px 0;"><b>Nhóm sản phẩm:</b> ${currentCategory}</p>
+            <p style="font-size: 10.5pt; margin: 4px 0;"><b>Ngày lập phiếu:</b> ${new Date().toLocaleString('vi-VN')}</p>
+            <table border="1" cellspacing="0" cellpadding="6" style="width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 10.5pt;">
+                <thead>
+                    <tr style="background-color: #f2f2f2; text-align: center;">
+                        <th style="width: 30px;">STT</th>
+                        <th style="width: 280px;">TÊN SẢN PHẨM</th>
+                        <th style="width: 55px;">ĐƠN VỊ</th>
+                        <th style="width: 110px;">QUY CÁCH</th>
+                        <th style="width: 55px;">TỒN</th>
+                        <th style="width: 100px;">SL CẦN ĐẶT</th>
+                        <th style="width: 30px; background-color: #d4edda; color: #155724;">THỰC NHẬN</th>
                     </tr>
-                `;
-            });
+                </thead>
+                <tbody>
+                    ${rowsHtml}
+                </tbody>
+            </table>
+            <div style="display: flex; justify-content: space-between; margin-top: 35px; text-align: center; font-size: 11pt;">
+            <div>             </div>
+                                <div class="signature-box" style="width: 30%; text-align: center;">
+                                    <p style="margin: 0;"><b>NGƯỜI LẬP PHIẾU</b></p>
+                                    <p>(Ký, ghi rõ họ tên)</p>
+                                    <div class="signature-space" style="height: 60px;"></div>
+                                    <p><b>${currentUser ? currentUser.name : ''}</b></p>
+            </div>
+        </div>
+    `;
 
-            let slipContent = `
-                <div style="font-family: Arial, sans-serif; padding: 20px; width: 750px; margin: 0 auto;">
-                    <h2 style="text-align: center; margin-bottom: 5px; color: #dc3545;">PHÒNG KHÁM BỆNH VIỆN ĐẠI HỌC Y DƯỢC 1</h2>
-                    <h3 style="text-align: center; margin-top: 0; text-transform: uppercase; color: #dc3545;">PHIẾU ĐỀ XUẤT ĐẶT HÀNG BỔ SUNG</h3>
-                    <p><b>Nhóm sản phẩm:</b> ${currentCategory}</p>
-                    <p><b>Ngày lập:</b> ${new Date().toLocaleString('vi-VN')}</p>
-                    <table border="1" cellspacing="0" cellpadding="6" style="width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 12px;">
-                        <thead>
-                            <tr style="background: #f2f2f2; text-align: center;">
-                                <th style="width: 35px;">STT</th>
-                                <th style="width: 300px;">Tên Sản Phẩm</th>
-                                <th style="width: 50px;">Đơn Vị</th>
-                                <th style="width: 110px;">Quy Cách</th>
-                                <th style="width: 50px;">Tồn Hiện Tại</th>
-                                <th style="width: 130px;">SL Cần Đặt</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${rowsHtml}
-                        </tbody>
-                    </table>
-                    <div class="signature-box" style="width: 30%; margin-top: 30px;">
-                        <p><b>NGƯỜI ĐẶT HÀNG</b></p>
-                        <p>(Ký, ghi rõ họ tên)</p>
-                        <div class="signature-space" style="height: 20px;"></div>
-                        <p><b>${currentUser ? currentUser.name : ''}</b></p>
-                    </div>
-                </div>
-            `;
-
-            let printArea = document.getElementById('printSlipArea');
-            printArea.innerHTML = slipContent;
-            printArea.style.display = 'block';
-            window.print();
-            printArea.style.display = 'none';
-        }
+    let printArea = document.getElementById('printSlipArea');
+    printArea.innerHTML = slipContent;
+    printArea.style.display = 'block';
+    window.print();
+    printArea.style.display = 'none';
+}
 
         function exportInventoryToCSV() {
             let data = [["Sản Phẩm", "Barcode", "Nhiệt Độ", "LOT", "Thời Gian Nhập", "Người Nhập", "Hạn Sử Dụng", "Tồn Kho", "Tồn Min", "Tồn Max"]];
@@ -3056,30 +3259,28 @@ function checkExpiryAndStockStatus(expiryStr, currentQty, minStock, maxStock) {
             XLSX.writeFile(wb, `ThongKeNHẬP_${currentCategory}.xlsx`);
         }
 
-        function exportMonthlyExportStatsToCSV() {
-            let exportStats = {};
-            logs.filter(l => l.category === currentCategory && l.type === 'XUẤT').forEach(l => {
-                let foundRes = findProductByTerm(l.barcode);
-                let currentName = foundRes ? foundRes.product.name : l.productName;
-                if (!exportStats[l.barcode]) {
-                    exportStats[l.barcode] = { productName: currentName, barcode: l.barcode, totalQty: 0 };
-                }
-                exportStats[l.barcode].totalQty += l.qty;
-            });
+function exportMonthlyExportStatsToCSV() {
+    let data = [["Thời Gian / Kỳ", "Tên Sản Phẩm", "LOT", "Hạn Sử Dụng", "Tổng SL Xuất"]];
+    let currentPeriod = new Date().toISOString().substring(0, 7);
 
-            let data = [["Thời Gian / Kỳ", "Tên Sản Phẩm (Barcode)", "Tổng SL Xuất"]];
-            let currentPeriod = new Date().toISOString().substring(0, 7);
+    logs.filter(l => l.category === currentCategory && l.type === 'XUẤT').forEach(l => {
+        let foundRes = findProductByTerm(l.barcode);
+        let currentName = foundRes ? foundRes.product.name : l.productName;
+        
+        data.push([
+            currentPeriod, 
+            currentName, 
+            l.lot || '', 
+            formatExpiryDisplay(l.expiry) || '', 
+            l.qty
+        ]);
+    });
 
-            for (let code in exportStats) {
-                let item = exportStats[code];
-                data.push([currentPeriod, `${item.productName} (${item.barcode})`, item.totalQty]);
-            }
-
-            let ws = XLSX.utils.aoa_to_sheet(data);
-            let wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "ThongKeXUAT");
-            XLSX.writeFile(wb, `ThongKeXUAT_${currentCategory}.xlsx`);
-        }
+    let ws = XLSX.utils.aoa_to_sheet(data);
+    let wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "ThongKeXUAT");
+    XLSX.writeFile(wb, `ThongKeXUAT_${currentCategory}.xlsx`);
+}
 
         function getReorderData() {
             let productStockMap = {};
@@ -3112,7 +3313,9 @@ function checkExpiryAndStockStatus(expiryStr, currentQty, minStock, maxStock) {
                 let actualLot = (productLotExpiryMap[key] && productLotExpiryMap[key].lot !== '-') ? productLotExpiryMap[key].lot : (p.defaultLot || '-');
                 let actualExpiry = (productLotExpiryMap[key] && productLotExpiryMap[key].expiry !== '-') ? productLotExpiryMap[key].expiry : (p.defaultExpiry || '-');
 
-                if (currentStock <= minStock) {
+                // ĐOẠN CODE ĐIỀU CHỈNH MỚI (Dựa vào Tồn Max):
+let maxStock = p.maxStock || 0;
+if (currentStock < maxStock) {
                     let priority = 2;
                     let alertText = "⚠️ SẮP HẾT HÀNG - ĐẶT BỔ SUNG";
                     let rowClass = "low-stock";
@@ -3145,35 +3348,34 @@ function checkExpiryAndStockStatus(expiryStr, currentQty, minStock, maxStock) {
 
             return { reorderList, outOfStockCount, lowStockCount };
         }
+function renderReorderTable() {
+    const tbody = document.getElementById('reorderTable').querySelector('tbody');
+    const { reorderList, outOfStockCount, lowStockCount } = getReorderData();
 
-        function renderReorderTable() {
-            const tbody = document.getElementById('reorderTable').querySelector('tbody');
-            const { reorderList, outOfStockCount, lowStockCount } = getReorderData();
+    document.getElementById('totalOutOfStockCount').innerText = outOfStockCount;
+    document.getElementById('totalLowStockCount').innerText = lowStockCount;
 
-            document.getElementById('totalOutOfStockCount').innerText = outOfStockCount;
-            document.getElementById('totalLowStockCount').innerText = lowStockCount;
+    let html = [];
+    reorderList.forEach((item, index) => {
+        html.push(`<tr class="${item.rowClass}">
+            <td style="text-align: center;"><input type="checkbox" class="row-checkbox"></td>
+            <td style="text-align: left; padding-left: 8px; font-size: 13px; font-weight: bold;">${item.name}</td>
+            <td><b style="color:#0056b3;">${item.defaultLot || '-'}</b></td>
+            <td><b style="color:#0056b3;">${item.defaultExpiry || '-'}</b></td>
+            <td>${item.unit}</td>
+            <td>${item.spec}</td>
+            <td><b style="font-size:12px;">${item.currentStock}</b></td>
+            <td>${item.maxStock || 0}</td>
+            <td style="background-color: #e8f4fd; text-align: center;">
+                <b style="color: #0056b3; font-size: 12.5px;">📦 ${item.boxesNeeded} Hộp</b>
+                <div style="font-size: 9px; color: #555;">(Quy đổi: ${item.packPerBox} ${item.unit}/hộp)</div>
+            </td>
+            <td>${item.alertText}</td>
+        </tr>`);
+    });
 
-            let html = [];
-            reorderList.forEach(item => {
-                html.push(`<tr class="${item.rowClass}">
-                    <td style="text-align: center;"><input type="checkbox" class="row-checkbox"></td>
-                    <td><b>${item.name}</b></td>
-                    <td><b style="color:#0056b3;">${item.defaultLot || '-'}</b></td>
-                    <td><b style="color:#0056b3;">${item.defaultExpiry || '-'}</b></td>
-                    <td>${item.unit}</td>
-                    <td>${item.spec}</td>
-                    <td><b style="font-size:12px;">${item.currentStock}</b></td>
-                    <td>${item.maxStock || 0}</td>
-                    <td style="background-color: #e8f4fd; text-align: center;">
-                        <b style="color: #0056b3; font-size: 13px;">📦 ${item.boxesNeeded} Hộp</b>
-                        <div style="font-size: 9px; color: #555;">(Quy đổi: ${item.packPerBox} ${item.unit}/hộp)</div>
-                    </td>
-                    <td>${item.alertText}</td>
-                </tr>`);
-            });
-
-            tbody.innerHTML = html.length ? html.join('') : `<tr><td colspan="10" style="text-align:center; color:#28a745; font-weight:bold; padding:15px;">✅ Tất cả sản phẩm thuộc ${currentCategory} đều đạt mức tồn kho an toàn!</td></tr>`;
-        }
+    tbody.innerHTML = html.length ? html.join('') : `<tr><td colspan="10" style="text-align:center; color:#28a745; font-weight:bold; padding:15px;">✅ Tất cả sản phẩm thuộc ${currentCategory} đều đạt mức tồn kho an toàn!</td></tr>`;
+}
 
         function exportReorderListToExcel() {
             const { reorderList } = getReorderData();
@@ -3346,14 +3548,19 @@ function checkExpiryAndStockStatus(expiryStr, currentQty, minStock, maxStock) {
                 let representativeExpiry = group.batches.length > 0 ? group.batches[0].expiry : '';
                 let status = checkExpiryAndStockStatus(representativeExpiry, group.totalQty, minStock, maxStock);
 
-                let lotHtml = '', expiryHtml = '', qtyHtml = '', actionHtml = '';
-                group.batches.forEach(b => {
-                    let adminAction = isAdmin ? `<button class="btn-delete" style="padding:1px 4px; font-size:9px;" onclick="deleteBatch('${b.key}')">Xóa</button>` : '';
-                    lotHtml += `<div style="padding: 2px 0; border-bottom: 1px dashed #eee;"><b style="color:#0056b3;">${b.lot}</b></div>`;
-                    expiryHtml += `<div style="padding: 2px 0; border-bottom: 1px dashed #eee;"><b>${b.expiry}</b></div>`;
-                    qtyHtml += `<div style="padding: 2px 0; border-bottom: 1px dashed #eee;"><b>${b.qty}</b> ${unit}</div>`;
-                    actionHtml += `<div style="padding: 2px 0; border-bottom: 1px dashed #eee; min-height:20px;">${adminAction}</div>`;
-                });
+let lotHtml = '', expiryHtml = '', qtyHtml = '', actionHtml = '';
+
+group.batches.forEach((b, batchIdx) => {
+    let adminAction = isAdmin ? `<button class="btn-delete" style="padding:1px 4px; font-size:9px;" onclick="deleteBatch('${b.key}')">Xóa</button>` : '';
+    
+    // Tự động xoay vòng các class màu sắc (style-1, style-2, style-3...) nếu sản phẩm có nhiều LOT/Date khác nhau
+    let colorClass = `lot-style-${(batchIdx % 4) + 1}`;
+    
+    lotHtml += `<div style="padding: 3px 0;"><span class="lot-highlight-tab2 ${colorClass}">${b.lot}</span></div>`;
+    expiryHtml += `<div style="padding: 3px 0;"><span class="lot-highlight-tab2 ${colorClass}">${b.expiry}</span></div>`;
+    qtyHtml += `<div style="padding: 6px 0; font-size: 13px;"><b>${b.qty}</b> ${unit}</div>`;
+    actionHtml += `<div style="padding: 6px 0; min-height:28px;">${adminAction}</div>`;
+});
 let trangThaiHTML = getMiniStatusBar(group.totalQty, minStock, maxStock);
                 invHtml.push(`<tr class="${status.class}">
                     <td style="text-align: center;"><input type="checkbox" class="row-checkbox"></td>
@@ -3454,14 +3661,27 @@ let trangThaiHTML = getMiniStatusBar(group.totalQty, minStock, maxStock);
                             if (isMonthOpen) {
                                 for (let day in tree[year][month]) {
                                     let dayKey = `${month}_${day}`;
-                                    let itemDate = new Date(day);
-                                    let now = new Date();
-                                    let isToday = itemDate.toDateString() === now.toDateString();
+                                   let itemDate = new Date(day);
+// Lấy thông tin ngày, tháng, năm hiện tại của hệ thống
+let todayObj = new Date();
+let currentYear = String(todayObj.getFullYear());
+let currentMonth = currentYear + '-' + String(todayObj.getMonth() + 1).padStart(2, '0');
+let currentDayStr = currentMonth + '-' + String(todayObj.getDate()).padStart(2, '0');
 
-                                    let defaultOpenState = isToday ? true : false;
-                                    let isDayOpen = toggledDays[dayKey] !== undefined ? toggledDays[dayKey] : defaultOpenState;
-                                    let dayIcon = isDayOpen ? '▼' : '▶';
-                                    let dayItems = tree[year][month][day];
+// 1. Tự động mở Năm hiện tại
+let isYearOpen = toggledYears[year] !== undefined ? toggledYears[year] : (year === currentYear);
+let yearIcon = isYearOpen ? '▼' : '▶';
+
+// 2. Tự động mở Tháng hiện tại
+let isMonthOpen = toggledMonths[month] !== undefined ? toggledMonths[month] : (month === currentMonth);
+let monthIcon = isMonthOpen ? '▼' : '▶';
+
+// 3. Tự động mở Ngày hôm nay
+let isToday = (day === currentDayStr);
+let defaultOpenState = isToday ? true : false;
+let isDayOpen = toggledDays[dayKey] !== undefined ? toggledDays[dayKey] : defaultOpenState;
+let dayIcon = isDayOpen ? '▼' : '▶';
+let dayItems = tree[year][month][day];
                                     
                                     dayItems.sort((a, b) => {
                                         let pA = mappedProducts.find(p => p.name === a.log.productName || p.barcode === a.log.barcode);
@@ -3494,47 +3714,53 @@ let trangThaiHTML = getMiniStatusBar(group.totalQty, minStock, maxStock);
                                             if (l.type === 'XUẤT') totalExpSum += l.qty;
 
                                             if (tableType === 'NHẬP') {
-                                                let status = checkExpiryAndStockStatus(formattedExp, l.qty, foundRes ? foundRes.product.minStock : 0);
-                                                let adminAction = isAdmin ? `<button class="btn-delete" onclick="deleteLog(${index})">Xóa</button>` : '-';
-                                                
-                                                htmlRows.push(`<tr>
-                                                    <td style="text-align: center;"><input type="checkbox" class="row-checkbox"></td>
-                                                    <td style="padding-left: 55px;">⏰ <b>${l.timeStr}</b></td>
-                                                    <td><b>${currentName}</b></td>
-                                                    <td><b style="color:#0056b3;">${l.lot}</b></td>
-                                                    <td><b>${formattedExp}</b></td>
-                                                    <td>${foundRes ? foundRes.product.spec : '-'}</td>
-                                                    <td class="${status.class}">${status.text}</td>
-                                                    <td>${foundRes ? foundRes.product.storageTemp : '-'}</td>
-                                                    <td><b>${l.qty}</b></td>
-                                                    <td>${adminAction}</td>
-                                                </tr>`);
-                                            } else if (tableType === 'XUẤT') {
-                                                let adminAction = isAdmin ? `<button class="btn-delete" onclick="deleteLog(${index})">Xóa</button>` : '-';
-                                                htmlRows.push(`<tr>
-                                                    <td style="text-align: center;"><input type="checkbox" class="row-checkbox"></td>
-                                                    <td style="padding-left: 55px;">⏰ <b>${l.timeStr}</b></td>
-                                                    <td><b>${currentName}</b> (${l.barcode})</td>
-                                                    <td><b style="color:#d97706;">${l.qty}</b></td>
-                                                    <td>${adminAction}</td>
-                                                </tr>`);
-                                            } else if (tableType === 'LOG') {
-                                                let adminAction = isAdmin ? `<button class="btn-delete" onclick="deleteLog(${index})">Xóa</button>` : '-';
-                                                let typeBadge = l.type === 'NHẬP' ? `<span style="color:green; font-weight:bold;">NHẬP (+)</span>` : `<span style="color:orange; font-weight:bold;">XUẤT (-)</span>`;
-                                                
-                                                htmlRows.push(`<tr>
-                                                    <td style="text-align: center;"><input type="checkbox" class="row-checkbox"></td>
-                                                    <td><b>${currentName}</b></td>
-                                                    <td><b style="color:#0056b3;">${l.lot}</b></td>
-                                                    <td><b>${formattedExp}</b></td>
-                                                    <td>${typeBadge}</td>
-                                                    <td><b>${l.qty}</b></td>
-                                                    <td>${l.note || '-'}</td>
-                                                    <td style="padding-left: 20px;">⏰ <b>${l.timeStr}</b></td>
-                                                    <td><span class="user-tag">${l.userName}</span></td>
-                                                    <td class="admin-only-col">${adminAction}</td>
-                                                </tr>`);
-                                            }
+        let status = checkExpiryAndStockStatus(formattedExp, l.qty, foundRes ? foundRes.product.minStock : 0);
+        let adminAction = isAdmin ? `<button class="btn-delete" onclick="deleteLog(${index})">Xóa</button>` : '-';
+
+        htmlRows.push(`<tr>
+            <td style="text-align: center;"><input type="checkbox" class="row-checkbox"></td>
+            <td style="padding-left: 55px;">⏰ <b>${l.timeStr}</b></td>
+            <td><b>${currentName}</b></td>
+            <td><span class="lot-date-highlight-tab3">${l.lot}</span></td>
+            <td><span class="lot-date-highlight-tab3">${formattedExp}</span></td>
+            <td>${foundRes ? foundRes.product.spec : '-'}</td>
+            <td class="${status.class}">${status.text}</td>
+            <td>${foundRes ? foundRes.product.storageTemp : '-'}</td>
+            <td><b>${l.qty}</b></td>
+            <td>${adminAction}</td>
+        </tr>`);
+        } else if (tableType === 'XUẤT') {
+    let adminAction = isAdmin ? `<button class="btn-delete" onclick="deleteLog(${index})">Xóa</button>` : '-';
+    
+    // Thêm thẻ <br> để ngắt dòng, đưa LOT và Date xuống hàng thứ 2
+    let lotInfo = l.lot ? `LOT: <span class="lot-date-highlight">${l.lot}</span>` : '';
+    let expiryInfo = l.expiry ? `Hạn sử dụng: <span class="lot-date-highlight">${formatExpiryDisplay(l.expiry)}</span>` : '';
+    let secondLine = (lotInfo || expiryInfo) ? `<br><div style="margin-top: 4px; font-size: 13px; color: #555;">${lotInfo} &nbsp;|&nbsp; ${expiryInfo}</div>` : '';
+    
+    htmlRows.push(`<tr>
+        <td style="text-align: center;"><input type="checkbox" class="row-checkbox"></td>
+        <td style="padding-left: 55px;">⏰ <b>${l.timeStr}</b></td>
+        <td><b>${currentName}</b>${secondLine}</td>
+        <td><b style="color:#d97706; font-size: 13px;">${l.qty}</b></td>
+        <td>${adminAction}</td>
+    </tr>`);
+} else if (tableType === 'LOG') {
+    let adminAction = isAdmin ? `<button class="btn-delete" onclick="deleteLog(${index})">Xóa</button>` : '-';
+    let typeBadge = l.type === 'NHẬP' ? `<span style="color:green; font-weight:bold;">NHẬP (+)</span>` : `<span style="color:orange; font-weight:bold;">XUẤT (-)</span>`;
+    
+    htmlRows.push(`<tr>
+        <td style="text-align: center;"><input type="checkbox" class="row-checkbox"></td>
+        <td><b>${currentName}</b></td>
+        <td><span class="lot-date-highlight-tab5">${l.lot}</span></td>
+        <td><span class="lot-date-highlight-tab5">${formattedExp}</span></td>
+        <td>${typeBadge}</td>
+        <td><b>${l.qty}</b></td>
+        <td>${l.note || '-'}</td>
+        <td style="padding-left: 20px;">⏰ <b>${l.timeStr}</b></td>
+        <td><span class="user-tag">${l.userName}</span></td>
+        <td class="admin-only-col">${adminAction}</td>
+    </tr>`);
+}
                                         });
                                     }
                                 }
@@ -3633,15 +3859,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function resolveProductAndAutoFillSuperPro(term) {
     let rawTerm = (term || '').trim();
+    let displayDiv = document.getElementById('productNameDisplay');
+    let dropDiv = document.getElementById('subMappingDropdown');
     
-    // --- BỔ SUNG: BỐC TÁCH CHUỖI GS1 / BARCODE DÀI ---
-    // Nếu chuỗi quét bắt đầu bằng "01" (chuẩn GS1 y tế), tiến hành lọc lấy mã GTIN chính (14 số tiếp theo)
+    // --- 1. HIỆN GỢI Ý NGAY LẬP TỨC (DÙ DƯỚI 8 KÝ TỰ VẪN HIỆN DROPDOWN ĐỂ CHỌN) ---
     let searchKey = rawTerm.toLowerCase();
     if (rawTerm.startsWith("01") && rawTerm.length >= 16) {
-        let extractedGtin = rawTerm.substring(2, 16); // Lấy 14 số GTIN sản phẩm
+        let extractedGtin = rawTerm.substring(2, 16); 
         searchKey = extractedGtin.toLowerCase();
         
-        // Tự động tìm và điền luôn Số Lô (LOT) nếu chuỗi chứa AI "10"
         let idxLot = rawTerm.indexOf("10");
         if (idxLot !== -1) {
             let lotVal = rawTerm.substring(idxLot + 2, idxLot + 10).replace(/[^a-zA-Z0-9]/g, '');
@@ -3649,10 +3875,6 @@ function resolveProductAndAutoFillSuperPro(term) {
         }
     }
 
-    let displayDiv = document.getElementById('productNameDisplay');
-    let dropDiv = document.getElementById('subMappingDropdown');
-    
-    // Ẩn hoàn toàn khung gợi ý cũ nếu có
     const oldSuggestBox = document.getElementById('autoSuggestBox');
     if (oldSuggestBox) oldSuggestBox.style.display = 'none';
 
@@ -3665,7 +3887,6 @@ function resolveProductAndAutoFillSuperPro(term) {
 
     let matchedConfigs = [];
 
-    // Quét toàn bộ danh mục sản phẩm và các dòng subItems đã map
     mappedProducts.forEach(p => {
         let pBarcodeLower = (p.barcode || '').toLowerCase();
         let isMainMatch = pBarcodeLower.includes(searchKey) || 
@@ -3682,7 +3903,6 @@ function resolveProductAndAutoFillSuperPro(term) {
             });
         }
 
-        // Kiểm tra trong danh sách subItems đã map
         if (p.subItems && Array.isArray(p.subItems)) {
             p.subItems.forEach(sub => {
                 let subBarcodeLower = (sub.barcode || '').toLowerCase();
@@ -3701,7 +3921,6 @@ function resolveProductAndAutoFillSuperPro(term) {
         }
     });
 
-    // Lọc bỏ trùng lặp tuyệt đối
     let uniqueConfigs = [];
     let keys = new Set();
     matchedConfigs.forEach(item => {
@@ -3719,14 +3938,52 @@ function resolveProductAndAutoFillSuperPro(term) {
         return;
     }
 
-    // Trường hợp 1: Chỉ có ĐÚNG 1 kết quả -> Tự động điền sạch sẽ mã ngắn chính hãng và ẩn dropdown
+    // --- 2. QUY TẮC AN TOÀN: NẾU GÕ TAY DƯỚI 8 KÝ TỰ THÌ CHỈ HIỆN DROPDOWN CHO CHỌN, TUYỆT ĐỐI KHÔNG TỰ ĐỘNG GÁN ---
+    let isManualShortTyping = (rawTerm.length > 0 && rawTerm.length < 8 && !rawTerm.startsWith("01") && !rawTerm.toUpperCase().includes("PCR"));
+
+    if (isManualShortTyping) {
+        displayDiv.innerText = `Đang nhập... (Gợi ý bên dưới, gõ đủ hoặc chọn từ danh sách)`;
+        displayDiv.style.color = "#6c757d";
+
+        // Khóa nút lưu tạm thời cho đến khi chọn chính xác sản phẩm
+        const saveButton = document.querySelector('button[onclick="saveTransaction()"]');
+        if (saveButton) {
+            saveButton.disabled = true;
+            saveButton.style.opacity = '0.5';
+            saveButton.style.cursor = 'not-allowed';
+        }
+
+        // Vẫn hiển thị dropdown các dòng sản phẩm đã Map để bạn click chọn thủ công
+        if (dropDiv) {
+            dropDiv.innerHTML = '';
+            uniqueConfigs.forEach(cfg => {
+                let opt = document.createElement('div');
+                opt.className = 'sub-mapping-option';
+                opt.innerHTML = `
+                    <div>
+                        <b style="font-size: 13px;">${cfg.product.name}</b>
+                    </div>
+                    <div style="text-align: right;">
+                        <span class="big-lot-expiry" style="background: #e2e8f0; padding: 3px 8px; border-radius: 4px;">LOT: ${cfg.lot || '---'} | Hạn: ${formatExpiryDisplay(cfg.expiry) || '---'}</span>
+                    </div>
+                `;
+                opt.onclick = () => {
+                    applySelectedConfig(cfg.product, cfg.lot, cfg.expiry, cfg.barcode);
+                    dropDiv.style.display = 'none';
+                };
+                dropDiv.appendChild(opt);
+            });
+            dropDiv.style.display = 'block';
+        }
+        return; // Dừng lại, không tự động gán ngầm
+    }
+
+    // --- 3. KHI ĐÃ ĐỦ KÝ TỰ HOẶC DÙNG MÁY QUÉT BARCODE: HOẠT ĐỘNG BÌNH THƯỜNG ---
     if (uniqueConfigs.length === 1) {
         let cfg = uniqueConfigs[0];
         applySelectedConfig(cfg.product, cfg.lot, cfg.expiry, cfg.barcode);
         if (dropDiv) dropDiv.style.display = 'none';
-    } 
-    // Trường hợp 2: Có NHIỀU kết quả -> Bung dropdown để chọn đúng lô
-    else {
+    } else {
         displayDiv.innerText = `⚠️ Có ${uniqueConfigs.length} lô phù hợp. Vui lòng chọn bên dưới:`;
         displayDiv.style.color = "#fd7e14";
         
@@ -3759,8 +4016,19 @@ let cleanCode = rawCode.replace(/[\x00-\x1F\x7F-\x9F]/g, "");
 
 function applySelectedConfig(product, lot, expiry, barcodeToFill) {
     let displayDiv = document.getElementById('productNameDisplay');
+    const saveButton = document.querySelector('button[onclick="saveTransaction()"]');
+    const lotInput = document.getElementById('lotNumber');
+    const expiryInput = document.getElementById('expiryDate');
+
     displayDiv.innerText = `[${product.category}] ${product.name}`;
     displayDiv.style.color = "#28a745";
+
+    // Mở khóa nút lưu vì đây là sản phẩm hợp lệ đã map
+    if (saveButton) {
+        saveButton.disabled = false;
+        saveButton.style.opacity = '1';
+        saveButton.style.cursor = 'pointer';
+    }
 
     currentCategory = product.category;
     document.getElementById('currentCategoryDisplay').innerText = "ĐANG CHỌN: " + currentCategory;
@@ -3775,10 +4043,19 @@ function applySelectedConfig(product, lot, expiry, barcodeToFill) {
     });
 
     if (barcodeToFill) document.getElementById('productBarcode').value = barcodeToFill;
-    if (lot) document.getElementById('lotNumber').value = lot;
-    if (expiry) document.getElementById('expiryDate').value = formatExpiryDisplay(expiry);
+    
+    // Gán thông tin và Khóa LOT, Date theo đúng yêu cầu
+    if (lotInput) {
+        lotInput.value = lot || product.defaultLot || '';
+        lotInput.readOnly = true;
+        lotInput.style.backgroundColor = '#e9ecef';
+    }
+    if (expiryInput) {
+        expiryInput.value = formatExpiryDisplay(expiry || product.defaultExpiry || '');
+        expiryInput.readOnly = true;
+        expiryInput.style.backgroundColor = '#e9ecef';
+    }
 
-    // CHỈ TỰ ĐỘNG LƯU NẾU NGƯỜI DÙNG CHỦ ĐỘNG TÍCH CHỌN CHECKBOX "AUTO LƯU"
     const autoSaveCb = document.getElementById('autoSaveCheckbox');
     if (autoSaveCb && autoSaveCb.checked) {
         setTimeout(() => {
@@ -3804,10 +4081,234 @@ function uniqueConfigsLengthIsOne() {
           measurementId: "G-GFGRSF4327"
         };
 
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
+// Khởi tạo Firebase
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  // 2. Hàm lưu dữ liệu lên Firebase thay cho localStorage (hoặc chạy song song)
+  function saveToCloud(key, data) {
+    db.ref('kho_xet_nghiem/' + key).set(data)
+      .then(() => {
+        console.log("Đã đồng bộ lên mây thành công!");
+      })
+      .catch((error) => {
+        console.error("Lỗi đồng bộ: ", error);
+      });
+  }
+
+  // 3. Hàm lắng nghe dữ liệu thay đổi từ các máy tính khác theo thời gian thực (Realtime)
+  function listenFromCloud(key, callback) {
+    db.ref('kho_xet_nghiem/' + key).on('value', (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        callback(data);
+        // Cập nhật lại localStorage cục bộ để hệ thống hoạt động bình thường
+        localStorage.setItem(key, JSON.stringify(data));
+      }
+    });
+  }
+
+  // Ví dụ áp dụng cho các key chính trong hệ thống của bạn:
+  // - qr_mapped_products_v7 (Sản phẩm)
+  // - qr_inventory_v11 (Tồn kho)
+  // - qr_logs_v11 (Lịch sử)
+  
+  // Khi khởi động ứng dụng, bạn gọi hàm lắng nghe:
+  window.addEventListener('DOMContentLoaded', () => {
+    listenFromCloud('qr_mapped_products_v7', (data) => {
+       console.log("Dữ liệu sản phẩm đã được cập nhật từ máy khác.");
+       // Gọi lại hàm render giao diện sản phẩm của bạn ở đây nếu cần
+    });
+  });
+<!-- Đoạn mã logic xử lý Nhập / Xuất kho cho Kit tổng và Sản phẩm con -->
+/**
+ * Xử lý giao dịch Nhập / Xuất kho áp dụng cho nhóm SHPT (PCR)
+ * @param {string} actionType - Loại giao dịch ('NHAP_KIT', 'XUAT_LE_CON', 'NHAP_BO_SUNG_CON')
+ * @param {string} productCode - Mã hoặc Tên sản phẩm chính (Ví dụ: 'Maga Serum DNA/RNA Co-Extraction')
+ * @param {string} subComponent - Tên sản phẩm con (Ví dụ: 'Magbead', 'Protein K', 'RL'...)
+ * @param {number} quantity - Số lượng giao dịch
+ */
+function handleInventoryTransaction(actionType, productCode, subComponent, quantity) {
+    // Lấy dữ liệu kho hiện tại từ bảng hoặc state của hệ thống
+    let inventoryData = getInventoryDatabase(); 
+
+    switch (actionType) {
+        case 'NHAP_KIT':
+            // 1. Khi nhập nguyên Kit tổng -> Tăng tồn kho Kit tổng
+            if (inventoryData[productCode]) {
+                inventoryData[productCode].totalStock += quantity;
+                console.log(`Đã nhập thêm ${quantity} hộp ${productCode}. Tổng tồn mới: ${inventoryData[productCode].totalStock}`);
+            }
+            break;
+
+        case 'XUAT_LE_CON':
+            // 2. Khi xuất lẻ sản phẩm con -> Trừ kho sản phẩm con, KHÔNG làm thay đổi tồn kho kit tổng
+            if (inventoryData[subComponent]) {
+                inventoryData[subComponent].totalStock -= quantity;
+                if (inventoryData[subComponent].totalStock < 0) inventoryData[subComponent].totalStock = 0;
+                console.log(`Đã xuất lẻ ${quantity} của thành phần con: ${subComponent}. Tồn kho thành phần giảm.`);
+            }
+            break;
+
+        case 'NHAP_BO_SUNG_CON':
+            // 3. Khi tăng thêm/nhập riêng sản phẩm con -> MẶC ĐỊNH KHÔNG TĂNG SỐ LƯỢNG TỒN KIT TỔNG
+            if (inventoryData[subComponent]) {
+                inventoryData[subComponent].totalStock += quantity;
+                console.log(`Nhập bổ sung riêng thành phần con ${subComponent}: +${quantity}. Tồn kho Bộ tổng (${productCode}) giữ nguyên không đổi!`);
+            }
+            break;
+
+        default:
+            console.warn("Loại giao dịch không hợp lệ.");
+    }
+
+    // Cập nhật lại giao diện bảng tồn kho sau khi tính toán
+    updateInventoryUI(inventoryData);
+}
+
+// Hàm giả lập cập nhật giao diện hiển thị bảng (Tab 2)
+function updateInventoryUI(data) {
+    // Cập nhật DOM hiển thị số lượng tồn mới cho từng dòng sản phẩm tương ứng trên bảng
+    console.log("Đã làm mới bảng Tồn Kho & Cảnh Báo theo logic mới.");
+}
+// Hàm chuyển đổi và ghi nhớ Theme người dùng chọn
+function changeTheme(themeName) {
+    // Xóa các class theme cũ
+    document.body.className = document.body.className.replace(/theme-\S+/g, '');
+    
+    if (themeName !== 'default') {
+        document.body.classList.add('theme-' + themeName);
+    }
+    
+    // Lưu lựa chọn vào bộ nhớ trình duyệt (LocalStorage) để lần sau mở lên vẫn giữ nguyên theme
+    localStorage.setItem('user_selected_theme', themeName);
+}
+
+// Tự động khôi phục theme khi tải lại trang
+window.addEventListener('DOMContentLoaded', () => {
+    let savedTheme = localStorage.getItem('user_selected_theme');
+    if (savedTheme) {
+        let selector = document.getElementById('themeSelector');
+        if (selector) selector.value = savedTheme;
+        changeTheme(savedTheme);
+    }
+});
+// Biến trạng thái gộp dòng cho Tab 3
+let isGomNhomMode = false;
+
+function chuyenDoiCheDoGop() {
+    isGomNhomMode = !isGomNhomMode;
+    
+    // Đổi màu nền nút bấm để nhận diện trạng thái Bật / Tắt
+    let btn = event.target;
+    if (isGomNhomMode) {
+        btn.style.backgroundColor = "#28a745"; // Đổi sang màu xanh khi bật
+        btn.innerText = "✅ Đang Gộp Dòng (Tắt)";
+        alert("Đã BẬT chế độ gộp dòng! Các hộp trùng tên và LOT trong ngày sẽ được cộng dồn lại.");
+    } else {
+        btn.style.backgroundColor = "#f0ad4e"; // Quay lại màu vàng khi tắt
+        btn.innerText = "🔄 Gộp Dòng In Biên Bản";
+        alert("Đã TẮT chế độ gộp dòng (quay lại xem chi tiết từng lần quét).");
+    }
+    
+    // Gọi lại hàm vẽ bảng để cập nhật giao diện ngay lập tức
+    renderTables();
+}
+// Hàm gom nhóm dữ liệu quét barcode
+function renderBangThongKeGop(mangDuLieuGoc) {
+    const mapGomNhom = {};
+    mangDuLieuGoc.forEach(item => {
+        let ngayNhap = "N/A";
+        if (item.thoiGian) {
+            const parts = item.thoiGian.trim().split(' ');
+            ngayNhap = parts.length > 1 ? parts[1] : parts[0];
         }
-        const db = firebase.database();
-    </script>
+        const key = `${ngayNhap}_${item.tenSanPham}_${item.lot}`;
+        if (!mapGomNhom[key]) {
+            mapGomNhom[key] = {
+                thoiGianHienThi: ngayNhap,
+                tenSanPham: item.tenSanPham,
+                lot: item.lot,
+                hanSuDung: item.hanSuDung,
+                quyCach: item.quyCach,
+                tinhTrang: item.tinhTrang,
+                nhietDo: item.nhietDo,
+                tongSlNhap: parseInt(item.tongSlNhap) || 1,
+                danhSachChiTiet: [item]
+            };
+        } else {
+            mapGomNhom[key].tongSlNhap += parseInt(item.tongSlNhap) || 1;
+            mapGomNhom[key].danhSachChiTiet.push(item);
+        }
+    });
+    return Object.values(mapGomNhom);
+}
+// Hàm reset sạch form Tab 1 và khóa nút Lưu
+function resetTab1FormState() {
+    const barcodeInput = document.getElementById('productBarcode');
+    const lotInput = document.getElementById('lotNumber');
+    const expiryInput = document.getElementById('expiryDate');
+    const saveButton = document.querySelector('button[onclick="saveTransaction()"]');
+    const displayDiv = document.getElementById('productNameDisplay');
+
+    if (barcodeInput) barcodeInput.value = '';
+    if (lotInput) {
+        lotInput.value = '';
+        lotInput.readOnly = false;
+        lotInput.style.backgroundColor = '#fff';
+    }
+    if (expiryInput) {
+        expiryInput.value = '';
+        expiryInput.readOnly = false;
+        expiryInput.style.backgroundColor = '#fff';
+    }
+    document.getElementById('quantity').value = 1;
+    document.getElementById('noteText').value = '';
+    
+    if (displayDiv) {
+        displayDiv.innerText = "Chưa quét / Chưa nhận diện sản phẩm";
+        displayDiv.style.color = "#007bff";
+    }
+
+    // Khóa nút Lưu Giao Dịch
+    if (saveButton) {
+        saveButton.disabled = true;
+        saveButton.style.opacity = '0.5';
+        saveButton.style.cursor = 'not-allowed';
+    }
+}
+
+// Lắng nghe sự kiện ngay khi người dùng gõ/xóa/thay đổi ký tự tại ô Barcode
+document.addEventListener('DOMContentLoaded', () => {
+    const barcodeInput = document.getElementById('productBarcode');
+    if (barcodeInput) {
+        barcodeInput.addEventListener('input', function() {
+            let val = this.value.trim();
+            // Nếu ô barcode bị xóa trống hoặc nội dung quá ngắn, tự động khóa nút lưu và reset hiển thị
+            if (!val || val.length < 2) {
+                const saveButton = document.querySelector('button[onclick="saveTransaction()"]');
+                const displayDiv = document.getElementById('productNameDisplay');
+                const lotInput = document.getElementById('lotNumber');
+                const expiryInput = document.getElementById('expiryDate');
+
+                if (displayDiv) {
+                    displayDiv.innerText = "Chưa quét / Chưa nhận diện sản phẩm";
+                    displayDiv.style.color = "#007bff";
+                }
+                if (saveButton) {
+                    saveButton.disabled = true;
+                    saveButton.style.opacity = '0.5';
+                    saveButton.style.cursor = 'not-allowed';
+                }
+                if (lotInput) { lotInput.value = ''; lotInput.readOnly = false; lotInput.style.backgroundColor = '#fff'; }
+                if (expiryInput) { expiryInput.value = ''; expiryInput.readOnly = false; expiryInput.style.backgroundColor = '#fff'; }
+            }
+        });
+    }
+    
+    // Khóa nút Lưu mặc định khi mới mở trang nếu chưa quét sản phẩm
+    resetTab1FormState();
+});
+</script>
 </body>
 </html>
