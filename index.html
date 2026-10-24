@@ -1818,8 +1818,8 @@ function saveTransactionSilent() {
 
     logs.unshift({ category: currentCategory, timeStr: nowStr, dateISO: isoDateStr, userName: currentUser.name, productName: prodName, barcode: actualBarcode, lot: lot, expiry: expiry, type: type, qty: qty, note: note });
 
-    localStorage.setItem('qr_inventory_v11', JSON.stringify(inventory));
-    localStorage.setItem('qr_logs_v11', JSON.stringify(logs));
+    saveInventoryToCloud(inventory);
+    saveLogsToCloud(logs);
 
     document.getElementById('quantity').value = 1;
     document.getElementById('productNameDisplay').innerText = "Chưa quét / Chưa nhận diện sản phẩm";
@@ -2454,8 +2454,8 @@ function saveProductLotEdit() {
     }
 
     localStorage.setItem('qr_mapped_products_v7', JSON.stringify(mappedProducts));
-    localStorage.setItem('qr_inventory_v11', JSON.stringify(inventory));
-    localStorage.setItem('qr_logs_v11', JSON.stringify(logs));
+    saveInventoryToCloud(inventory);
+    saveLogsToCloud(logs);
 
     renderMappedProductsTable();
     populateLabelProductSelect();
@@ -2699,8 +2699,8 @@ function saveTransaction() {
 
     logs.unshift({ category: currentCategory, timeStr: nowStr, dateISO: isoDateStr, userName: currentUser.name, productName: prodName, barcode: actualBarcode, lot: lot, expiry: expiry, type: type, qty: qty, note: note });
 
-    localStorage.setItem('qr_inventory_v11', JSON.stringify(inventory));
-    localStorage.setItem('qr_logs_v11', JSON.stringify(logs));
+    saveInventoryToCloud(inventory);
+    saveLogsToCloud(logs);
 
     // --- RESET TOÀN BỘ GIAO DIỆN VÀ KHÓA NÚT LƯU SAU KHI LƯU THÀNH CÔNG ---
     resetTab1FormState();
@@ -2733,8 +2733,8 @@ function saveTransaction() {
 
                 logs.splice(index, 1);
 
-                localStorage.setItem('qr_inventory_v11', JSON.stringify(inventory));
-                localStorage.setItem('qr_logs_v11', JSON.stringify(logs));
+                saveInventoryToCloud(inventory);
+                saveLogsToCloud(logs);
 
                 renderTables();
                 alert("✅ Đã xóa giao dịch và tự động đồng bộ tồn kho thành công!");
@@ -2745,7 +2745,7 @@ function saveTransaction() {
             if (currentUser.role !== 'ADMIN') return;
             if (confirm("Xóa lô kho này?")) {
                 delete inventory[batchKey];
-                localStorage.setItem('qr_inventory_v11', JSON.stringify(inventory));
+                saveInventoryToCloud(inventory);
                 renderTables();
             }
         }
@@ -4070,20 +4070,22 @@ function uniqueConfigsLengthIsOne() {
     return true; // Hỗ trợ kích hoạt auto lưu khi chọn xong dòng duy nhất
 }
 
-        const firebaseConfig = {
-          apiKey: "AIzaSyCODnAwFDbfixlIWQKdgZmMFWVa6M4goJc",
-          authDomain: "kho-labpkbvdhyd1.firebaseapp.com",
-          databaseURL: "https://kho-labpkbvdhyd1-default-rtdb.firebaseio.com",
-          projectId: "kho-labpkbvdhyd1",
-          storageBucket: "kho-labpkbvdhyd1.firebasestorage.app",
-          messagingSenderId: "1039878184033",
-          appId: "1:1039878184033:web:22875e1ce1f2f78c24de20",
-          measurementId: "G-GFGRSF4327"
-        };
+const firebaseConfig = {
+  apiKey: "AIzaSyCODnAwFDbfixlIWQKdgZmMFWVa6M4goJc",
+  authDomain: "kho-labpkbvdhyd1.firebaseapp.com",
+  databaseURL: "https://kho-labpkbvdhyd1-default-rtdb.firebaseio.com",
+  projectId: "kho-labpkbvdhyd1",
+  storageBucket: "kho-labpkbvdhyd1.firebasestorage.app",
+  messagingSenderId: "1039878184033",
+  appId: "1:1039878184033:web:22875e1ce1f2f78c24de20",
+  measurementId: "G-GFGRSF4327"
+};
 
 // Khởi tạo Firebase
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
+if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+}
+const db = firebase.database();
 
   // 2. Hàm lưu dữ liệu lên Firebase thay cho localStorage (hoặc chạy song song)
   function saveToCloud(key, data) {
@@ -4120,6 +4122,44 @@ function uniqueConfigsLengthIsOne() {
        // Gọi lại hàm render giao diện sản phẩm của bạn ở đây nếu cần
     });
   });
+// --- CÁC HÀM ĐỒNG BỘ FIREBASE REALTIME ---
+
+// 1. Hàm lưu Tồn kho lên Cloud và LocalStorage
+function saveInventoryToCloud(invData) {
+    localStorage.setItem('qr_inventory_v11', JSON.stringify(invData));
+    db.ref('kho_xet_nghiem/qr_inventory_v11').set(invData)
+      .catch((error) => console.error("Lỗi đồng bộ tồn kho lên Firebase: ", error));
+}
+
+// 2. Hàm lưu Lịch sử giao dịch lên Cloud và LocalStorage
+function saveLogsToCloud(logsData) {
+    localStorage.setItem('qr_logs_v11', JSON.stringify(logsData));
+    db.ref('kho_xet_nghiem/qr_logs_v11').set(logsData)
+      .catch((error) => console.error("Lỗi đồng bộ lịch sử lên Firebase: ", error));
+}
+
+// 3. Lắng nghe dữ liệu thời gian thực khi vừa mở trang (Realtime Listener)
+window.addEventListener('DOMContentLoaded', () => {
+    // Lắng nghe tồn kho từ các máy khác
+    db.ref('kho_xet_nghiem/qr_inventory_v11').on('value', (snapshot) => {
+        const cloudInventory = snapshot.val();
+        if (cloudInventory) {
+            inventory = cloudInventory;
+            localStorage.setItem('qr_inventory_v11', JSON.stringify(cloudInventory));
+            if (typeof renderTables === 'function') renderTables();
+        }
+    });
+
+    // Lắng nghe lịch sử giao dịch từ các máy khác
+    db.ref('kho_xet_nghiem/qr_logs_v11').on('value', (snapshot) => {
+        const cloudLogs = snapshot.val();
+        if (cloudLogs) {
+            logs = cloudLogs;
+            localStorage.setItem('qr_logs_v11', JSON.stringify(cloudLogs));
+            if (typeof renderTables === 'function') renderTables();
+        }
+    });
+});
 <!-- Đoạn mã logic xử lý Nhập / Xuất kho cho Kit tổng và Sản phẩm con -->
 /**
  * Xử lý giao dịch Nhập / Xuất kho áp dụng cho nhóm SHPT (PCR)
