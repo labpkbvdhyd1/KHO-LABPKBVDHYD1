@@ -1804,7 +1804,9 @@ function saveTransactionSilent() {
     let prodName = res ? res.product.name : `SP_${barcodeTerm}`;
     let actualBarcode = res ? res.product.barcode : barcodeTerm;
 
-    const batchKey = `${currentCategory}_${actualBarcode}_${lot}`;
+    const cleanBarcode = actualBarcode.replace(/[.#$\[\]\/]/g, '_');
+const cleanLot = lot.replace(/[.#$\[\]\/]/g, '_');
+const batchKey = `${currentCategory}_${cleanBarcode}_${cleanLot}`;
     const now = new Date();
     const nowStr = now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' ' + now.toLocaleDateString('vi-VN');
     const isoDateStr = now.toISOString().split('T')[0];
@@ -2691,7 +2693,9 @@ function saveTransaction() {
             if (subbedBoxes > 0 && inventory[kitBatchKey].qty >= subbedBoxes) { inventory[kitBatchKey].qty -= subbedBoxes; }
         }
     } else {
-        const batchKey = `${currentCategory}_${actualBarcode}_${lot}`;
+        const cleanBarcode = actualBarcode.replace(/[.#$\[\]\/]/g, '_');
+const cleanLot = lot.replace(/[.#$\[\]\/]/g, '_');
+const batchKey = `${currentCategory}_${cleanBarcode}_${cleanLot}`;
         if (type === 'NHẬP') {
             if (!inventory[batchKey]) {
                 inventory[batchKey] = { category: currentCategory, productName: prodName, barcode: actualBarcode, lot: lot, importTimeStr: nowStr, importDateISO: isoDateStr, lastUser: currentUser.name, expiry: expiry, qty: 0 };
@@ -4166,22 +4170,37 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 // --- HÀM ĐỒNG BỘ TOÀN DIỆN LÊN FIREBASE ---
 
+// --- HÀM LÀM SẠCH KEY AN TOÀN CHO FIREBASE ---
+function sanitizeKey(keyStr) {
+    if (!keyStr) return "unknown_key";
+    return String(keyStr).replace(/[.#$\[\]\/]/g, '_');
+}
+
+// --- HÀM ĐỒNG BỘ TOÀN DIỆN ĐÃ ĐƯỢC CHUẨN HÓA ---
 function saveProductsToCloud(prodData) {
     localStorage.setItem('qr_mapped_products_v7', JSON.stringify(prodData));
     db.ref('kho_xet_nghiem/qr_mapped_products_v7').set(prodData)
-      .catch((error) => console.error("Lỗi đồng bộ sản phẩm lên Firebase: ", error));
+      .catch((error) => console.error("Lỗi đồng bộ sản phẩm: ", error));
 }
 
 function saveInventoryToCloud(invData) {
     localStorage.setItem('qr_inventory_v11', JSON.stringify(invData));
-    db.ref('kho_xet_nghiem/qr_inventory_v11').set(invData)
-      .catch((error) => console.error("Lỗi đồng bộ tồn kho lên Firebase: ", error));
+    
+    // Chuẩn hóa toàn bộ key bên trong kho trước khi đẩy lên mây
+    let safeInvData = {};
+    for (let k in invData) {
+        let safeKey = sanitizeKey(k);
+        safeInvData[safeKey] = invData[k];
+    }
+
+    db.ref('kho_xet_nghiem/qr_inventory_v11').set(safeInvData)
+      .catch((error) => console.error("Lỗi đồng bộ tồn kho: ", error));
 }
 
 function saveLogsToCloud(logsData) {
     localStorage.setItem('qr_logs_v11', JSON.stringify(logsData));
     db.ref('kho_xet_nghiem/qr_logs_v11').set(logsData)
-      .catch((error) => console.error("Lỗi đồng bộ lịch sử lên Firebase: ", error));
+      .catch((error) => console.error("Lỗi đồng bộ lịch sử: ", error));
 }
 
 // --- LẮNG NGHE TẤT CẢ DỮ LIỆU THỜI GIAN THỰC TỪ CÁC MÁY KHÁC ---
