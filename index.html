@@ -1629,6 +1629,12 @@ let mappedProducts = JSON.parse(localStorage.getItem('qr_mapped_products_v7')) |
                 let p = res.product;
                 displayDiv.innerText = `[${p.category}] ${p.name}`;
                 displayDiv.style.color = "#28a745";
+const saveButton = document.querySelector('button[onclick="saveTransaction()"]');
+    if (saveButton) {
+        saveButton.disabled = false;
+        saveButton.style.opacity = '1';
+        saveButton.style.cursor = 'pointer';
+    }
 
                 currentCategory = p.category;
                 document.getElementById('currentCategoryDisplay').innerText = "ĐANG CHỌN: " + currentCategory;
