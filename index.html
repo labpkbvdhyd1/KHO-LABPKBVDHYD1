@@ -1499,7 +1499,7 @@ let mappedProducts = JSON.parse(localStorage.getItem('qr_mapped_products_v7')) |
             }
 
             targetProd.stt = val;
-            localStorage.setItem('qr_mapped_products_v7', JSON.stringify(mappedProducts));
+            saveProductsToCloud(mappedProducts);
             renderMappedProductsTable();
             renderTables();
         }
@@ -2300,7 +2300,7 @@ function openProductModal() {
                 storageTemp, unit, spec, minStock, maxStock, packPerBox, defaultLot: lot, defaultExpiry: expiry 
             });
             
-            localStorage.setItem('qr_mapped_products_v7', JSON.stringify(mappedProducts));
+            saveProductsToCloud(mappedProducts);
             renderMappedProductsTable();
             populateLabelProductSelect();
             document.getElementById('newProdName').value = '';
@@ -2315,7 +2315,7 @@ function openProductModal() {
 
             if (confirm("Xóa sản phẩm này khỏi cấu hình?")) {
                 mappedProducts.splice(index, 1);
-                localStorage.setItem('qr_mapped_products_v7', JSON.stringify(mappedProducts));
+                saveProductsToCloud(mappedProducts);
                 renderMappedProductsTable();
                 populateLabelProductSelect();
             }
@@ -2453,7 +2453,7 @@ function saveProductLotEdit() {
         });
     }
 
-    localStorage.setItem('qr_mapped_products_v7', JSON.stringify(mappedProducts));
+    saveProductsToCloud(mappedProducts);
     saveInventoryToCloud(inventory);
     saveLogsToCloud(logs);
 
@@ -3475,7 +3475,7 @@ function renderReorderTable() {
                         }
                     }
 
-                    localStorage.setItem('qr_mapped_products_v7', JSON.stringify(mappedProducts));
+                    saveProductsToCloud(mappedProducts);
                     renderMappedProductsTable();
                     populateLabelProductSelect();
                     alert(`Đã nhập thành công ${count} sản phẩm từ file Excel!`);
@@ -4124,23 +4124,22 @@ const db = firebase.database();
   });
 // --- CÁC HÀM ĐỒNG BỘ FIREBASE REALTIME ---
 
-// 1. Hàm lưu Tồn kho lên Cloud và LocalStorage
+// --- 1. HÀM LƯU TỒN KHO LÊN CLOUD ---
 function saveInventoryToCloud(invData) {
     localStorage.setItem('qr_inventory_v11', JSON.stringify(invData));
     db.ref('kho_xet_nghiem/qr_inventory_v11').set(invData)
       .catch((error) => console.error("Lỗi đồng bộ tồn kho lên Firebase: ", error));
 }
 
-// 2. Hàm lưu Lịch sử giao dịch lên Cloud và LocalStorage
+// --- 2. HÀM LƯU LỊCH SỬ GIAO DỊCH LÊN CLOUD ---
 function saveLogsToCloud(logsData) {
     localStorage.setItem('qr_logs_v11', JSON.stringify(logsData));
     db.ref('kho_xet_nghiem/qr_logs_v11').set(logsData)
       .catch((error) => console.error("Lỗi đồng bộ lịch sử lên Firebase: ", error));
 }
 
-// 3. Lắng nghe dữ liệu thời gian thực khi vừa mở trang (Realtime Listener)
+// --- 3. LẮNG NGHE DỮ LIỆU THỜI GIAN THỰC TỪ CÁC MÁY KHÁC ---
 window.addEventListener('DOMContentLoaded', () => {
-    // Lắng nghe tồn kho từ các máy khác
     db.ref('kho_xet_nghiem/qr_inventory_v11').on('value', (snapshot) => {
         const cloudInventory = snapshot.val();
         if (cloudInventory) {
@@ -4150,7 +4149,58 @@ window.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Lắng nghe lịch sử giao dịch từ các máy khác
+    db.ref('kho_xet_nghiem/qr_logs_v11').on('value', (snapshot) => {
+        const cloudLogs = snapshot.val();
+        if (cloudLogs) {
+            logs = cloudLogs;
+            localStorage.setItem('qr_logs_v11', JSON.stringify(cloudLogs));
+            if (typeof renderTables === 'function') renderTables();
+        }
+    });
+});
+// --- HÀM ĐỒNG BỘ TOÀN DIỆN LÊN FIREBASE ---
+
+function saveProductsToCloud(prodData) {
+    localStorage.setItem('qr_mapped_products_v7', JSON.stringify(prodData));
+    db.ref('kho_xet_nghiem/qr_mapped_products_v7').set(prodData)
+      .catch((error) => console.error("Lỗi đồng bộ sản phẩm lên Firebase: ", error));
+}
+
+function saveInventoryToCloud(invData) {
+    localStorage.setItem('qr_inventory_v11', JSON.stringify(invData));
+    db.ref('kho_xet_nghiem/qr_inventory_v11').set(invData)
+      .catch((error) => console.error("Lỗi đồng bộ tồn kho lên Firebase: ", error));
+}
+
+function saveLogsToCloud(logsData) {
+    localStorage.setItem('qr_logs_v11', JSON.stringify(logsData));
+    db.ref('kho_xet_nghiem/qr_logs_v11').set(logsData)
+      .catch((error) => console.error("Lỗi đồng bộ lịch sử lên Firebase: ", error));
+}
+
+// --- LẮNG NGHE TẤT CẢ DỮ LIỆU THỜI GIAN THỰC TỪ CÁC MÁY KHÁC ---
+window.addEventListener('DOMContentLoaded', () => {
+    // 1. Lắng nghe sản phẩm
+    db.ref('kho_xet_nghiem/qr_mapped_products_v7').on('value', (snapshot) => {
+        const cloudProducts = snapshot.val();
+        if (cloudProducts) {
+            mappedProducts = cloudProducts;
+            localStorage.setItem('qr_mapped_products_v7', JSON.stringify(cloudProducts));
+            if (typeof renderMappedProductsTable === 'function') renderMappedProductsTable();
+        }
+    });
+
+    // 2. Lắng nghe tồn kho
+    db.ref('kho_xet_nghiem/qr_inventory_v11').on('value', (snapshot) => {
+        const cloudInventory = snapshot.val();
+        if (cloudInventory) {
+            inventory = cloudInventory;
+            localStorage.setItem('qr_inventory_v11', JSON.stringify(cloudInventory));
+            if (typeof renderTables === 'function') renderTables();
+        }
+    });
+
+    // 3. Lắng nghe lịch sử
     db.ref('kho_xet_nghiem/qr_logs_v11').on('value', (snapshot) => {
         const cloudLogs = snapshot.val();
         if (cloudLogs) {
