@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hệ Thống Quản Lý Kho Phân Nhóm Xét Nghiệm</title>
@@ -13,6 +14,264 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 <style>
+/* ========================================================== */
+/* KHUNG VIỀN ĐỒNG BỘ CHO CÁC TAB CON DANH MỤC & LAB LƯU MẪU */
+/* ========================================================== */
+
+/* ========================================================== */
+/* KHẮC PHỤC SÁNG VÀNG ĐỒNG THỜI: CHỈ MỤC ĐƯỢC CHỌN MỚI SÁNG VÀNG */
+/* ========================================================== */
+
+/* 1. Khung bọc tổng thể cho danh sách nhóm hóa chất và Lab Lưu Mẫu */
+.sidebar-sub-list, #lab-submenu {
+    background: rgba(0, 0, 0, 0.12) !important;
+    border: 2px solid rgba(255, 255, 255, 0.25) !important;
+    border-radius: 8px !important;
+    padding: 6px !important;
+    margin-top: 4px !important;
+}
+
+/* 2. Định dạng mặc định cho tất cả các nút tab con (màu xanh lá/xanh ngọc) */
+.sidebar-sub-list .sub-menu-btn, 
+#lab-submenu .sub-menu-btn {
+    background-color: #20c997 !important; /* Màu xanh mặc định */
+    color: white !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    border-radius: 6px !important;
+    padding: 8px 10px !important;
+    margin-bottom: 5px !important;
+    font-weight: 600 !important;
+    transition: all 0.2s ease;
+}
+
+/* 3. Hiệu ứng khi rê chuột */
+.sidebar-sub-list .sub-menu-btn:hover, 
+#lab-submenu .sub-menu-btn:hover {
+    border-color: #ffffff !important;
+    background-color: #17a2b8 !important;
+    transform: translateX(2px);
+}
+
+/* 4. CHỈ KHI NÀO CÓ CLASS 'active' THÌ MỚI SÁNG VÀNG (Dù ở Kho XN hay Lab Lưu Mẫu) */
+.sidebar-sub-list .sub-menu-btn.active, 
+#lab-submenu .sub-menu-btn.active {
+    background-color: #ffc107 !important; /* Sáng vàng */
+    color: #212529 !important;            /* Chữ đen rõ nét */
+    border: 2px solid #ffffff !important;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+    font-weight: bold !important;
+}
+/* ========================================================== */
+/* TẠO VIỀN KHUNG CHO CÁC TAB CON KHO XN & LAB LƯU MẪU */
+/* ========================================================== */
+
+/* 1. Viền khung cho các nút tab con Kho Xét Nghiệm trong Sidebar */
+.sidebar-sub-list .sub-menu-btn {
+    border: 1px solid rgba(255, 255, 255, 0.4) !important; /* Tạo viền mờ rõ nét cho các tab con kho XN */
+    border-radius: 5px !important;
+    margin-bottom: 4px !important;
+    transition: all 0.2s ease;
+}
+
+.sidebar-sub-list .sub-menu-btn:hover {
+    border-color: #ffffff !important;
+    background-color: #17a2b8 !important;
+}
+
+.sidebar-sub-list .sub-menu-btn.active {
+    border: 2px solid #ffc107 !important; /* Viền màu vàng nổi bật cho tab đang chọn */
+    box-shadow: 0 0 6px rgba(255, 193, 7, 0.4);
+}
+
+/* 2. Viền khung cho các nút tab con Lab Lưu Mẫu (Mẫu Máu & Mẫu Nước Tiểu) */
+#lab-submenu .sub-menu-btn {
+    border: 1px solid rgba(255, 255, 255, 0.4) !important; /* Tạo viền rõ nét cho các tab con Lab Lưu Mẫu */
+    border-radius: 5px !important;
+    margin-bottom: 4px !important;
+    transition: all 0.2s ease;
+}
+
+#lab-submenu .sub-menu-btn:hover {
+    border-color: #ffffff !important;
+    background-color: #17a2b8 !important;
+}
+
+#lab-submenu .sub-menu-btn.active {
+    border: 2px solid #ffc107 !important; /* Viền màu vàng nổi bật khi chọn mẫu máu / nước tiểu */
+    box-shadow: 0 0 6px rgba(255, 193, 7, 0.4);
+}
+/* Tùy chỉnh hiển thị chữ và số đậm nét, đen tuyền khi in biên bản */
+.bb-table th, .bb-table td, 
+.sheet, .sheet span, .sheet b, .sheet p {
+    color: #000000 !important; /* Đen tuyền tuyệt đối */
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+}
+
+/* Làm đậm rõ các con số số lượng, số LOT và ngày tháng */
+.bb-table td {
+    font-weight: 500;
+}
+.bb-table td b {
+    font-weight: 700 !important;
+}
+/* Phóng to khung viền, tăng cỡ chữ và làm đậm rõ cho ô quét/nhập mã sản phẩm */
+#productBarcode {
+    height: 56px !important;            /* Tăng chiều cao khung viền */
+    font-size: 20px !important;         /* Cỡ chữ to rõ */
+    font-weight: bold !important;       /* Chữ in đậm */
+    padding: 10px 16px !important;      /* Khoảng cách lề trong */
+    border: 2px solid #2563eb !important; /* Khung viền màu xanh nổi bật */
+    border-radius: 6px !important;      /* Bo góc khung */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); /* Hiệu ứng đổ bóng nhẹ */
+}
+/* Đoạn CSS để nút tự co giãn theo nội dung và gọn gàng hơn */
+.btn-export-bien-ban, /* Thay thế bằng tên class hoặc ID thực tế của nút này trong code của anh */
+.tab-pane #tab3 .btn-export-bien-ban {
+    display: inline-block; /* Hoặc bỏ display block, dùng mặc định */
+    width: auto !important;  /* Bỏ độ rộng 100% */
+    padding: 6px 16px;      /* Điều chỉnh khoảng cách lề trong cho vừa vặn */
+    margin: 8px 0;          /* Khoảng cách trên dưới nếu cần */
+}
+/* --- TÙY CHỈNH THU GỌN TIÊU ĐỀ TAB LAB LƯU MẪU --- */
+.lab-sub-tab-btn {
+    padding: 6px 12px !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    white-space: nowrap !important;
+    border-radius: 4px 4px 0 0 !important;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+/* Hiệu ứng khi rê chuột hoặc active */
+.lab-sub-tab-btn:hover {
+    opacity: 0.9;
+}
+/* ========================================================== */
+/* PHÓNG TO KHUNG QUÉT MÃ VẠCH TẠI TAB 1 GẤP ĐÔI */
+/* ========================================================== */
+
+/* Mở rộng thanh điều khiển chứa khung quét ở Tab 1 */
+#tab1ControlPanel {
+    padding: 16px !important;
+    background: #f8fafc;
+    border: 2px dashed #3b82f6;
+    border-radius: 8px;
+    margin-bottom: 12px !important;
+}
+
+/* Phóng to ô nhập liệu/quét mã vạch gấp đôi (tăng chiều cao, cỡ chữ và độ đậm) */
+#inputQuetMauLuu {
+    height: 56px !important;            /* Tăng gấp đôi chiều cao tiêu chuẩn */
+    font-size: 20px !important;         /* Cỡ chữ lớn, rõ ràng */
+    font-weight: bold !important;
+    padding: 10px 16px !important;
+    border: 2px solid #2563eb !important;
+    border-radius: 6px !important;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+/* Tăng kích thước nút Lưu Mẫu Tự Động và các nút đi kèm cho cân xứng */
+#tab1ControlPanel button {
+    height: 56px !important;
+    padding: 0 24px !important;
+    font-size: 14px !important;
+    font-weight: bold !important;
+    border-radius: 6px !important;
+}
+/* 1. Ép toàn bộ giao diện dùng font Inter mượt mà, thanh thoát */
+    *, html, body, div, span, table, th, td, input, select, textarea, button {
+        font-family: 'Inter', sans-serif !important;
+        box-sizing: border-box;
+    }
+
+    /* 2. Làm mềm các ô nhập liệu, bảng biểu và nút bấm */
+    input, select, textarea {
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 6px !important;
+        padding: 8px 12px !important;
+        font-size: 13px !important;
+        background-color: #ffffff;
+        transition: all 0.2s ease;
+    }
+
+    input:focus, select:focus, textarea:focus {
+        border-color: #0ea5e9 !important;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15);
+    }
+
+    /* 3. Tinh chỉnh các khung form và card cho thoáng đãng, hiện đại */
+    .form-grid, .tab-content-wrapper, .top-header, .sidebar-menu {
+        border-radius: 8px;
+    }
+
+    /* 4. Làm đẹp các nút bấm (Button) */
+    button {
+        border-radius: 6px !important;
+        font-weight: 600 !important;
+        padding: 8px 14px !important;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+
+    /* 5. Tinh chỉnh bảng dữ liệu gọn gàng, dễ nhìn */
+    table th {
+        background-color: #f8fafc !important;
+        color: #334155;
+        font-weight: 600;
+        border-bottom: 2px solid #e2e8f0 !important;
+        padding: 8px 10px !important;
+    }
+
+    table td {
+        padding: 8px 10px !important;
+        border-color: #f1f5f9 !important;
+        color: #1e293b;
+    }
+    body {
+        background-color: #f4f6f9;
+        margin: 0;
+        padding: 0;
+        height: 100vh;
+        overflow: hidden;
+    }
+
+    /* Giữ nguyên các định dạng bố cục giao diện của bạn */
+    .app-layout { display: flex; height: 100vh; width: 100vw; }
+    .sidebar-menu { width: 220px; min-width: 220px; background-color: rgba(0, 64, 133, 0.95); padding: 12px 8px; display: flex; flex-direction: column; box-shadow: 2px 0 8px rgba(0,0,0,0.15); z-index: 10; }
+    .sidebar-title { color: #ffffff; font-size: 12px; font-weight: bold; text-transform: uppercase; text-align: center; padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.2); margin-bottom: 8px; }
+    .category-list { display: flex; flex-direction: column; gap: 6px; flex: 1; }
+    .menu-btn { background-color: #17a2b8; color: white; border: none; padding: 9px 8px; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 11px; text-align: left; display: flex; align-items: center; gap: 6px; }
+    .menu-btn:hover { background-color: #138496; }
+    .menu-btn.active { background-color: #ffc107; color: #212529; }
+    
+    .main-content { flex: 1; padding: 10px 15px; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+    .top-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; background: rgba(255, 255, 255, 0.95); padding: 6px 12px; border-radius: 6px; border: 1px solid #ced4da; }
+    .top-header h2 { font-size: 14px; margin: 0; color: #333; }
+    
+    .tab-container { display: flex; flex-wrap: nowrap; gap: 2px; border-bottom: 2px solid #007bff; background: rgba(233, 236, 239, 0.9); padding: 4px 4px 0 4px; border-radius: 6px 6px 0 0; overflow-x: auto; }
+    .tab-btn { flex: 1; background-color: #e2e8f0; border: 1px solid #cbd5e1; border-bottom: none; padding: 6px 4px; border-radius: 5px 5px 0 0; font-size: 10px; font-weight: bold; color: #475569; cursor: pointer; text-align: center; }
+    .tab-btn.active { background-color: #007bff; color: white; border-color: #007bff; }
+    
+    .tab-content-wrapper { flex: 1; background: rgba(255, 255, 255, 0.95); border: 1px solid #ced4da; border-top: none; padding: 12px; border-radius: 0 0 6px 6px; overflow-y: auto; position: relative; }
+    .tab-pane { display: none; height: 100%; }
+    .tab-pane.active { display: block; }
+
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+    .form-group { margin-bottom: 8px; position: relative; }
+    label { font-weight: bold; display: block; margin-bottom: 3px; font-size: 11px; color: #444; }
+    input, select, textarea, button { width: 100%; padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px; }
+    
+    table { width: 100%; border-collapse: collapse; font-size: 11px; }
+    th, td { border: 1px solid #ddd; padding: 5px 6px; text-align: left; }
+    th { background-color: #f2f2f2; position: sticky; top: 0; z-index: 1; }
+
+    /* Các hiệu ứng phụ */
+    .login-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 32, 64, 0.85); backdrop-filter: blur(8px); z-index: 9999; display: flex; align-items: center; justify-content: center; }
+    .login-card { background: #ffffff; padding: 25px 30px; border-radius: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); width: 100%; max-width: 380px; text-align: center; }
+    .btn-login { width: 100%; background-color: #007bff; color: white; border: none; padding: 10px; border-radius: 5px; font-weight: bold; cursor: pointer; margin-top: 10px; }
 /* Định dạng chữ to gấp đôi và nổi bật cho LOT và Date ở Tab 5 */
 .lot-date-highlight-tab5 {
     font-size: 15px !important;
@@ -205,7 +464,6 @@
             margin: 0 auto;
             background: white;
             box-sizing: border-box;
-            font-family: "Times New Roman", Times, serif;
             font-size: 13pt;
             color: #000;
             padding: 20mm;
@@ -265,6 +523,13 @@
         .menu-btn { background-color: #17a2b8; color: white; border: none; padding: 9px 8px; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 11px; text-align: left; transition: all 0.2s ease; display: flex; align-items: center; gap: 6px; }
         .menu-btn:hover { background-color: #138496; }
         .menu-btn.active { background-color: #ffc107; color: #212529; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .sidebar-group-container { display: flex; flex-direction: column; gap: 2px; }
+        .sidebar-group-header { background-color: #138496; color: white; border: none; padding: 8px; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 11px; text-align: left; display: flex; justify-content: space-between; align-items: center; }
+        .sidebar-group-header:hover { background-color: #0f6674; }
+        .sidebar-sub-list { display: flex; flex-direction: column; gap: 4px; padding-left: 10px; margin-top: 4px; border-left: 2px solid rgba(255,255,255,0.3); }
+        .sub-menu-btn { background-color: #20c997; color: white; border: none; padding: 7px 6px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 10.5px; text-align: left; display: flex; align-items: center; gap: 5px; }
+        .sub-menu-btn:hover { background-color: #17a2b8; }
+        .sub-menu-btn.active { background-color: #ffc107 !important; color: #212529 !important; }
         .sidebar-footer { margin-top: auto; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.2); display: flex; flex-direction: column; gap: 8px; }
         .btn-admin-sidebar { background-color: #6c757d; color: white; border: 1px solid rgba(255,255,255,0.3); padding: 8px 6px; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 11px; width: 100%; text-align: left; display: flex; align-items: center; gap: 5px; }
         .btn-admin-sidebar:hover { background-color: #5a6268; }
@@ -498,7 +763,6 @@
             margin: 0 auto;
             background: white;
             box-sizing: border-box;
-            font-family: "Times New Roman", Times, serif;
             font-size: 10pt;
             color: #000;
             padding: 10mm;
@@ -565,12 +829,44 @@
         <aside class="sidebar-menu">
             <div class="sidebar-title">DANH MỤC NHÓM HÓA CHẤT</div>
             <div class="category-list">
-                <button class="menu-btn active" onclick="switchCategory('NHÓM MIỄN DỊCH', this)">🧪 NHÓM MIỄN DỊCH</button>
-                <button class="menu-btn" onclick="switchCategory('NHÓM HUYẾT HỌC - ĐÔNG MÁU', this)">🩸 NHÓM HUYẾT HỌC - ĐÔNG MÁU</button>
-                <button class="menu-btn" onclick="switchCategory('NHÓM SINH HÓA', this)">🔬 NHÓM SINH HÓA</button>
-                <button class="menu-btn" onclick="switchCategory('NHÓM VẬT TƯ TIÊU HAO', this)">📦 NHÓM VẬT TƯ TIÊU HAO</button>
-                <button class="menu-btn" onclick="switchCategory('NHÓM SHPT (PCR)', this)">🧬 NHÓM SHPT (PCR)</button>
-            </div>
+                <div class="sidebar-group-container">
+                    <button class="sidebar-group-header" onclick="toggleSidebarGroup('groupKhoaXN')">
+                        <span>🧪 KHO XÉT NGHIỆM</span> <span id="icon-groupKhoaXN">▼</span>
+                    </button>
+                    <div id="subList-groupKhoaXN" class="sidebar-sub-list">
+                        <button class="sub-menu-btn active" onclick="switchCategory('NHÓM MIỄN DỊCH', this)">🧪 NHÓM MIỄN DỊCH</button>
+                        <button class="sub-menu-btn" onclick="switchCategory('NHÓM HUYẾT HỌC - ĐÔNG MÁU', this)">🩸 NHÓM HUYẾT HỌC - ĐÔNG MÁU</button>
+                        <button class="sub-menu-btn" onclick="switchCategory('NHÓM SINH HÓA', this)">🔬 NHÓM SINH HÓA</button>
+                        <button class="sub-menu-btn" onclick="switchCategory('NHÓM VẬT TƯ TIÊU HAO', this)">📦 NHÓM VẬT TƯ TIÊU HAO</button>
+                        <button class="sub-menu-btn" onclick="switchCategory('NHÓM SHPT (PCR)', this)">🧬 NHÓM SHPT (PCR)</button>
+                    </div>
+                </div>
+
+                <!-- Mục Quản Lý Mới: LAB LƯU MẪU -->
+<!-- Mục Quản Lý Mới: LAB LƯU MẪU có thu gọn và 2 nhánh con -->
+<div class="sidebar-group-container" style="margin-top: 6px;">
+    <!-- Nút chính để bấm thu gọn / mở rộng -->
+    <button class="sidebar-group-header" style="background-color: #28a745; width: 100%; text-align: left; display: flex; justify-content: space-between; align-items: center;" onclick="toggleLabSubMenu()">
+        <span>🗄️ LAB LƯU MẪU</span>
+        <span id="lab-arrow">▼</span>
+    </button>
+    
+    <!-- 2 Nhánh con: Mẫu Máu và Mẫu Nước Tiểu -->
+    <div id="lab-submenu" style="display: block; padding-left: 12px; margin-top: 4px;">
+        <button class="sub-menu-btn active" onclick="switchLabBranch('mau', this)" style="width: 100%; text-align: left; margin-bottom: 3px;">
+            🩸 Lưu Mẫu Máu
+        </button>
+        <button class="sub-menu-btn" onclick="switchLabBranch('nuoc-tieu', this)" style="width: 100%; text-align: left;">
+            🧪 Lưu Mẫu Nước Tiểu
+        </button>
+    </div>
+</div>
+
+    <div style="margin: 8px 0;">
+        <button class="menu-btn" onclick="openTab(event, 'tabNoiKiemIQC')" style="background-color: #20c997; width: 100%;">
+            📊 NHÓM NỘI KIỂM IQC
+        </button>
+    </div>
 
             <div class="sidebar-footer">
 <button id="btnAdminConfig" class="btn-admin-sidebar" onclick="openProductModal()">
@@ -660,8 +956,6 @@
                         <label style="display: flex; align-items: center; gap: 5px; font-weight: bold; cursor: pointer; background: #e9ecef; padding: 6px 10px; border-radius: 4px; border: 1px solid #ced4da; margin: 0;">
                            <input type="checkbox" id="autoSaveCheckbox" style="width: auto; margin: 0;"> ⚡ Auto lưu khi quét máy quét
                         </label>
-                        <button onclick="printSelectedSlip('NHẬP')" class="btn-print-slip" style="flex: 1; background-color: #28a745;">📄 Xuất Phiếu Nhập Kho</button>
-                        <button onclick="printSelectedSlip('XUẤT')" class="btn-print-slip" style="flex: 1; background-color: #ffc107; color: #212529;">📄 Xuất Phiếu Xuất Kho</button>
                     </div>
                 </div>
 
@@ -670,11 +964,10 @@
                     <h3>2. Tồn Kho Theo Lô & Cảnh Báo Hạn Sử Dụng / Tồn Mức Tối Thiểu</h3>
                     <div class="action-bar">
                         <input type="text" id="searchInvInput" placeholder="🔍 Nhập tên sản phẩm hoặc barcode..." oninput="renderTables()">
-                        <label>Tháng từ:</label> <input type="month" id="filterInvFrom">
-                        <label>Đến:</label> <input type="month" id="filterInvTo">
+<label>Tháng từ:</label> <input type="month" id="filterInvFrom">
+        <label>Đến:</label> <input type="month" id="filterInvTo">
                         <button class="btn-filter" onclick="renderTables()">Lọc</button>
                         <button class="btn-reset-filter" onclick="resetFilter('inv')">Tất cả</button>
-                        <button class="btn-export" onclick="exportInventoryToCSV()">📥 Tải Excel Tồn Kho</button>
                         <button class="btn-print-slip" onclick="printTableSelection('inventoryTable')">📄 Xuất Phiếu Tồn Kho</button>
                         <div style="font-size: 11px; font-weight: bold; color: #004085; align-self: center; margin-left: auto;">
                             📦 Tổng lô tồn: <span id="totalInventoryBatches">0</span>
@@ -708,8 +1001,6 @@
                         <label>Đến:</label> <input type="month" id="filterImpTo">
                         <button class="btn-filter" onclick="renderTables()">Lọc</button>
                         <button class="btn-reset-filter" onclick="resetFilter('imp')">Tất cả</button>
-                        <button class="btn-export" onclick="exportMonthlyImportStatsToCSV()">📥 Tải Excel Nhập</button>
-                        <button class="btn-print-slip" onclick="printTableSelection('monthlyImportTable')">📄 Xuất Phiếu Thống Kê Nhập</button>
                         <button onclick="xuatBienBanBanGiao()" style="background-color: #28a745; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 11px;">🖨️ Xuất Biên Bản Bàn Giao</button>
                         <div class="toolbar-group" style="display: inline-block; margin-left: 10px; margin-right: 10px;">
                             <label for="txtNguoiGiao" style="font-weight: bold; margin-right: 5px;">Tên Người Giao:</label>
@@ -746,7 +1037,6 @@
                         <label>Đến:</label> <input type="month" id="filterExpTo">
                         <button class="btn-filter" onclick="renderTables()">Lọc</button>
                         <button class="btn-reset-filter" onclick="resetFilter('exp')">Tất cả</button>
-                        <button class="btn-export" onclick="exportMonthlyExportStatsToCSV()">📥 Tải Excel Xuất</button>
                         <button class="btn-print-slip" onclick="printTableSelection('monthlyExportTable')">📄 Xuất Phiếu Thống Kê Xuất</button>
                     </div>
                     <table id="monthlyExportTable">
@@ -871,7 +1161,6 @@
     <div class="action-bar" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
         <input type="text" id="searchReorderInput" placeholder="🔍 Tìm kiếm hàng cần đặt..." oninput="renderReorderTable()" style="flex: 1; min-width: 240px; padding: 6px 10px; font-size: 12px;">
         <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-            <button class="btn-export" style="background-color: #dc3545; padding: 6px 12px; font-size: 11px;" onclick="exportReorderListToExcel()">📥 Xuất Excel Đặt Hàng</button>
             <button class="btn-print-slip" style="background-color: #17a2b8; padding: 6px 12px; font-size: 11px;" onclick="printSelectedReorderSlip()">📄 Xuất Phiếu Hàng Cần Đặt</button>
         </div>
     </div>
@@ -895,6 +1184,161 @@
     </thead>
     <tbody></tbody>
 </table>
+    </div>
+</div>
+               <!-- TAB / GIAO DIỆN RIÊNG CHO LAB LƯU MẪU -->
+                <div id="tabLabLuuMau" class="tab-pane">
+                    <h3 style="color: #004085; text-align: center; margin-bottom: 8px; font-weight: bold;">🗄️ HỆ THỐNG QUẢN LÝ LAB LƯU MẪU XÉT NGHIỆM</h3>
+                    
+<!-- THANH TAB PHỤ (CHỈ CHỨA CÁC NÚT TAB THUẦN TÚY) -->
+<div style="display: flex; gap: 3px; border-bottom: 2px solid #007bff; background: #e9ecef; padding: 4px 4px 0 4px; border-radius: 6px 6px 0 0; overflow-x: auto;">
+    <button class="lab-sub-tab-btn active" id="btnSubTab1" onclick="switchLabSubTab(1)" style="background: #007bff; color: white; border: none;">
+        📁 Tab 1: Trong Ngày (<span id="countTab1">0</span>)
+    </button>
+    <button class="lab-sub-tab-btn" id="btnSubTab2" onclick="switchLabSubTab(2)" style="background: #cbd5e1; color: #333; border: none;">
+        📁 Tab 2: Tích Lũy (<span id="countTab2">0</span>)
+    </button>
+    <button class="lab-sub-tab-btn" id="btnSubTab3" onclick="switchLabSubTab(3)" style="background: #cbd5e1; color: #333; border: none;">
+        📁 Tab 3: Lịch Sử Hủy
+    </button>
+</div>
+
+<!-- KHUNG CHỌN VÀ HỦY MẪU THEO NGÀY (ĐÃ ÉP CÂN ĐỐI CHUẨN XÁC) -->
+<div id="divHuyTheoNgayTab2" style="display: none; align-items: center; gap: 8px; margin: 8px 0; background: #fff3cd; padding: 10px 12px; border-radius: 6px; border: 1px solid #ffeeba; width: 100%; box-sizing: border-box;">
+    <div style="font-weight: bold; color: #856404; font-size: 11.5px; white-space: nowrap; flex: 0 0 auto;">
+        🗑️ Chọn ngày cần hủy:
+    </div>
+    <!-- select được ép flex: 1 để tự động giãn rộng hiển thị trọn vẹn ngày tháng -->
+    <select id="selectNgayHuyTab2" style="flex: 1; min-width: 150px; padding: 6px 12px; font-weight: bold; border-radius: 4px; border: 1px solid #ccc; font-size: 11.5px; background: #fff; height: 36px;">
+        <option value="">-- Chọn ngày cần hủy --</option>
+    </select>
+    <!-- button được ép flex: 0 0 auto để thu nhỏ lại vừa vặn đúng bằng kích thước chữ -->
+    <button onclick="thucHienHuyTheoNgayDaChon()" style="flex: 0 0 auto; width: auto; background-color: #dc3545; color: white; padding: 0 16px; font-size: 11.5px; font-weight: bold; border-radius: 4px; border: none; cursor: pointer; white-space: nowrap; height: 36px;">
+        Xác Nhận Hủy Mẫu
+    </button>
+</div>
+<!-- Ô QUÉT VÀ CÁC NÚT ĐIỀU KHIỂN CÂN ĐỐI TRÊN MỘT HÀNG -->
+<div id="tab1ControlPanel" style="background: #e8f4fd; padding: 12px; border-radius: 0 0 6px 6px; border: 1px solid #bce8f1; border-top: none; margin-bottom: 12px;">
+    <div style="display: flex; gap: 8px; align-items: center; width: 100%;">
+        <!-- Ô quét mã vạch chiếm không gian rộng lớn (flex: 3) -->
+        <input type="text" id="inputQuetMauLuu" placeholder="Quét mã vạch mẫu lưu hoặc nhập thông tin mẫu vào Tab 1..." style="flex: 3; padding: 8px; font-size: 13px; font-weight: bold; border: 2px solid #007bff; height: 38px;" onkeypress="if(event.key==='Enter') xuLyQuetMauLuu()">
+        
+        <!-- Nút lưu mẫu tự động gọn gàng -->
+        <button onclick="xuLyQuetMauLuu()" style="flex: 0 0 auto; width: auto; padding: 0 12px; background-color: #28a745; font-size: 11px; height: 38px; white-space: nowrap;">📥 Lưu Mẫu</button>
+        
+        <!-- Nút hủy mẫu hàng loạt gọn gàng -->
+        <button onclick="thucHienHuyMauHangLoat()" style="flex: 0 0 auto; width: auto; padding: 0 12px; background-color: #dc3545; font-size: 11px; height: 38px; white-space: nowrap;" title="Hủy các mẫu quá 4 ngày hoặc đạt 1200 mẫu để giải phóng chỗ trống">🗑️ Hủy Hàng Loạt (>=4 Ngày)</button>
+    </div>
+    <span style="font-size: 10.5px; color: #555; display: block; margin-top: 4px;">
+        💡 Quy tắc: Sang ngày mới, hệ thống tự chuyển mẫu hôm trước sang Tab 2. Hủy mẫu ở Tab 2 sẽ hiển thị người hủy, giữ lại lịch sử và tự chuyển sang Tab 3.
+    </span>
+</div>
+
+                    <!-- Thanh thao tác lọc và xuất dữ liệu mẫu lưu -->
+<!-- Thanh thao tác lọc dữ liệu mẫu lưu (Đã bỏ bộ lọc từ ngày / đến ngày) -->
+<div class="action-bar" style="margin-top: 10px;">
+    <input type="text" id="searchSampleInput" placeholder="🔍 Tìm kiếm vị trí, mã mẫu, người lưu, người hủy..." oninput="renderSampleTable()" style="flex: 1; min-width: 280px;">
+<!-- Sửa nút Lọc có gắn thêm sự kiện onclick vào -->
+<button class="btn-filter" onclick="renderSampleTable()" style="background-color: #6c757d; color: white; padding: 6px 16px; font-size: 11.5px; font-weight: bold; cursor: pointer; border: none; border-radius: 4px;">
+    🔍 Lọc
+</button>
+    <div style="font-size: 11px; font-weight: bold; color: #004085; align-self: center; margin-left: auto;">
+        📋 Đang xem <span id="currentViewTabName">Tab 1</span> | Tổng mẫu: <span id="totalSavedSamplesCount">0</span>
+    </div>
+</div>
+
+                    <!-- Bảng hiển thị danh sách vị trí lưu mẫu -->
+                    <div style="overflow-x: auto; max-height: 440px;">
+                        <table id="sampleTable" style="width: 100%; border-collapse: collapse; font-size: 11.5px; text-align: center;">
+                            <thead>
+                                <tr style="background-color: #f2f2f2; position: sticky; top: 0; z-index: 2;" id="sampleTableHeaderRow">
+                                    <th style="width: 110px; text-align: center;">Khay & Vị Trí</th>
+                                    <th style="text-align: left; padding-left: 10px;">Mẫu Lưu Theo Ngày / Barcode / Tên Mẫu</th>
+                                    <th>Ngày Giờ Lưu</th>
+                                    <th>Thuộc Tab</th>
+                                    <th>Người Lưu Mẫu</th>
+                                    <th style="width: 90px; text-align: center;">Thao Tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sampleTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+<!-- KHUNG NỘI DUNG CHÍNH CỦA NHÓM NỘI KIỂM IQC -->
+<div id="tabNoiKiemIQC" class="tab-pane" style="display: none;">
+    <div style="background: #ffffff; padding: 15px; border-radius: 8px; border: 1px solid #ced4da;">
+        <h3 style="color: #004085; margin-top: 0; border-bottom: 2px solid #007bff; padding-bottom: 8px;">
+            📊 HỆ THỐNG QUẢN LÝ NỘI KIỂM IQC (6 NHÓM XÉT NGHIỆM & LUẬT WESTGARD)
+        </h3>
+
+        <!-- Chọn 6 nhóm xét nghiệm -->
+        <div style="display: flex; gap: 10px; align-items: center; margin-top: 15px; background: #f8f9fa; padding: 10px; border-radius: 6px;">
+            <label style="font-weight: bold; color: #333;">Chọn Nhóm Xét Nghiệm:</label>
+            <select id="iqcGroupSelect" onchange="renderIqcInterface()" style="flex: 1; padding: 6px; font-weight: bold;">
+                <option value="HUYET_HOC">🩸 Huyết Học</option>
+                <option value="SINH_HOA">🔬 Sinh Hóa</option>
+                <option value="MIEN_DICH">🧪 Miễn Dịch</option>
+                <option value="HBA1C">🧬 HbA1c</option>
+                <option value="DONG_MAU">⏱️ Đông Máu</option>
+                <option value="NUOC_TIEU">🧪 Nước Tiểu (10 Thông Số)</option>
+            </select>
+        </div>
+
+        <!-- Cấu hình Target & Nhập liệu -->
+        <div class="form-grid" style="margin-top: 15px;">
+            <div style="background: #fff; padding: 12px; border: 1px solid #ddd; border-radius: 6px;">
+                <h4 style="margin-top: 0; color: #004085;">1. Cấu Hình Giá Trị Mục Tiêu (Mean & SD)</h4>
+                <div class="form-group">
+                    <label>Tên Xét Nghiệm:</label>
+                    <input type="text" id="iqcTestName" placeholder="VD: Glucose, AST, ALT...">
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <div class="form-group" style="flex: 1;">
+                        <label>Mean (Trung bình):</label>
+                        <input type="number" id="iqcMean" step="0.001" placeholder="VD: 100">
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label>SD (Độ lệch chuẩn):</label>
+                        <input type="number" id="iqcSD" step="0.001" placeholder="VD: 2.5">
+                    </div>
+                </div>
+                <button onclick="saveIqcTarget()" style="background-color: #007bff; color: #fff; margin-top: 5px;">💾 Lưu Cấu Hình</button>
+            </div>
+
+            <div style="background: #fff; padding: 12px; border: 1px solid #ddd; border-radius: 6px;">
+                <h4 style="margin-top: 0; color: #004085;">2. Nhập Kết Quả Hằng Ngày & Đánh Giá Luật</h4>
+                <div class="form-group">
+                    <label>Giá trị đo được:</label>
+                    <input type="number" id="iqcValue" step="0.001" placeholder="Nhập kết quả chạy máy...">
+                </div>
+                <div class="form-group">
+                    <label>Lô QC / Ghi chú:</label>
+                    <input type="text" id="iqcLot" placeholder="VD: QC-2026-A">
+                </div>
+                <button onclick="addIqcDataPoint()" style="background-color: #28a745; color: #fff; margin-top: 5px;">➕ Kiểm Tra Luật Westgard</button>
+            </div>
+        </div>
+
+        <!-- Kết quả Luật Westgard -->
+        <div id="westgardResultBox" style="margin-top: 15px; padding: 12px; border-radius: 6px; background: #e2e8f0; font-weight: bold; text-align: center;">
+            📌 Trạng thái: Chưa có dữ liệu kiểm tra.
+        </div>
+
+        <!-- Biểu đồ Levey-Jennings -->
+        <div style="margin-top: 15px; background: #fff; padding: 15px; border-radius: 6px; border: 1px solid #ddd;">
+            <h4 style="margin-top: 0; text-align: center; color: #004085;">📈 Biểu Đồ Kiểm Soát Chất Lượng Levey - Jennings</h4>
+            <div style="height: 200px; border-left: 2px solid #333; border-bottom: 2px solid #333; position: relative; margin: 20px 10px 10px 40px; display: flex; align-items: flex-end; justify-content: space-around; background: repeating-linear-gradient(#f9f9f9, #f9f9f9 33px, #eee 33px, #eee 34px);">
+                <span style="position: absolute; left: -35px; top: 0px; font-size: 10px;">+3s</span>
+                <span style="position: absolute; left: -35px; top: 50px; font-size: 10px;">+2s</span>
+                <span style="position: absolute; left: -35px; top: 100px; font-size: 10px; color: green; font-weight: bold;">Mean</span>
+                <span style="position: absolute; left: -35px; top: 150px; font-size: 10px;">-2s</span>
+                <span style="position: absolute; left: -35px; top: 190px; font-size: 10px;">-3s</span>
+                <div id="ljPointsContainer" style="display: flex; width: 100%; height: 100%; align-items: flex-end; justify-content: space-around; position: relative; z-index: 2;">
+                    <span style="color: #888; font-style: italic; align-self: center;">Chưa có dữ liệu biểu đồ</span>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
         </main>
@@ -926,50 +1370,54 @@
         <div class="modal-content">
             <span class="close" onclick="closeProductModal()">&times;</span>
 
-            <details style="background: #f8f9fa; padding: 8px; border-radius: 4px; border: 1px solid #dee2e6; margin-bottom: 10px;">
-                <summary style="cursor: pointer; font-weight: bold; color: #004085; font-size: 13px; outline: none;">
-                    📊 Quản Lý Danh Mục Sản Phẩm Từ Excel (Bấm để ẩn/hiện)
-                </summary>
-                <div style="margin-top: 10px;">
-                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                        <button onclick="downloadExcelTemplate()" style="width: auto; background-color: #17a2b8;">📄 Tải Excel Mẫu</button>
-                        <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" style="display: none;" onchange="importProductsFromExcel(this)">
-                        <button onclick="document.getElementById('excelFileInput').click()" style="width: auto; background-color: #28a745;">📂 Chọn File Excel Tải Lên</button>
-                        <button onclick="exportProductsToExcel()" style="width: auto; background-color: #007bff;">📤 Xuất Danh Sách Sản Phẩm (Excel)</button>
-                    </div>
-                </div>
-            </details>
-            
-            <details class="backup-section" style="background: #f8f9fa; padding: 8px; border-radius: 4px; border: 1px solid #dee2e6; margin-bottom: 10px;">
-                <summary style="cursor: pointer; font-weight: bold; color: #004085; font-size: 13px; outline: none;">
-                    💾 Sao Lưu & Khôi Phục Dữ Liệu (Backup / Restore) (Bấm để ẩn/hiện)
-                </summary>
-                <div style="margin-top: 10px;">
-                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                        <button onclick="exportFullDatabase()" style="width: auto; background-color: #007bff;">📥 Tải File Sao Lưu (.json)</button>
-                        <input type="file" id="importDbFileInput" accept=".json" style="display: none;" onchange="importFullDatabase(this)">
-                        <button onclick="document.getElementById('importDbFileInput').click()" style="width: auto; background-color: #ffc107; color: #333;">📤 Khôi Phục CSDL Từ File</button>
-                    </div>
-                </div>
-            </details>
-            <details>
-                <summary style="cursor: pointer; font-weight: bold; color: #004085; padding: 5px 0; font-size: 14px;">
-                    👤 Quản Lý Danh Sách Tài Khoản Người Dùng (Bấm để ẩn/hiện)
-                </summary>
-                <div style="margin-top: 10px;">
-                    <div style="display: grid; grid-template-columns: 2fr 2fr 1fr 1fr; gap: 8px; margin-bottom: 8px;">
-                        <input type="text" id="newAccUser" placeholder="Tên đăng nhập...">
-                        <input type="text" id="newAccName" placeholder="Họ và tên hiển thị...">
-                        <select id="newAccRole">
-                            <option value="USER">Nhân viên (User)</option>
-                            <option value="ADMIN">Quản trị (Admin)</option>
-                            <option value="PHÓ ADMIN">Phó Admin</option>
-                        </select>
-                        <button onclick="addNewUserAccount()" style="margin-top:0; background-color: #007bff;">Thêm User</button>
-                    </div>
-                    <div id="staffListTags" style="display: flex; flex-wrap: wrap; gap: 6px;"></div>
-                </div>
-            </details>
+<!-- 1. Mục Excel -->
+<details class="admin-manage-section admin-only-section excel-import-details" style="background: #f8f9fa; padding: 8px; border-radius: 4px; border: 1px solid #dee2e6; margin-bottom: 10px;">
+    <summary style="cursor: pointer; font-weight: bold; color: #004085; font-size: 13px; outline: none;">
+        📊 Quản Lý Danh Mục Sản Phẩm Từ Excel (Bấm để ẩn/hiện)
+    </summary>
+    <div style="margin-top: 10px;">
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <button onclick="downloadExcelTemplate()" style="width: auto; background-color: #17a2b8;">📄 Tải Excel Mẫu</button>
+            <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" style="display: none;" onchange="importProductsFromExcel(this)">
+            <button onclick="document.getElementById('excelFileInput').click()" style="width: auto; background-color: #28a745;">📂 Chọn File Excel Tải Lên</button>
+            <button onclick="exportProductsToExcel()" style="width: auto; background-color: #007bff;">📤 Xuất Danh Sách Sản Phẩm (Excel)</button>
+        </div>
+    </div>
+</details>
+
+<!-- 2. Mục Sao lưu & Khôi phục -->
+<details class="admin-manage-section admin-only-section backup-section" style="background: #f8f9fa; padding: 8px; border-radius: 4px; border: 1px solid #dee2e6; margin-bottom: 10px;">
+    <summary style="cursor: pointer; font-weight: bold; color: #004085; font-size: 13px; outline: none;">
+        💾 Sao Lưu & Khôi Phục Dữ Liệu (Backup / Restore) (Bấm để ẩn/hiện)
+    </summary>
+    <div style="margin-top: 10px;">
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <button onclick="exportFullDatabase()" style="width: auto; background-color: #007bff;">📥 Tải File Sao Lưu (.json)</button>
+            <input type="file" id="importDbFileInput" accept=".json" style="display: none;" onchange="importFullDatabase(this)">
+            <button onclick="document.getElementById('importDbFileInput').click()" style="width: auto; background-color: #ffc107; color: #333;">📤 Khôi Phục CSDL Từ File</button>
+        </div>
+    </div>
+</details>
+
+<!-- 3. Mục Quản lý Tài khoản người dùng -->
+<details class="admin-manage-section admin-only-section user-account-details" style="background: #f8f9fa; padding: 8px; border-radius: 4px; border: 1px solid #dee2e6; margin-bottom: 10px;">
+    <summary style="cursor: pointer; font-weight: bold; color: #004085; padding: 5px 0; font-size: 14px;">
+        👤 Quản Lý Danh Sách Tài Khoản Người Dùng (Bấm để ẩn/hiện)
+    </summary>
+    <div style="margin-top: 10px;">
+        <div style="display: grid; grid-template-columns: 2fr 2fr 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+            <input type="text" id="newAccUser" placeholder="Tên đăng nhập...">
+            <input type="text" id="newAccName" placeholder="Họ và tên hiển thị...">
+            <select id="newAccRole">
+                <option value="USER">Nhân viên (User)</option>
+                <option value="ADMIN">Quản trị (Admin)</option>
+                <option value="PHÓ ADMIN">Phó Admin</option>
+            </select>
+            <button onclick="addNewUserAccount()" style="margin-top:0; background-color: #007bff;">Thêm User</button>
+        </div>
+        <div id="staffListTags" style="display: flex; flex-direction: column; gap: 6px;"></div>
+    </div>
+</details>
             <hr style="margin: 10px 0;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                 <h3 style="margin: 0;">Danh Sách Sản Phẩm, Đa Barcode & LOT / Hạn sử dụng Tương Ứng</h3>
@@ -1046,8 +1494,8 @@
                     <option value="15-25°C">15-25°C</option>
                     <option value="-20°C">-20°C</option>
                     <option value="-80°C">-80°C</option>
-                    <option value="Bảo quản mát (2-15°C)">Bảo quản mát (2-15°C)</option>
-                    <option value="Nhiệt độ phòng (<30°C)">Nhiệt độ phòng (&lt;30°C)</option>
+                    <option value="2-15°C">2-15°C</option>
+                    <option value="T° phòng ">T° phòng </option>
                 </select>
 
                 <select id="newProdUnit" style="flex: 1.2;">
@@ -1182,7 +1630,7 @@
         </div>
     </div>
 
-    <!-- MODAL SỬA TOÀN BỘ THÔNG TIN SẢN PHẨM & ĐA BARCODE - LOT - HẠN SỬ DỤNG -->
+<!-- MODAL SỬA TOÀN BỘ THÔNG TIN SẢN PHẨM & ĐA BARCODE - LOT - HẠN SỬ DỤNG -->
     <div id="editProductLotModal" class="modal">
         <div class="modal-content modal-content-small">
             <span class="close" onclick="closeEditProductLotModal()">&times;</span>
@@ -1214,10 +1662,9 @@
                     <button type="button" onclick="addSubItemRow()" style="background-color: #007bff; width: auto; padding: 4px 10px; font-size: 11px; border-radius: 4px;">➕ Thêm dòng phụ</button>
                 </div>
                 <div id="subItemsContainer" style="max-height: 160px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px;"></div>
-                <span style="font-size: 10px; color: #555; display: block; margin-top: 4px;">💡 Bấm nút thêm để tạo từng dòng tương ứng Barcode ➔ LOT ➔ Hạn sử dụng rất gọn gàng.</span>
             </div>
 
-            <div class="form-group" style="margin-top: 8px;">
+            <div class="form-group">
                 <label>Hãng Sản Xuất:</label>
                 <input type="text" id="editProdManufacturer" placeholder="Nhập hãng sản xuất...">
             </div>
@@ -1225,9 +1672,48 @@
                 <label>Máy Thực Hiện:</label>
                 <input type="text" id="editProdMachine" placeholder="Nhập tên máy thực hiện...">
             </div>
+
+            <!-- NHIỆT ĐỘ ĐÃ ĐƯỢC CHUYỂN THÀNH DANH SÁCH CHỌN (SELECT) -->
+            <div class="form-group">
+                <label>Nhiệt Độ Bảo Quản:</label>
+                <select id="editProdTemp">
+                    <option value="2-8°C">2-8°C</option>
+                    <option value="2-8°C/-20°C">2-8°C/-20°C</option>
+                    <option value="15-25°C">15-25°C</option>
+                    <option value="-20°C">-20°C</option>
+                    <option value="-80°C">-80°C</option>
+                    <option value="2-15°C">2-15°C</option>
+                    <option value="T° Phòng">T° Phòng</option>
+                </select>
+            </div>
+
+            <!-- ĐƠN VỊ TÍNH ĐÃ ĐƯỢC CHUYỂN THÀNH DANH SÁCH CHỌN (SELECT) -->
+            <div class="form-group">
+                <label>Đơn Vị Tính:</label>
+                <select id="editProdUnit">
+                    <option value="Hộp">Hộp</option>
+                    <option value="Lọ">Lọ</option>
+                    <option value="Chai">Chai</option>
+                    <option value="Thùng">Thùng</option>
+                    <option value="Bộ">Bộ</option>
+                    <option value="Kit">Kit</option>
+                    <option value="Cuộn">Cuộn</option>
+                    <option value="Cây">Cây</option>
+                    <option value="Ống">Ống</option>
+                    <option value="Túi">Túi</option>
+                    <option value="Thanh">Thanh</option>
+                    <option value="Bịch">Bịch</option>
+                    <option value="Khay">Khay</option>
+                    <option value="Pack">Pack</option>
+                    <option value="Bình">Bình</option>
+                    <option value="Cái">Cái</option>
+                    <option value="Test">Test</option>
+                </select>
+            </div>
+
             <div class="form-group">
                 <label>Quy Cách:</label>
-                <input type="text" id="editProdSpec" placeholder="Nhập quy cách (VD: 100 test/hộp)...">
+                <input type="text" id="editProdSpec" placeholder="Nhập quy cách...">
             </div>
             <div class="form-group">
                 <label>Số Lô (LOT) Mặc Định:</label>
@@ -1255,12 +1741,62 @@
 
     <!-- KHU VỰC IN PHIẾU TÙY CHỌN -->
     <div id="printSlipArea" style="display:none;"></div>
-
+        </div>
     <script>
         let currentCategory = "NHÓM MIỄN DỊCH";
         let suggestTimeout = null;
         let currentUser = null;
         let qrcodeObj = null;
+        // Quản lý cấu hình số lượng vị trí lưu mẫu (Mặc định 100, có thể nâng lên 500 hoặc 1000)
+// Quản lý giới hạn vị trí và tách biệt dữ liệu Máu / Nước tiểu
+// Cố định mặc định 1500 vị trí (15 khay mẫu) không cần dùng nút cài đặt
+let maxSampleLimit = 1500;
+
+// Hàm lấy đúng kho lưu trữ tùy thuộc vào nhánh đang chọn (Máu hay Nước Tiểu)
+function getCurrentLabStorageKey() {
+    let branch = window.currentLabBranch || 'mau'; // Mặc định là máu nếu chưa chọn
+    return `qr_lab_sample_storage_${branch}_v1`;
+}
+
+function getActiveLabStorage() {
+    let key = getCurrentLabStorageKey();
+    let data = JSON.parse(localStorage.getItem(key)) || {};
+    return data;
+}
+
+// --- HÀM ĐỒNG BỘ LAB LƯU MẪU LÊN FIREBASE ---
+function saveActiveLabStorage(data) {
+    let key = getCurrentLabStorageKey();
+    
+    // 1. Lưu cục bộ trên trình duyệt
+    localStorage.setItem(key, JSON.stringify(data));
+    
+    // 2. Đẩy đồng bộ lên Firebase Realtime Database ngay lập tức
+    db.ref('kho_xet_nghiem/' + key).set(data)
+      .then(() => {
+          console.log("Đã đẩy dữ liệu Lab Lưu Mẫu lên Firebase thành công!");
+      })
+      .catch((error) => {
+          console.error("Lỗi đồng bộ Lab Lưu Mẫu lên Firebase: ", error);
+      });
+}
+// --- LẮNG NGHE REALTIME CHO LAB LƯU MẪU TỪ MÁY KHÁC ---
+window.addEventListener('DOMContentLoaded', () => {
+    // Lắng nghe dữ liệu realtime cho cả 2 nhánh Máu và Nước Tiểu
+    ['mau', 'nuoc-tieu'].forEach(branch => {
+        let key = `qr_lab_sample_storage_${branch}_v1`;
+        db.ref('kho_xet_nghiem/' + key).on('value', (snapshot) => {
+            const cloudData = snapshot.val();
+            if (cloudData) {
+                localStorage.setItem(key, JSON.stringify(cloudData));
+                // Nếu đang mở đúng nhánh đó trên giao diện thì render lại bảng ngay
+                if (window.currentLabBranch === branch && typeof renderSampleTable === 'function') {
+                    renderSampleTable();
+                }
+            }
+        });
+    });
+});
 
         let defaultAccounts = [
             { username: "admin", pass: "admin123", name: "Quản Trị Viên", role: "ADMIN" },
@@ -1451,6 +1987,21 @@ let mappedProducts = JSON.parse(localStorage.getItem('qr_mapped_products_v7')) |
 
         let inventory = JSON.parse(localStorage.getItem('qr_inventory_v11')) || {};
         let logs = JSON.parse(localStorage.getItem('qr_logs_v11')) || {};
+
+        // --- HÀM THU GỌN / MỞ RỘNG MENU NHÓM BÊN TRÁI ---
+        function toggleSidebarGroup(groupId) {
+            let subList = document.getElementById('subList-' + groupId);
+            let icon = document.getElementById('icon-' + groupId);
+            if (subList) {
+                if (subList.style.display === 'none') {
+                    subList.style.display = 'flex';
+                    if (icon) icon.innerText = '▼';
+                } else {
+                    subList.style.display = 'none';
+                    if (icon) icon.innerText = '▶';
+                }
+            }
+        }
 
         function formatExpiryDisplay(expiryStr) {
             if (!expiryStr) return '-';
@@ -1656,14 +2207,26 @@ const saveButton = document.querySelector('button[onclick="saveTransaction()"]')
             }
         }
 
+let isScannerInput = false; // Cờ phân biệt quét máy hay gõ phím
+let lastInputTime = 0;
+
+// Lắng nghe sự kiện gõ phím tốc độ cao của máy quét barcode
+document.getElementById('productBarcode')?.addEventListener('keydown', function(e) {
+    let now = new Date().getTime();
+    // Máy quét barcode thường nhập các ký tự liên tiếp cực nhanh (< 50ms/ký tự)
+    if (now - lastInputTime < 50) {
+        isScannerInput = true;
+    } else {
+        isScannerInput = false;
+    }
+    lastInputTime = now;
+});
+
 function onBarcodeManualInput(val) {
     clearTimeout(suggestTimeout);
     suggestTimeout = setTimeout(() => {
         let codeVal = val.trim();
         
-        // --- QUY TẮC MỚI: NẾU GÕ THỦ CÔNG (ĐỘ DÀI < 8 KÝ TỰ) THÌ KHÔNG TỰ ĐỘNG GỢI Ý/NHẬN DIỆN ---
-        // Ngoại trừ trường hợp quét máy quét barcode (thường mã dài hoặc có định dạng đặc biệt)
-        // Nếu bạn gõ tay chữ "GA" (2 ký tự), hệ thống sẽ bỏ qua, không nhảy sang sản phẩm khác nữa.
         if (codeVal.length > 0 && codeVal.length < 8 && !codeVal.startsWith("01") && !codeVal.includes("PCR")) {
             const displayDiv = document.getElementById('productNameDisplay');
             if (displayDiv) {
@@ -1672,22 +2235,19 @@ function onBarcodeManualInput(val) {
             }
             const dropDiv = document.getElementById('subMappingDropdown');
             if (dropDiv) dropDiv.style.display = 'none';
-            return; // Dừng lại, không chạy tìm kiếm thông minh khi chưa đủ 8 ký tự gõ tay
+            return; 
         }
-        // -------------------------------------------------------------------------------------
 
-        showAutoSuggest(codeVal);
-        
+        // Lấy danh sách tất cả các sản phẩm/lô khớp với từ khóa
+        let matchedItems = findAllProductsByTerm(codeVal); // Hàm tìm tất cả các kết quả phù hợp
+
         const saveButton = document.querySelector('button[onclick="saveTransaction()"]');
         const displayDiv = document.getElementById('productNameDisplay');
         const lotInput = document.getElementById('lotNumber');
         const expiryInput = document.getElementById('expiryDate');
 
-        // Tìm kiếm sản phẩm trong danh sách đã Map từ Tab Quản Lý
-        let res = findProductByTerm(codeVal);
-
-        if (!res) {
-            displayDiv.innerHTML = `<span style="color: red; font-weight: bold;">⚠️ CẢNH BÁO: Sản phẩm chưa được MAP trong hệ thống!</span>`;
+        if (!matchedItems || matchedItems.length === 0) {
+            displayDiv.innerHTML = `<span style="color: red; font-weight: bold;">⚠️ CẢNH BÁO: Sản phẩm chưa được MAP trong hệ thống! Không cho phép lưu.</span>`;
             displayDiv.style.color = "#dc3545";
             
             if (saveButton) {
@@ -1695,13 +2255,31 @@ function onBarcodeManualInput(val) {
                 saveButton.style.opacity = '0.5';
                 saveButton.style.cursor = 'not-allowed';
             }
-
-            if (lotInput) { lotInput.value = ''; lotInput.readOnly = false; lotInput.style.backgroundColor = '#fff'; }
-            if (expiryInput) { expiryInput.value = ''; expiryInput.readOnly = false; expiryInput.style.backgroundColor = '#fff'; }
-        } else {
+            if (lotInput) { lotInput.value = ''; lotInput.readOnly = false; }
+            if (expiryInput) { expiryInput.value = ''; expiryInput.readOnly = false; }
+            
+            hideSubMappingDropdown();
+        } 
+        else if (matchedItems.length === 1) {
+            // TRƯỜNG HỢP KHỚP 100% (DUY NHẤT 1 KẾT QUẢ)
+            let res = matchedItems[0];
             let p = res.product;
-            displayDiv.innerHTML = `[${p.category}] ${p.name}`;
+            
+            displayDiv.innerHTML = `[${p.category}] ${p.name} - LOT: ${res.matchedLot || p.defaultLot || 'N/A'}`;
             displayDiv.style.color = "#28a745";
+
+            if (lotInput) {
+                lotInput.value = res.matchedLot || p.defaultLot || '';
+                lotInput.readOnly = true;
+            }
+            if (expiryInput) {
+                expiryInput.value = formatExpiryDisplay(res.matchedExpiry || p.defaultExpiry || '');
+                expiryInput.readOnly = true;
+            }
+
+            currentCategory = p.category;
+            updateCategoryUI(p.category);
+            hideSubMappingDropdown();
 
             if (saveButton) {
                 saveButton.disabled = false;
@@ -1709,37 +2287,30 @@ function onBarcodeManualInput(val) {
                 saveButton.style.cursor = 'pointer';
             }
 
-            if (lotInput) {
-                lotInput.value = res.matchedLot || p.defaultLot || '';
-                lotInput.readOnly = true;
-                lotInput.style.backgroundColor = '#e9ecef';
+            // NẾU LÀ MÁY QUÉT CODE VÀ KHỚP 100% -> LƯU LUÔN KHÔNG CẦN SHOW/BẤM
+            const autoSaveCb = document.getElementById('autoSaveCheckbox');
+            if (isScannerInput || (autoSaveCb && autoSaveCb.checked)) {
+                setTimeout(() => {
+                    saveTransactionSilent(); // Hàm lưu ngầm không hiện alert rườm rà
+                    let barcodeInput = document.getElementById('productBarcode');
+                    if (barcodeInput) {
+                        barcodeInput.value = '';
+                        barcodeInput.focus();
+                    }
+                    isScannerInput = false;
+                }, 50);
             }
-            if (expiryInput) {
-                expiryInput.value = formatExpiryDisplay(res.matchedExpiry || p.defaultExpiry || '');
-                expiryInput.readOnly = true;
-                expiryInput.style.backgroundColor = '#e9ecef';
-            }
-
-            currentCategory = p.category;
-            document.getElementById('currentCategoryDisplay').innerText = "ĐANG CHỌN: " + currentCategory;
+        } 
+        else {
+            // TRƯỜNG HỢP TRÙNG CODE / NHIỀU LÔ -> BẮT BUỘC SHOW RA ĐỂ THỦ CÔNG CHỌN ĐÚNG HÀNG
+            displayDiv.innerHTML = `<span style="color: #d39e00; font-weight: bold;">⚠️ Có ${matchedItems.length} lô phù hợp. Vui lòng chọn bên dưới:</span>`;
+            displayDiv.style.color = "#d39e00";
             
-            let btns = document.querySelectorAll('.sidebar-menu .menu-btn');
-            btns.forEach(b => {
-                if (b.innerText.includes(p.category.replace('NHÓM ', ''))) {
-                    b.classList.add('active');
-                } else {
-                    b.classList.remove('active');
-                }
-            });
-        }
-        
-        const autoSaveCb = document.getElementById('autoSaveCheckbox');
-        if (codeVal && autoSaveCb && autoSaveCb.checked && !isSaving && res) {
-            saveTransactionSilent();
-            let barcodeInput = document.getElementById('productBarcode');
-            if (barcodeInput) {
-                barcodeInput.value = '';
-                barcodeInput.focus();
+            showSubMappingDropdown(matchedItems); // Hiển thị danh sách các lô để người dùng click chọn
+            
+            if (saveButton) {
+                saveButton.disabled = true; // Khóa đến khi chọn đúng lô cụ thể
+                saveButton.style.opacity = '0.5';
             }
         }
     }, 100);
@@ -1956,50 +2527,126 @@ const batchKey = `${currentCategory}_${cleanBarcode}_${cleanLot}`;
                 closeChangePasswordModal();
             }
         }
-
+// 1. Cập nhật hàm áp dụng phân quyền chạy ngay sau khi đăng nhập thành công
 function applyUserPermissions() {
     if (!currentUser) return;
-    document.getElementById('currentUserDisplay').innerHTML = `👤 ${currentUser.name} <span class="${currentUser.role === 'ADMIN' ? 'admin-tag' : 'user-tag'}">${currentUser.role}</span>`;
-    document.getElementById('currentUserInput').value = `${currentUser.name} (${currentUser.role})`;
-
-    const btnAdmin = document.getElementById('btnAdminConfig');
-    if (btnAdmin) {
-        btnAdmin.style.display = 'flex'; // Cho phép User thấy nút Quản lý sản phẩm
+    
+    if (!currentUser.assignedGroups) {
+        currentUser.assignedGroups = [];
     }
 
-    // LỌC ẨN CÁC NHÓM KHÔNG CÓ QUYỀN Ở THANH SIDEBAR
-    let isAdmin = (currentUser.role === 'ADMIN');
-    let allowedGroups = currentUser.assignedGroups || [];
-    
-    let menuButtons = document.querySelectorAll('.sidebar-menu .menu-btn');
-    menuButtons.forEach(btn => {
-        let btnText = btn.innerText;
-        // Tìm tên nhóm tương ứng trên nút
-        let groupName = "";
-        if (btnText.includes("MIỄN DỊCH")) groupName = "NHÓM MIỄN DỊCH";
-        else if (btnText.includes("HUYẾT HỌC")) groupName = "NHÓM HUYẾT HỌC - ĐÔNG MÁU";
-        else if (btnText.includes("SINH HÓA")) groupName = "NHÓM SINH HÓA";
-        else if (btnText.includes("VẬT TƯ TIÊU HAO")) groupName = "NHÓM VẬT TƯ TIÊU HAO";
-        else if (btnText.includes("SHPT")) groupName = "NHÓM SHPT (PCR)";
+    let userRole = currentUser.role || 'USER';
+    let isAdmin = (userRole === 'ADMIN' || userRole === 'PHÓ ADMIN' || userRole === 'SUB_ADMIN');
 
-        if (isAdmin || allowedGroups.length === 0 || allowedGroups.includes(groupName)) {
-            btn.style.display = 'flex'; // Hiển thị nếu có quyền hoặc là Admin
+    let displayEl = document.getElementById('currentUserDisplay');
+    let inputEl = document.getElementById('currentUserInput');
+    
+    if (displayEl) {
+        displayEl.innerHTML = `👤 ${currentUser.name} <span class="${isAdmin ? 'admin-tag' : 'user-tag'}">${userRole}</span>`;
+    }
+    if (inputEl) {
+        inputEl.value = `${currentUser.name} (${userRole})`;
+    }
+
+    // 1. Phân quyền hiển thị nhóm sidebar
+    let subMenuBtns = document.querySelectorAll('.sidebar-sub-list .sub-menu-btn');
+    subMenuBtns.forEach(btn => {
+        let btnText = btn.innerText.trim().toUpperCase();
+        if (isAdmin) {
+            btn.style.display = 'flex';
         } else {
-            btn.style.display = 'none'; // Ẩn đi nếu không được phân công
+            let isAllowed = currentUser.assignedGroups.some(groupName => {
+                let cleanGroup = groupName.trim().toUpperCase();
+                return btnText.includes(cleanGroup) || cleanGroup.includes(btnText.replace('NHÓM ', ''));
+            });
+            btn.style.display = isAllowed ? 'flex' : 'none';
         }
     });
 
-    // Nếu nhóm hiện tại bị ẩn, tự động chuyển sang nhóm hợp lệ đầu tiên mà user được phân công
-    let activeCategoryBtn = document.querySelector('.sidebar-menu .menu-btn.active');
-    if (activeCategoryBtn && activeCategoryBtn.style.display === 'none') {
-        let firstVisibleBtn = Array.from(menuButtons).find(b => b.style.display !== 'none');
-        if (firstVisibleBtn) {
-            firstVisibleBtn.click();
-        }
+    // 2. Ẩn các mục quản lý nâng cao đối với User
+    let adminManageSections = document.querySelectorAll('.admin-manage-section, .excel-import-details, .backup-section, .user-account-details');
+    adminManageSections.forEach(section => {
+        section.style.display = isAdmin ? 'block' : 'none';
+    });
+
+    // 3. Ẩn nút "Thêm Mới" sản phẩm đối với User
+    let btnThemMoi = document.querySelector('button[onclick="addProductMapping()"]');
+    if (btnThemMoi) {
+        btnThemMoi.style.display = isAdmin ? 'inline-block' : 'none';
     }
 
-    renderTables();
-    populateLabelProductSelect();
+    // 4. ẨN NÚT "HỦY MẪU HÀNG LOẠT" ĐỐI VỚI USER
+    let btnHuyHangLoat = document.querySelector('button[onclick="thucHienHuyMauHangLoat()"]');
+    if (btnHuyHangLoat) {
+        btnHuyHangLoat.style.display = isAdmin ? 'inline-block' : 'none';
+    }
+
+    // 5. Cột thao tác đặc quyền Admin
+    let adminOnlyElements = document.querySelectorAll('.admin-only-col, .admin-only');
+    adminOnlyElements.forEach(el => {
+        el.style.display = isAdmin ? '' : 'none';
+    });
+
+    if (typeof renderTables === 'function') renderTables();
+    if (typeof renderMappedProductsTable === 'function') renderMappedProductsTable();
+    if (typeof renderUserAccountsModal === 'function') renderUserAccountsModal();
+}
+
+// 2. Cập nhật hàm thực thi đăng nhập để gọi ngay phân quyền
+function executeLogin() {
+    const userInp = document.getElementById('loginUsername').value.trim();
+    const passInp = document.getElementById('loginPassword').value.trim();
+
+    if (!userInp || !passInp) { alert("Vui lòng nhập đầy đủ thông tin!"); return; }
+
+    let account = userAccounts.find(u => u.username.toLowerCase() === userInp.toLowerCase() && u.pass === passInp);
+    if (account) {
+        currentUser = account;
+        sessionStorage.setItem('qr_active_user', JSON.stringify(currentUser));
+        
+        // Ẩn overlay đăng nhập
+        document.getElementById('loginOverlay').style.display = 'none';
+        document.getElementById('loginPassword').value = '';
+        
+        // Áp dụng quyền và ép làm mới lại giao diện bảng ngay lập tức tránh mất dữ liệu hiển thị
+        applyUserPermissions();
+        if (typeof renderTables === 'function') renderTables();
+    } else {
+        alert("Tên đăng nhập hoặc mật khẩu không chính xác!");
+    }
+}
+
+// 3. Cập nhật hàm đăng xuất (Xóa sạch session an toàn, không làm mất localStorage)
+function executeLogout() {
+    if (confirm("Bạn có chắc chắn muốn đăng xuất khỏi hệ thống?")) {
+        // 1. Ép lưu cứng toàn bộ dữ liệu hiện tại lên localStorage để đề phòng mất mát
+        localStorage.setItem('qr_inventory_v11', JSON.stringify(inventory));
+        localStorage.setItem('qr_logs_v11', JSON.stringify(logs));
+        localStorage.setItem('qr_mapped_products_v7', JSON.stringify(mappedProducts));
+
+        // 2. Ép đẩy toàn bộ dữ liệu lên Firebase trước khi out (Đảm bảo an toàn tuyệt đối)
+        let safeInvData = {};
+        for (let k in inventory) {
+            safeInvData[sanitizeKey(k)] = inventory[k];
+        }
+
+        Promise.all([
+            db.ref('kho_xet_nghiem/qr_inventory_v11').set(safeInvData),
+            db.ref('kho_xet_nghiem/qr_logs_v11').set(logs),
+            db.ref('kho_xet_nghiem/qr_mapped_products_v7').set(mappedProducts)
+        ]).then(() => {
+            // Sau khi Firebase xác nhận đã lưu thành công thì mới xóa session và tải lại trang
+            sessionStorage.removeItem('qr_active_user');
+            currentUser = null;
+            location.reload();
+        }).catch((error) => {
+            console.error("Lỗi khi đồng bộ trước khi đăng xuất: ", error);
+            // Dù lỗi mạng vẫn cho phép out nhưng cảnh báo nhẹ
+            sessionStorage.removeItem('qr_active_user');
+            currentUser = null;
+            location.reload();
+        });
+    }
 }
 
         function populateLabelProductSelect() {
@@ -2113,115 +2760,98 @@ function applyUserPermissions() {
             btnElement.classList.add('active');
             renderTables();
         }
-
 function openProductModal() {
+    let modal = document.getElementById('productModal');
+    if (modal) modal.style.display = 'block';
+    
     if (currentUser) {
-        document.getElementById('productModal').style.display = 'block';
-        
-        let isAdminOrManager = (currentUser.role === 'ADMIN' || currentUser.role === 'PHÓ ADMIN' || currentUser.role === 'SUB_ADMIN');
+        // Kiểm tra xem có phải tài khoản ADMIN tuyệt đối hay không
+        let isAdmin = (currentUser.role === 'ADMIN');
 
-        // 1. Ẩn mục Quản lý từ Excel đối với User
-        const excelSection = document.querySelector('details summary');
-        if (excelSection) {
-            let excelDetails = excelSection.closest('details');
-            if (excelDetails) excelDetails.style.display = isAdminOrManager ? 'block' : 'none';
-        }
-
-        const staffSection = document.querySelector('.staff-section');
-        if (staffSection) staffSection.style.display = isAdminOrManager ? 'block' : 'none';
-
-        const importExcelSection = document.querySelector('.import-excel-section');
-        if (importExcelSection) importExcelSection.style.display = isAdminOrManager ? 'block' : 'none';
-
-        const backupSection = document.querySelector('.backup-section');
-        if (backupSection) backupSection.style.display = isAdminOrManager ? 'block' : 'none';
-
-        // 2. ẨN HOÀN TOÀN MỤC QUẢN LÝ DANH SÁCH TÀI KHOẢN & PHÂN NHÓM ĐỐI VỚI USER
-        let userAccDetails = document.querySelector('#productModal details:has(#staffListTags)') || 
-                             Array.from(document.querySelectorAll('#productModal details')).find(d => d.innerText.includes('Tài Khoản'));
-        if (userAccDetails) {
-            userAccDetails.style.display = isAdminOrManager ? 'block' : 'none';
-        }
-
-        // 3. Ẩn form thêm mới sản phẩm đối với User
-        let addProdElements = document.querySelectorAll('#productModal select#newProdCategory, #productModal input#newProdName, #productModal input#newProdBarcode, #productModal select#newProdManufacturer, #productModal select#newProdMachine, #productModal select#newProdTemp, #productModal select#newProdUnit, #productModal select#newProdSpec, #productModal input#newProdMinStock, #productModal input#newProdMaxStock, #productModal input#newProdLot, #productModal input#newProdPackPerBox, #productModal input#newProdExpiry, #productModal button[onclick="addProductMapping()"]');
-        
-        addProdElements.forEach(el => {
-            if (el && el.parentElement) {
-                el.parentElement.style.display = isAdminOrManager ? '' : 'none';
-            }
+        // Ẩn/hiện toàn bộ các mục có class 'admin-only-section'
+        let adminOnlySections = document.querySelectorAll('.admin-only-section');
+        adminOnlySections.forEach(section => {
+            section.style.display = isAdmin ? 'block' : 'none';
         });
 
-        renderUserAccountsModal();
-        renderMappedProductsTable();
+        // Nếu là Admin thì render danh sách tài khoản user
+        if (isAdmin && typeof renderUserAccountsModal === 'function') {
+            renderUserAccountsModal();
+        }
     } else {
         alert("Vui lòng đăng nhập hệ thống!");
+    }
+
+    // Luôn hiển thị danh sách sản phẩm cấu hình bên dưới cho phép xem
+    if (typeof renderMappedProductsTable === 'function') {
+        renderMappedProductsTable();
     }
 }
 
         function closeProductModal() { document.getElementById('productModal').style.display = 'none'; }
 
-        function renderUserAccountsModal() {
-            const tagsDiv = document.getElementById('staffListTags');
-            tagsDiv.innerHTML = '';
-            
-            let tableHtml = `
-                <table style="width:100%; margin-top:5px; font-size:11px; background:#fff;">
-                    <thead>
-                        <tr style="background:#f2f2f2;">
-                            <th style="padding:4px;">Tên Đăng Nhập</th>
-                            <th style="padding:4px;">Họ và Tên</th>
-                            <th style="padding:4px;">Quyền</th>
-                            <th style="padding:4px;">Nhóm Phụ Trách (Chọn nhiều)</th>
-                            <th style="padding:4px; text-align:center;">Thao Tác</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-            `;
+function renderUserAccountsModal() {
+    const tagsDiv = document.getElementById('staffListTags');
+    if (!tagsDiv) return;
+    tagsDiv.innerHTML = '';
+    
+    let tableHtml = `
+        <table style="width:100%; margin-top:5px; font-size:11px; background:#fff; border-collapse: collapse;" border="1">
+            <thead>
+                <tr style="background:#f2f2f2; text-align: center;">
+                    <th style="padding:6px;">Tên Đăng Nhập</th>
+                    <th style="padding:6px;">Họ và Tên</th>
+                    <th style="padding:6px;">Quyền</th>
+                    <th style="padding:6px;">Nhóm Làm Việc (Phân Công Map)</th>
+                    <th style="padding:6px; text-align:center;">Thao Tác</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
 
-            const allCategories = [
-                "NHÓM MIỄN DỊCH", 
-                "NHÓM HUYẾT HỌC - ĐÔNG MÁU", 
-                "NHÓM SINH HÓA", 
-                "NHÓM VẬT TƯ TIÊU HAO", 
-                "NHÓM SHPT (PCR)"
-            ];
+    const allCategories = [
+        "NHÓM MIỄN DỊCH", 
+        "NHÓM HUYẾT HỌC - ĐÔNG MÁU", 
+        "NHÓM SINH HÓA", 
+        "NHÓM VẬT TƯ TIÊU HAO", 
+        "NHÓM SHPT (PCR)"
+    ];
 
-            userAccounts.forEach((u, index) => {
-                let userGroups = u.assignedGroups || [];
+    userAccounts.forEach((u, index) => {
+        let userGroups = u.assignedGroups || [];
 
-                let groupCheckboxesHtml = '<div class="group-checkbox-container">';
-                allCategories.forEach(cat => {
-                    let isChecked = userGroups.includes(cat) ? 'checked' : '';
-                    groupCheckboxesHtml += `<label>
-                        <input type="checkbox" class="user-group-chk-${index}" value="${cat}" ${isChecked} onchange="updateUserGroups(${index})"> ${cat}
-                    </label>`;
-                });
-                groupCheckboxesHtml += '</div>';
+        let groupCheckboxesHtml = '<div class="group-checkbox-container" style="display:flex; flex-direction:column; gap:3px; text-align:left; max-height:100px; overflow-y:auto; padding:4px;">';
+        allCategories.forEach(cat => {
+            let isChecked = userGroups.includes(cat) ? 'checked' : '';
+            groupCheckboxesHtml += `<label style="display:flex; align-items:center; gap:6px; font-size:11px; cursor:pointer;">
+                <input type="checkbox" class="user-group-chk-${index}" value="${cat}" ${isChecked} onchange="updateUserGroups(${index})"> ${cat}
+            </label>`;
+        });
+        groupCheckboxesHtml += '</div>';
 
-                tableHtml += `
-                    <tr>
-                        <td style="padding:4px;"><b>${u.username}</b></td>
-                        <td style="padding:4px;">${u.name}</td>
-                        <td style="padding:4px;">
-                            <select onchange="updateUserRole(${index}, this.value)" style="padding:2px; font-size:10px;">
-                                <option value="USER" ${u.role === 'USER' ? 'selected' : ''}>USER</option>
-                                <option value="ADMIN" ${u.role === 'ADMIN' ? 'selected' : ''}>ADMIN</option>
-                                <option value="PHÓ ADMIN" ${u.role === 'PHÓ ADMIN' ? 'selected' : ''}>PHÓ ADMIN</option>
-                            </select>
-                        </td>
-                        <td style="padding:4px; background:#f9f9f9;">${groupCheckboxesHtml}</td>
-                        <td style="padding:4px; text-align:center; vertical-align:middle;">
-                            <button class="btn-edit" style="padding:2px 5px; font-size:10px; margin-bottom:2px;" onclick="resetUserPassword(${index})" title="Reset mật khẩu về 123456">🔑 Reset MK</button><br>
-                            <button class="btn-delete" style="padding:2px 5px; font-size:10px;" onclick="removeUserAccount(${index})">Xóa</button>
-                        </td>
-                    </tr>
-                `;
-            });
+        tableHtml += `
+            <tr>
+                <td style="padding:6px;"><b>${u.username}</b></td>
+                <td style="padding:6px;">${u.name}</td>
+                <td style="padding:6px; text-align:center;">
+                    <select onchange="updateUserRole(${index}, this.value)" style="padding:3px; font-size:10.5px;">
+                        <option value="USER" ${u.role === 'USER' ? 'selected' : ''}>USER</option>
+                        <option value="ADMIN" ${u.role === 'ADMIN' ? 'selected' : ''}>ADMIN</option>
+                        <option value="PHÓ ADMIN" ${u.role === 'PHÓ ADMIN' || u.role === 'SUB_ADMIN' ? 'selected' : ''}>PHÓ ADMIN</option>
+                    </select>
+                </td>
+                <td style="padding:6px; background:#f9f9f9;">${groupCheckboxesHtml}</td>
+                <td style="padding:6px; text-align:center; vertical-align:middle;">
+                    <button class="btn-edit" style="padding:3px 6px; font-size:10px; margin-bottom:3px;" onclick="resetUserPassword(${index})" title="Reset mật khẩu về 123456">🔑 Reset MK</button><br>
+                    <button class="btn-delete" style="padding:3px 6px; font-size:10px;" onclick="removeUserAccount(${index})">Xóa</button>
+                </td>
+            </tr>
+        `;
+    });
 
-            tableHtml += `</tbody></table>`;
-            tagsDiv.innerHTML = tableHtml;
-        }
+    tableHtml += `</tbody></table>`;
+    tagsDiv.innerHTML = tableHtml;
+}
 
         function updateUserGroups(index) {
             let checkboxes = document.querySelectorAll(`.user-group-chk-${index}:checked`);
@@ -2361,6 +2991,20 @@ function openEditProductLotModal(index) {
 
     document.getElementById('editProdManufacturer').value = prod.manufacturer || '';
     document.getElementById('editProdMachine').value = prod.machine || '';
+    
+    // --- CHUYỂN NHIỆT ĐỘ THÀNH DANH SÁCH CHỌN ---
+    let tempSelect = document.getElementById('editProdTemp');
+    if (!tempSelect) {
+        // Nếu chưa có thẻ select nhiệt độ, tự động chuyển đổi từ input sang select
+        let oldTempInput = document.getElementById('editProdTemp'); // hoặc lấy theo selector tương ứng
+        // (Xem chi tiết đoạn HTML ở Bước 2 bên dưới)
+    }
+    if (tempSelect) tempSelect.value = prod.storageTemp || '2-8°C';
+
+    // --- CHUYỂN ĐƠN VỊ THÀNH DANH SÁCH CHỌN ---
+    let unitSelect = document.getElementById('editProdUnit');
+    if (unitSelect) unitSelect.value = prod.unit || 'Hộp';
+
     document.getElementById('editProdSpec').value = prod.spec || '';
     document.getElementById('editProdLot').value = prod.defaultLot || '';
     document.getElementById('editProdExpiry').value = formatExpiryDisplay(prod.defaultExpiry) || '';
@@ -2368,13 +3012,10 @@ function openEditProductLotModal(index) {
     document.getElementById('editProdMaxStock').value = prod.maxStock || 0;
     document.getElementById('editProdPackPerBox').value = prod.packPerBox || 1;
 
-    // PHÂN QUYỀN CHẶT CHẼ CHO USER:
     let isUser = (currentUser && currentUser.role === 'USER');
-    
-    // Khóa/Mở khóa các ô thông tin chính
     let fieldsToLock = [
         'editProdCategory', 'editProdName', 'editProdBarcode', 
-        'editProdManufacturer', 'editProdMachine', 'editProdSpec', 
+        'editProdManufacturer', 'editProdMachine', 'editProdTemp', 'editProdUnit', 'editProdSpec', 
         'editProdLot', 'editProdExpiry', 'editProdMinStock', 
         'editProdMaxStock', 'editProdPackPerBox'
     ];
@@ -2382,20 +3023,11 @@ function openEditProductLotModal(index) {
     fieldsToLock.forEach(fieldId => {
         let el = document.getElementById(fieldId);
         if (el) {
-            el.disabled = isUser; // Nếu là User thì khóa cứng, không cho sửa
-            if (isUser) {
-                el.style.backgroundColor = "#e9ecef";
-                el.style.cursor = "not-allowed";
-            } else {
-                el.style.backgroundColor = "#fff";
-                el.style.cursor = "text";
-            }
+            el.disabled = isUser;
+            el.style.backgroundColor = isUser ? "#e9ecef" : "#fff";
+            el.style.cursor = isUser ? "not-allowed" : "pointer";
         }
     });
-
-    // Riêng nút "Thêm dòng phụ" và các input bên trong mục dòng phụ vẫn mở để User tùy ý thêm/xóa/sửa dòng phụ
-    let btnAddSub = document.querySelector('#editProductLotModal button[onclick="addSubItemRow()"]');
-    if (btnAddSub) btnAddSub.style.display = '';
 
     document.getElementById('editProductLotModal').style.display = 'block';
 }
@@ -2435,6 +3067,8 @@ function saveProductLotEdit() {
         prod.barcode = document.getElementById('editProdBarcode').value.trim() || prod.name;
         prod.manufacturer = document.getElementById('editProdManufacturer').value.trim();
         prod.machine = document.getElementById('editProdMachine').value.trim();
+prod.storageTemp = document.getElementById('editProdTemp').value;
+    prod.unit = document.getElementById('editProdUnit').value;
         prod.spec = document.getElementById('editProdSpec').value.trim();
         prod.defaultLot = document.getElementById('editProdLot').value.trim();
         prod.defaultExpiry = formatExpiryDisplay(document.getElementById('editProdExpiry').value);
@@ -2474,7 +3108,10 @@ function saveProductLotEdit() {
 }
 
 function renderMappedProductsTable() {
-    const tbody = document.getElementById('mappedProductsTable').querySelector('tbody');
+    // Thêm đoạn kiểm tra an toàn này để chống sập khi chưa có user đăng nhập
+    if (!currentUser) return; 
+    
+    const tbody = document.getElementById('mappedProductsTable')?.querySelector('tbody');
     const searchInput = document.getElementById('searchMappedProductsInput');
     const searchKey = searchInput ? searchInput.value.trim().toLowerCase() : '';
 
@@ -2592,10 +3229,10 @@ function saveTransaction() {
 
     if (!barcodeTerm || isNaN(qty) || qty <= 0) { alert("Vui lòng nhập đầy đủ thông tin!"); return; }
 
-    // KIỂM TRA SẢN PHẨM: Bắt buộc phải có trong danh mục đã Map mới được phép nhập/xuất
+    // KIỂM TRA BẮT BUỘC ĐÃ MAP TRONG DANH MỤC
     let res = findProductByTerm(barcodeTerm);
     if (!res) {
-        alert("⚠️ CẢNH BÁO: Sản phẩm chưa được MAP trong hệ thống! Không cho phép lưu kho.");
+        alert("⚠️ CẢNH BÁO: Sản phẩm chưa được MAP trong hệ thống! Không cho phép lưu giao dịch vào kho để tránh mất thông tin LOT/Date.");
         return; 
     }
 
@@ -3014,73 +3651,95 @@ function checkExpiryAndStockStatus(expiryStr, currentQty, minStock, maxStock) {
                         </tr>
                     `;
                 });
-                fullHtml += `
-                    <div class="sheet" style="page-break-after: always; position: relative; min-height: 185mm; display: flex; flex-direction: column; justify-content: space-between;">
-                        <div>
-                            <div style="display: flex; justify-content: space-between; font-size: 13pt; margin-bottom: 13px;">
-                                <div style="text-align: center;">
-                                    <b>CÔNG TY CỔ PHẦN Y VIỆT<br>PHÒNG KHÁM BỆNH VIỆN ĐẠI HỌC Y DƯỢC 1</b><br>
-                                    <span style="font-size: 9pt;">KHOA XÉT NGHIỆM</span>
-                                </div>
-                                <div style="text-align: center;">
-                                    <span style="font-size: 20pt;"><b>BIÊN BẢN BÀN GIAO<br>THUỐC THỬ-VTTH XÉT NGHIỆM</b><br>
-                                    <span style="font-size: 10pt;">BM: XN-QTCL.02</span>
-                                </div>
-                            </div>
+fullHtml += `
+    <div class="sheet" style="page-break-after: always; position: relative; min-height: 185mm; display: flex; flex-direction: column; justify-content: space-between;">
+        <div>
+            <div style="display: flex; justify-content: space-between; font-size: 13pt; margin-bottom: 13px;">
+                <div style="text-align: center;">
+                    <b>CÔNG TY CỔ PHẦN Y VIỆT<br>PHÒNG KHÁM BỆNH VIỆN ĐẠI HỌC Y DƯỢC 1</b><br>
+                    <span style="font-size: 9pt;">KHOA XÉT NGHIỆM</span>
+                </div>
+                <div style="text-align: center;">
+                    <span style="font-size: 20pt;"><b>BIÊN BẢN BÀN GIAO<br>THUỐC THỬ-VTTH XÉT NGHIỆM</b></span><br>
+                    <span style="font-size: 10pt;">BM: XN-QTCL.02</span>
+                </div>
+            </div>
 
-                            <div class="info-section">
-                                <p style="margin: 2px 0;"><span style="font-size: 13pt;">Công ty cung cấp: <b>CÔNG TY TNHH XÉT NGHIỆM Y KHOA THỦY NHI</b></p>
-                                <p style="margin: 2px 0;"><span style="font-size: 13pt;">Ngày giao: Ngày ${today.getDate()} tháng ${today.getMonth() + 1} năm ${today.getFullYear()}</p>
-                            </div>
-                            
-                            <table class="data-table">
-                                <thead>
-                                    <tr>
-                                        <th style="width: 30px;"><span style="font-size: 11pt;">STT</th>
-                                        <th><span style="font-size: 11pt;">TÊN VẬT TƯ</th>
-                                        <th style="width: 100px;"><span style="font-size: 11pt;">SỐ LOT</th>
-                                        <th style="width: 100px;"><span style="font-size: 11pt;">HẠN SỬ DỤNG</th>
-                                        <th style="width: 130px;"><span style="font-size: 11pt;">QUY CÁCH</th>
-                                        <th style="width: 50px;"><span style="font-size: 11pt;">ĐƠN VỊ TÍNH</th>
-                                        <th style="width: 75px;"><span style="font-size: 11pt;">NHIỆT ĐỘ</th>
-                                        <th style="width: 75px;"><span style="font-size: 11pt;">TÌNH TRẠNG</th>
-                                        <th style="width: 75px;"><span style="font-size: 11pt;">SỐ LƯỢNG</th>
-                                        <th style="width: 75px;"><span style="font-size: 11pt;">GHI CHÚ</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${rowsHtml}
-                                </tbody>
-                            </table>
-                        </div>
+            <div class="info-section">
+                <p style="margin: 2px 0;"><span style="font-size: 13pt;">Công ty cung cấp: <b>CÔNG TY TNHH XÉT NGHIỆM Y KHOA THỦY NHI</b></span></p>
+                <p style="margin: 2px 0;"><span style="font-size: 13pt;">Ngày giao: Ngày ${today.getDate()} tháng ${today.getMonth() + 1} năm ${today.getFullYear()}</span></p>
+            </div>
+            
+            <style>
+                /* CSS chuyên biệt cho bảng Biên Bản Bàn Giao: Viền đen nét liền, nền trắng tiêu đề, chữ size 11 */
+                .bb-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin-bottom: 20px;
+                }
+                .bb-table th, .bb-table td {
+                    border: 1px solid #000 !important;
+                    padding: 6px 4px;
+                    text-align: center;
+                    vertical-align: middle;
+                    font-size: 11pt !important; /* Cỡ chữ sản phẩm và bảng chuẩn 11pt */
+                }
+                .bb-table th {
+                    background-color: #ffffff !important; /* Nền trắng, không tô màu */
+                    color: #000 !important;
+                    font-weight: bold;
+                    -webkit-print-color-adjust: exact;
+                }
+            </style>
 
-                        <div>
-                            <div class="signature-section" style="display: flex; justify-content: space-between; text-align: center; margin-top: 15px; font-size: 9.5pt; align-items: flex-start;">
-                                <div class="signature-box" style="width: 30%;">
-                                    <p style="margin-top: 20px;"><b>ĐẠI DIỆN BÊN GIAO</b></p>
-                                    <p>(Ký, ghi rõ họ tên)</p>
-                                    <div class="signature-space" style="height: 60px;"></div>
-                                    <b>${tenNguoiGiao}</b>
-                                </div>
-                                <div class="signature-box" style="width: 30%;">
-                                    <p style="margin-top: 20px;"><b>NGƯỜI KIỂM HÀNG</b></p>
-                                    <p>(Ký, ghi rõ họ tên)</p>
-                                    <div class="signature-space" style="height: 60px;"></div>
-                                    <p>&nbsp;</p>
-                                </div>
-                                <div class="signature-box" style="width: 30%; text-align: center;">
-                                    <div style="font-style: italic; font-size: 9.5pt; margin-bottom: 5px;">
-                                        Thành phố Hồ Chí Minh,Ngày ${today.getDate()} tháng ${today.getMonth() + 1} năm ${today.getFullYear()}
-                                    </div>
-                                    <p style="margin: 0;"><b>ĐẠI DIỆN BÊN NHẬN</b></p>
-                                    <p>(Ký, ghi rõ họ tên)</p>
-                                    <div class="signature-space" style="height: 60px;"></div>
-                                    <p><b>${currentUser ? currentUser.name : ''}</b></p>
-                                </div>
-                            </div>
-                        </div>
+            <table class="bb-table">
+                <thead>
+                    <tr>
+                        <th style="width: 30px;">STT</th>
+                        <th>TÊN VẬT TƯ</th>
+                        <th style="width: 90px;">SỐ LOT</th>
+                        <th style="width: 90px;">HẠN SỬ DỤNG</th>
+                        <th style="width: 120px;">QUY CÁCH</th>
+                        <th style="width: 50px;">ĐƠN VỊ TÍNH</th>
+                        <th style="width: 75px;">NHIỆT ĐỘ</th>
+                        <th style="width: 70px;">TÌNH TRẠNG</th>
+                        <th style="width: 65px;">SỐ LƯỢNG</th>
+                        <th style="width: 70px;">GHI CHÚ</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${rowsHtml}
+                </tbody>
+            </table>
+        </div>
+
+        <div>
+            <div class="signature-section" style="display: flex; justify-content: space-between; text-align: center; margin-top: 15px; font-size: 9.5pt; align-items: flex-start;">
+                <div class="signature-box" style="width: 30%;">
+                    <p style="margin-top: 20px;"><b>ĐẠI DIỆN BÊN GIAO</b></p>
+                    <p>(Ký, ghi rõ họ tên)</p>
+                    <div class="signature-space" style="height: 60px;"></div>
+                    <b>${tenNguoiGiao}</b>
+                </div>
+                <div class="signature-box" style="width: 30%;">
+                    <p style="margin-top: 20px;"><b>NGƯỜI KIỂM HÀNG</b></p>
+                    <p>(Ký, ghi rõ họ tên)</p>
+                    <div class="signature-space" style="height: 60px;"></div>
+                    <p>&nbsp;</p>
+                </div>
+                <div class="signature-box" style="width: 30%; text-align: center;">
+                    <div style="font-style: italic; font-size: 9.5pt; margin-bottom: 5px;">
+                        Thành phố Hồ Chí Minh, Ngày ${today.getDate()} tháng ${today.getMonth() + 1} năm ${today.getFullYear()}
                     </div>
-                `;
+                    <p style="margin: 0;"><b>ĐẠI DIỆN BÊN NHẬN</b></p>
+                    <p>(Ký, ghi rõ họ tên)</p>
+                    <div class="signature-space" style="height: 60px;"></div>
+                    <p><b>${currentUser ? currentUser.name : ''}</b></p>
+                </div>
+            </div>
+        </div>
+    </div>
+`;
             }
 
             let printArea = document.getElementById('printSlipArea');
@@ -3154,49 +3813,52 @@ function printSelectedReorderSlip() {
     checkboxes.forEach((cb, index) => {
         let tr = cb.closest('tr');
         let tds = tr.querySelectorAll('td');
-        // tds[1]: Tên sản phẩm, tds[4]: Đơn Vị, tds[5]: Quy Cách, tds[6]: Tồn Hiện Tại, tds[8]: SL Cần Đặt
         rowsHtml += `
             <tr>
-                <td style="text-align: center;">${index + 1}</td>
-               <td class="text-left" style="padding-left: 6px; font-size: 13px; font-weight: bold; line-height: 1;">${tds[1].innerText}</td>
-                <td style="text-align: center;">${tds[4].innerText}</td>
-                <td style="text-align: center;">${tds[5].innerText}</td>
-                <td style="text-align: center;"><b>${tds[6].innerText}</b></td>
-                <td style="text-align: center; font-size: 10px; font-weight: bold; color: #0056b3;">${tds[8].innerText}</td>
-                <td style="text-align: center; height: 25px;"></td> <!-- Cột Thực Nhận để trống cho phiếu in -->
+                <td style="text-align: center; border: 1.5px solid #000 !important; padding: 6px; font-weight: bold; color: #000;">${index + 1}</td>
+                <td style="text-align: left; border: 1.5px solid #000 !important; padding: 6px 8px; font-weight: bold; color: #000; font-size: 11pt;">${tds[1].innerText}</td>
+                <td style="text-align: center; border: 1.5px solid #000 !important; padding: 6px; font-weight: bold; color: #000;">${tds[4].innerText}</td>
+                <td style="text-align: center; border: 1.5px solid #000 !important; padding: 6px; font-weight: bold; color: #000;">${tds[5].innerText}</td>
+                <td style="text-align: center; border: 1.5px solid #000 !important; padding: 6px; font-weight: bold; color: #000;">${tds[6].innerText}</td>
+                <td style="text-align: center; border: 1.5px solid #000 !important; padding: 6px; font-weight: 800; color: #000; font-size: 11pt;">${tds[8].innerText}</td>
+                <td style="text-align: center; border: 1.5px solid #000 !important; padding: 6px;"></td>
             </tr>
         `;
     });
 
     let slipContent = `
-        <div style="font-family: Arial, sans-serif; padding: 20px; width: 750px; margin: 0 auto;">
-            <h2 style="text-align: center; margin-bottom: 5px; color: #dc3545; font-size: 13pt;">PHÒNG KHÁM BỆNH VIỆN ĐẠI HỌC Y DƯỢC 1</h2>
-            <h3 style="text-align: center; margin-top: 0; text-transform: uppercase; color: #dc3545; font-size: 11.5pt;">PHIẾU ĐỀ XUẤT ĐẶT HÀNG BỔ SUNG & THỰC NHẬN</h3>
-            <p style="font-size: 10.5pt; margin: 4px 0;"><b>Nhóm sản phẩm:</b> ${currentCategory}</p>
-            <p style="font-size: 10.5pt; margin: 4px 0;"><b>Ngày lập phiếu:</b> ${new Date().toLocaleString('vi-VN')}</p>
-            <table border="1" cellspacing="0" cellpadding="6" style="width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 10.5pt;">
+        <div style="font-family: Arial, sans-serif; padding: 15px; width: 100%; color: #000 !important;">
+            <h2 style="text-align: center; margin-bottom: 4px; color: #000 !important; font-size: 14pt; font-weight: bold;">PHÒNG KHÁM BỆNH VIỆN ĐẠI HỌC Y DƯỢC 1</h2>
+            <h3 style="text-align: center; margin-top: 0; margin-bottom: 12px; text-transform: uppercase; color: #000 !important; font-size: 12pt; font-weight: bold;">PHIẾU ĐỀ XUẤT ĐẶT HÀNG BỔ SUNG & THỰC NHẬN</h3>
+            <p style="font-size: 11pt; margin: 4px 0; color: #000 !important;"><b>Nhóm sản phẩm:</b> ${currentCategory}</p>
+            <p style="font-size: 11pt; margin: 4px 0 12px 0; color: #000 !important;"><b>Ngày lập phiếu:</b> ${new Date().toLocaleString('vi-VN')}</p>
+            
+            <table style="width: 100%; border-collapse: collapse; margin-top: 5px; border: 2px solid #000 !important;">
                 <thead>
                     <tr style="background-color: #f2f2f2; text-align: center;">
-                        <th style="width: 30px;">STT</th>
-                        <th style="width: 280px;">TÊN SẢN PHẨM</th>
-                        <th style="width: 55px;">ĐƠN VỊ</th>
-                        <th style="width: 110px;">QUY CÁCH</th>
-                        <th style="width: 55px;">TỒN</th>
-                        <th style="width: 100px;">SL CẦN ĐẶT</th>
-                        <th style="width: 30px; background-color: #d4edda; color: #155724;">THỰC NHẬN</th>
+                        <th style="border: 1.5px solid #000 !important; padding: 8px 4px; font-size: 10.5pt; font-weight: bold; color: #000; width: 35px;">STT</th>
+                        <th style="border: 1.5px solid #000 !important; padding: 8px 6px; font-size: 10.5pt; font-weight: bold; color: #000; text-align: left;">TÊN SẢN PHẨM</th>
+                        <th style="border: 1.5px solid #000 !important; padding: 8px 4px; font-size: 10.5pt; font-weight: bold; color: #000; width: 45px;">ĐƠN VỊ</th>
+                        <th style="border: 1.5px solid #000 !important; padding: 8px 4px; font-size: 10.5pt; font-weight: bold; color: #000; width: 110px;">QUY CÁCH</th>
+                        <th style="border: 1.5px solid #000 !important; padding: 8px 4px; font-size: 10.5pt; font-weight: bold; color: #000; width: 45px;">TỒN</th>
+                        <th style="border: 1.5px solid #000 !important; padding: 8px 4px; font-size: 10.5pt; font-weight: bold; color: #000; width: 120px;">SL CẦN ĐẶT</th>
+                        <th style="border: 1.5px solid #000 !important; padding: 8px 4px; font-size: 10.5pt; font-weight: bold; color: #000; width: 75px;">THỰC NHẬN</th>
                     </tr>
                 </thead>
                 <tbody>
                     ${rowsHtml}
                 </tbody>
             </table>
-            <div style="display: flex; justify-content: space-between; margin-top: 35px; text-align: center; font-size: 11pt;">
-            <div>             </div>
-                                <div class="signature-box" style="width: 30%; text-align: center;">
-                                    <p style="margin: 0;"><b>NGƯỜI LẬP PHIẾU</b></p>
-                                    <p>(Ký, ghi rõ họ tên)</p>
-                                    <div class="signature-space" style="height: 60px;"></div>
-                                    <p><b>${currentUser ? currentUser.name : ''}</b></p>
+
+            <div style="display: flex; justify-content: space-between; margin-top: 45px; text-align: center; font-size: 11pt; color: #000 !important;">
+                <div style="width: 33%;"></div>
+                <div style="width: 33%;"></div>
+                <div style="width: 33%; text-align: center;">
+                    <p style="margin: 0; font-weight: bold;">NGƯỜI LẬP PHIẾU</p>
+                    <p style="margin: 2px 0; font-style: italic;">(Ký, ghi rõ họ tên)</p>
+                    <div style="height: 45px;"></div>
+                    <p style="margin: 0; font-weight: bold;">${currentUser ? currentUser.name : ''}</p>
+                </div>
             </div>
         </div>
     `;
@@ -3377,8 +4039,8 @@ function renderReorderTable() {
             <td><b style="font-size:12px;">${item.currentStock}</b></td>
             <td>${item.maxStock || 0}</td>
             <td style="background-color: #e8f4fd; text-align: center;">
-                <b style="color: #0056b3; font-size: 12.5px;">📦 ${item.boxesNeeded} Hộp</b>
-                <div style="font-size: 9px; color: #555;">(Quy đổi: ${item.packPerBox} ${item.unit}/hộp)</div>
+                <b style="color: #0056b3; font-size: 16px;"> ${item.boxesNeeded} Hộp</b>
+                <div style="font-size: 7px; color: #555;">(${item.packPerBox} ${item.unit}/hộp)</div>
             </td>
             <td>${item.alertText}</td>
         </tr>`);
@@ -3415,24 +4077,61 @@ function renderReorderTable() {
             a.download = `Backup_CSDL_Kho_${new Date().toISOString().split('T')[0]}.json`;
             a.click();
         }
+function importFullDatabase(input) {
+    let file = input.files[0];
+    if (!file) return;
+    let reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            let dbData = JSON.parse(e.target.result);
+            console.log("📦 Dữ liệu JSON đã đọc:", dbData);
 
-        function importFullDatabase(input) {
-            let file = input.files[0];
-            if (!file) return;
-            let reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    let db = JSON.parse(e.target.result);
-                    if (db.userAccounts) localStorage.setItem('qr_user_accounts_v1', JSON.stringify(db.userAccounts));
-                    if (db.mappedProducts) localStorage.setItem('qr_mapped_products_v7', JSON.stringify(db.mappedProducts));
-                    if (db.inventory) localStorage.setItem('qr_inventory_v11', JSON.stringify(db.inventory));
-                    if (db.logs) localStorage.setItem('qr_logs_v11', JSON.stringify(db.logs));
-                    alert("Khôi phục CSDL thành công! Hệ thống sẽ tải lại trang.");
-                    location.reload();
-                } catch (err) { alert("File không hợp lệ!"); }
-            };
-            reader.readAsText(file);
+            if (typeof db === 'undefined' || !db) {
+                alert("❌ Lỗi: Biến kết nối Firebase 'db' chưa được khởi tạo!");
+                return;
+            }
+
+            // 1. Lưu dự phòng cục bộ trên trình duyệt của máy hiện tại
+            if (dbData.userAccounts) localStorage.setItem('qr_user_accounts_v1', JSON.stringify(dbData.userAccounts));
+            if (dbData.mappedProducts) localStorage.setItem('qr_mapped_products_v7', JSON.stringify(dbData.mappedProducts));
+            if (dbData.inventory) localStorage.setItem('qr_inventory_v11', JSON.stringify(dbData.inventory));
+            if (dbData.logs) localStorage.setItem('qr_logs_v11', JSON.stringify(dbData.logs));
+
+            console.log("🚀 Đang tiến hành đồng bộ từng nhánh lên Firebase...");
+
+            // 2. Thực hiện đẩy lần lượt các nhánh lên Firebase Realtime Database
+            let promises = [];
+            
+            if (dbData.mappedProducts) {
+                promises.push(db.ref('kho_xet_nghiem/qr_mapped_products_v7').set(dbData.mappedProducts));
+            }
+            if (dbData.inventory) {
+                promises.push(db.ref('kho_xet_nghiem/qr_inventory_v11').set(dbData.inventory));
+            }
+            if (dbData.logs) {
+                promises.push(db.ref('kho_xet_nghiem/qr_logs_v11').set(dbData.logs));
+            }
+            if (dbData.userAccounts) {
+                promises.push(db.ref('kho_xet_nghiem/qr_user_accounts_v1').set(dbData.userAccounts));
+            }
+
+            // 3. Đợi tất cả hoàn tất rồi mới thông báo và tải lại trang
+            Promise.all(promises).then(() => {
+                console.log("✅ Đồng bộ toàn bộ CSDL lên Firebase THÀNH CÔNG!");
+                alert("✅ Khôi phục và đồng bộ CSDL lên Firebase thành công cho tất cả các máy!");
+                location.reload();
+            }).catch(error => {
+                console.error("❌ Lỗi khi đẩy Firebase:", error);
+                alert("⚠️ Lỗi Firebase: " + error.message);
+            });
+
+        } catch (err) { 
+            console.error("❌ Lỗi phân tích JSON:", err);
+            alert("❌ File sao lưu không hợp lệ hoặc bị lỗi định dạng JSON!"); 
         }
+    };
+    reader.readAsText(file);
+}
 
         function downloadExcelTemplate() {
             let data = [
@@ -3585,7 +4284,9 @@ let trangThaiHTML = getMiniStatusBar(group.totalQty, minStock, maxStock);
             document.getElementById('totalInventoryBatches').innerText = totalBatches;
 
             function renderHierarchicalLogs(tableType, filterFrom, filterTo, searchKey) {
-                let filtered = logs.filter(l => {
+    // Ép kiểu biến logs về dạng mảng an toàn để tránh lỗi .filter is not a function
+    let safeLogs = Array.isArray(logs) ? logs : Object.values(logs || {});
+    let filtered = safeLogs.filter(l => {
                     if (l.category !== currentCategory) return false;
                     if (tableType === 'NHẬP' && l.type !== 'NHẬP') return false;
                     if (tableType === 'XUẤT' && l.type !== 'XUẤT') return false;
@@ -4080,100 +4781,31 @@ function uniqueConfigsLengthIsOne() {
     return true; // Hỗ trợ kích hoạt auto lưu khi chọn xong dòng duy nhất
 }
 
+// --- KHỞI TẠO FIREBASE DATABASE ---
 const firebaseConfig = {
     apiKey: "AIzaSyAHd_GtzmkyVaRejptE7AOmgHDmD6cV1oA",
     authDomain: "labpkbvdhyd1-4bf6c.firebaseapp.com",
-    projectId: "labpkbvdhyd1-4bf6c",
+    projectId: "labpkbvdhyd1-4bf6c-default-rtdb",
+    databaseURL: "https://labpkbvdhyd1-4bf6c-default-rtdb.asia-southeast1.firebasedatabase.app", // Phải khớp 100% với URL trên Console
     storageBucket: "labpkbvdhyd1-4bf6c.firebasestorage.app",
     messagingSenderId: "223915800109",
     appId: "1:223915800109:web:14e2885d5126c0c0c9aaa4",
     measurementId: "G-8YK8RNK43P"
-  };
+};
 
-// Khởi tạo Firebase
+// Khởi tạo Firebase an toàn không bị trùng lặp
 if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
 }
 const db = firebase.database();
 
-  // 2. Hàm lưu dữ liệu lên Firebase thay cho localStorage (hoặc chạy song song)
-  function saveToCloud(key, data) {
-    db.ref('kho_xet_nghiem/' + key).set(data)
-      .then(() => {
-        console.log("Đã đồng bộ lên mây thành công!");
-      })
-      .catch((error) => {
-        console.error("Lỗi đồng bộ: ", error);
-      });
-  }
-
-  // 3. Hàm lắng nghe dữ liệu thay đổi từ các máy tính khác theo thời gian thực (Realtime)
-  function listenFromCloud(key, callback) {
-    db.ref('kho_xet_nghiem/' + key).on('value', (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        callback(data);
-        // Cập nhật lại localStorage cục bộ để hệ thống hoạt động bình thường
-        localStorage.setItem(key, JSON.stringify(data));
-      }
-    });
-  }
-
-  // Ví dụ áp dụng cho các key chính trong hệ thống của bạn:
-  // - qr_mapped_products_v7 (Sản phẩm)
-  // - qr_inventory_v11 (Tồn kho)
-  // - qr_logs_v11 (Lịch sử)
-  
-  // Khi khởi động ứng dụng, bạn gọi hàm lắng nghe:
-  window.addEventListener('DOMContentLoaded', () => {
-    listenFromCloud('qr_mapped_products_v7', (data) => {
-       console.log("Dữ liệu sản phẩm đã được cập nhật từ máy khác.");
-       // Gọi lại hàm render giao diện sản phẩm của bạn ở đây nếu cần
-    });
-  });
-// --- CÁC HÀM ĐỒNG BỘ FIREBASE REALTIME ---
-
-// --- 1. HÀM LƯU TỒN KHO LÊN CLOUD ---
-function saveInventoryToCloud(invData) {
-    localStorage.setItem('qr_inventory_v11', JSON.stringify(invData));
-    db.ref('kho_xet_nghiem/qr_inventory_v11').set(invData)
-      .catch((error) => console.error("Lỗi đồng bộ tồn kho lên Firebase: ", error));
-}
-
-// --- 2. HÀM LƯU LỊCH SỬ GIAO DỊCH LÊN CLOUD ---
-function saveLogsToCloud(logsData) {
-    localStorage.setItem('qr_logs_v11', JSON.stringify(logsData));
-    db.ref('kho_xet_nghiem/qr_logs_v11').set(logsData)
-      .catch((error) => console.error("Lỗi đồng bộ lịch sử lên Firebase: ", error));
-}
-
-// --- 3. LẮNG NGHE DỮ LIỆU THỜI GIAN THỰC TỪ CÁC MÁY KHÁC ---
-window.addEventListener('DOMContentLoaded', () => {
-    db.ref('kho_xet_nghiem/qr_inventory_v11').on('value', (snapshot) => {
-        const cloudInventory = snapshot.val();
-        if (cloudInventory) {
-            inventory = cloudInventory;
-            localStorage.setItem('qr_inventory_v11', JSON.stringify(cloudInventory));
-            if (typeof renderTables === 'function') renderTables();
-        }
-    });
-
-    db.ref('kho_xet_nghiem/qr_logs_v11').on('value', (snapshot) => {
-        const cloudLogs = snapshot.val();
-        if (cloudLogs) {
-            logs = cloudLogs;
-            localStorage.setItem('qr_logs_v11', JSON.stringify(cloudLogs));
-            if (typeof renderTables === 'function') renderTables();
-        }
-    });
-});
-// --- HÀM LÀM SẠCH KEY AN TOÀN CHO FIREBASE ---
+// --- HÀM LÀM SẠCH KHÓA AN TOÀN CHO FIREBASE ---
 function sanitizeKey(keyStr) {
     if (!keyStr) return "unknown_key";
     return String(keyStr).replace(/[.#$\[\]\/]/g, '_');
 }
 
-// --- CÁC HÀM ĐỒNG BỘ TOÀN DIỆN LÊN FIREBASE ---
+// --- CÁC HÀM ĐẨY DỮ LIỆU LÊN FIREBASE (CLOUD) ---
 function saveProductsToCloud(prodData) {
     localStorage.setItem('qr_mapped_products_v7', JSON.stringify(prodData));
     db.ref('kho_xet_nghiem/qr_mapped_products_v7').set(prodData)
@@ -4196,9 +4828,23 @@ function saveLogsToCloud(logsData) {
       .catch((error) => console.error("Lỗi đồng bộ lịch sử: ", error));
 }
 
-// --- DUY NHẤT MỘT KHỐI LẮNG NGHE THỜI GIAN THỰC ONLINE ---
+// --- DUY NHẤT MỘT KHỐI KHỞI TẠO & LẮNG NGHE REALTIME ONLINE ---
 window.addEventListener('DOMContentLoaded', () => {
-    // 1. Lắng nghe sản phẩm
+    // 1. Nạp ngay dữ liệu cục bộ lên giao diện trước để không bị trống bảng khi mất mạng
+    let localInv = localStorage.getItem('qr_inventory_v11');
+    if (localInv) { try { inventory = JSON.parse(localInv); } catch(e){} }
+    
+    let localLogs = localStorage.getItem('qr_logs_v11');
+    if (localLogs) { try { logs = JSON.parse(localLogs); } catch(e){} }
+    
+    let localProds = localStorage.getItem('qr_mapped_products_v7');
+    if (localProds) { try { mappedProducts = JSON.parse(localProds); } catch(e){} }
+
+    if (typeof renderTables === 'function') renderTables();
+    if (typeof renderMappedProductsTable === 'function') renderMappedProductsTable();
+    if (typeof populateLabelProductSelect === 'function') populateLabelProductSelect();
+
+    // 2. Lắng nghe thay đổi Sản phẩm theo thời gian thực từ các máy khác
     db.ref('kho_xet_nghiem/qr_mapped_products_v7').on('value', (snapshot) => {
         const cloudProducts = snapshot.val();
         if (cloudProducts) {
@@ -4209,7 +4855,7 @@ window.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // 2. Lắng nghe tồn kho
+    // 3. Lắng nghe thay đổi Tồn kho theo thời gian thực
     db.ref('kho_xet_nghiem/qr_inventory_v11').on('value', (snapshot) => {
         const cloudInventory = snapshot.val();
         if (cloudInventory) {
@@ -4219,7 +4865,7 @@ window.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // 3. Lắng nghe lịch sử
+    // 4. Lắng nghe thay đổi Lịch sử giao dịch theo thời gian thực
     db.ref('kho_xet_nghiem/qr_logs_v11').on('value', (snapshot) => {
         const cloudLogs = snapshot.val();
         if (cloudLogs) {
@@ -4229,6 +4875,44 @@ window.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
+function handleInventoryAction(actionType, productData) {
+    let startTime = performance.now(); // Đo tốc độ thực tế
+
+    // 1. Cập nhật dữ liệu tạm thời vào bộ nhớ cục bộ (Local Storage) để UI phản hồi ngay lập tức
+    let currentInventory = JSON.parse(localStorage.getItem('qr_inventory_v11')) || {};
+    let currentLogs = JSON.parse(localStorage.getItem('qr_logs_v11')) || [];
+
+    // Cập nhật tồn kho và thêm lịch sử cục bộ
+    // (Xử lý logic cộng trừ số lượng tồn kho, LOT, hạn sử dụng tại đây...)
+    currentLogs.unshift(productData); // Đưa giao dịch mới lên đầu mảng lịch sử
+
+    // Lưu kho tốc độ cao
+    localStorage.setItem('qr_inventory_v11', JSON.stringify(currentInventory));
+    localStorage.setItem('qr_logs_v11', JSON.stringify(currentLogs));
+
+    // 2. KÍCH HOẠT GIAO DIỆN NGAY LẬP TỨC (Nhanh trong chớp mắt)
+    renderInventoryUI(); 
+    renderLogsUI();
+    
+    // Xóa trắng input quét mã để sẵn sàng cho mẫu tiếp theo
+    if (typeof resetBarcodeScanner === 'function') resetBarcodeScanner();
+
+    let endTime = performance.now();
+    console.log(`⚡ Giao diện phản hồi trong: ${(endTime - startTime).toFixed(2)} ms`);
+
+    // 3. ĐỒNG BỘ NGẦM LÊN FIREBASE (Chạy ở background không chặn luồng giao diện)
+    setTimeout(() => {
+        let updates = {};
+        updates['kho_xet_nghiem/qr_inventory_v11'] = currentInventory;
+        updates['kho_xet_nghiem/qr_logs_v11'] = currentLogs;
+
+        db.ref().update(updates).then(() => {
+            console.log("☁️ Đã đồng bộ ngầm lên Firebase thành công!");
+        }).catch(err => {
+            console.error("⚠️ Lỗi đồng bộ ngầm Firebase:", err);
+        });
+    }, 10); // Đẩy nhiệm vụ lên hàng đợi bất đồng bộ ngay lập tức
+}
 <!-- Đoạn mã logic xử lý Nhập / Xuất kho cho Kit tổng và Sản phẩm con -->
 /**
  * Xử lý giao dịch Nhập / Xuất kho áp dụng cho nhóm SHPT (PCR)
@@ -4418,6 +5102,1511 @@ document.addEventListener('DOMContentLoaded', () => {
     // Khóa nút Lưu mặc định khi mới mở trang nếu chưa quét sản phẩm
     resetTab1FormState();
 });
-</script>
+        // --- CHUYỂN ĐỔI TAB & XỬ LÝ RIÊNG CHO LAB LƯU MẪU ---
+function switchCategory(categoryName, btnElement) {
+            currentCategory = categoryName;
+            document.getElementById('currentCategoryDisplay').innerText = "ĐANG CHỌN: " + categoryName;
+            
+            // Xử lý active/deactive cho các nút nhóm menu
+            document.querySelectorAll('.sub-menu-btn, .sidebar-group-header').forEach(b => b.classList.remove('active'));
+            if (btnElement) btnElement.classList.add('active');
+
+            // 🟢 LẤY THÊM KHUNG 7 TAB CỦA KHO XN
+            let tabContainerHeader = document.querySelector('.tab-container');
+
+            if (categoryName === 'LAB LƯU MẪU') {
+                // 1. Ẩn thanh 7 Tab của Kho XN đi để không bị dính vào Lab Lưu Mẫu
+                if (tabContainerHeader) tabContainerHeader.style.display = 'none';
+
+                // 2. Ẩn toàn bộ các tab pane của kho, hiện khung Lab Lưu Mẫu lên
+                document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+                let samplePane = document.getElementById('tabLabLuuMau');
+                if (samplePane) samplePane.classList.add('active');
+
+                switchLabSubTab(1); // Mặc định mở Tab 1 của Lab Lưu Mẫu
+            } else {
+                // 1. Hiện lại thanh 7 Tab của Kho XN khi bấm về các nhóm xét nghiệm bình thường
+                if (tabContainerHeader) tabContainerHeader.style.display = 'flex';
+
+                // 2. Ẩn khung Lab Lưu Mẫu, hiện lại các tab kho XN
+                let labLuuMauPane = document.getElementById('tabLabLuuMau');
+                if (labLuuMauPane) labLuuMauPane.classList.remove('active');
+                
+                // Kích hoạt hiển thị Tab 1 của Kho XN mặc định khi chuyển về nhóm hóa chất
+                let firstTabBtn = document.querySelector('.tab-btn');
+                if (firstTabBtn) firstTabBtn.click();
+
+                // 3. Render lại toàn bộ dữ liệu bảng theo đúng nhóm vừa chọn
+                renderTables();
+            }
+        }
+
+        function openTab(evt, tabId) {
+            let tabPanes = document.getElementsByClassName("tab-pane");
+            for (let i = 0; i < tabPanes.length; i++) tabPanes[i].classList.remove("active");
+            let tabBtns = document.getElementsByClassName("tab-btn");
+            for (let i = 0; i < tabBtns.length; i++) tabBtns[i].classList.remove("active");
+            
+            document.getElementById(tabId).classList.add("active");
+            if (evt && evt.currentTarget) evt.currentTarget.classList.add("active");
+            if (tabId === 'tabReorder') renderReorderTable();
+        }
+
+        // --- CƠ CHẾ LOGIC QUẢN LÝ LAB LƯU MẪU ---
+        let activeLabSubTab = 1; // 1: Mẫu Trong Ngày, 2: Mẫu Tích Lũy, 3: Lịch Sử Tất Cả Các Ngày
+
+        function switchLabSubTab(tabNum) {
+            activeLabSubTab = tabNum;
+            document.getElementById('btnSubTab1').style.background = tabNum === 1 ? '#007bff' : '#cbd5e1';
+            document.getElementById('btnSubTab1').style.color = tabNum === 1 ? '#fff' : '#333';
+            document.getElementById('btnSubTab2').style.background = tabNum === 2 ? '#007bff' : '#cbd5e1';
+            document.getElementById('btnSubTab2').style.color = tabNum === 2 ? '#fff' : '#333';
+            document.getElementById('btnSubTab3').style.background = tabNum === 3 ? '#007bff' : '#cbd5e1';
+            document.getElementById('btnSubTab3').style.color = tabNum === 3 ? '#fff' : '#333';
+            
+            document.getElementById('currentViewTabName').innerText = `Tab ${tabNum}`;
+
+            // QUY TẮC HIỂN THỊ THAY ĐỔI THEO TAB:
+            // Chỉ hiển thị ô quét mã vạch và lưu tự động ở TAB 1. Ẩn ở Tab 2 và Tab 3.
+            let controlPanel = document.getElementById('tab1ControlPanel');
+            if (controlPanel) {
+                controlPanel.style.display = (tabNum === 1) ? 'block' : 'none';
+            }
+
+            renderSampleTable();
+        }
+
+// --- 1. TỰ ĐỘNG KIỂM TRA CHUYỂN NGÀY VÀ RESET KHAY TỪ ĐẦU ---
+function kiemTraVaTuDongChuyenNgayLab() {
+    let labSampleStorage = getActiveLabStorage();
+    let todayStr = new Date().toISOString().split('T')[0]; // Định dạng YYYY-MM-DD
+    let lastDate = localStorage.getItem('qr_last_lab_date_' + (window.currentLabBranch || 'mau')) || todayStr;
+
+    if (lastDate !== todayStr) {
+        // Sang ngày mới: Chuyển toàn bộ các mẫu đang ở Tab 1 chưa bị hủy sang Tab 2
+        for (let i = 1; i <= maxSampleLimit; i++) {
+            let s = labSampleStorage[i];
+            if (s && s.sampleContent && !s.daHuy && s.tabIndex === 1) {
+                s.tabIndex = 2; // Đẩy sang Tab 2 (Mẫu Tích Lũy / Ngày Hôm Trước)
+            }
+        }
+        // Lưu lại ngày hiện tại làm mốc cho ngày tiếp theo
+        localStorage.setItem('qr_last_lab_date_' + (window.currentLabBranch || 'mau'), todayStr);
+        saveActiveLabStorage(labSampleStorage);
+    }
+}
+
+// --- 2. XỬ LÝ QUÉT MẪU VÀ LƯU VÀO VỊ TRÍ TRỐNG ĐẦU TIÊN CỦA TAB 1 ---
+function xuLyQuetMauLuu() {
+    kiemTraVaTuDongChuyenNgayLab();
+    let labSampleStorage = getActiveLabStorage();
+    let inputElem = document.getElementById('inputQuetMauLuu');
+    let val = inputElem.value.trim();
+    if (!val) { alert("Vui lòng quét hoặc nhập mã mẫu lưu!"); return; }
+
+    // Kiểm tra trùng lặp mẫu đang hoạt động trong kho hiện tại
+    for (let i = 1; i <= maxSampleLimit; i++) {
+        if (labSampleStorage[i] && labSampleStorage[i].sampleContent && !labSampleStorage[i].daHuy) {
+            if (labSampleStorage[i].sampleContent.toLowerCase() === val.toLowerCase()) {
+                let branchName = (window.currentLabBranch === 'mau') ? 'Mẫu Máu' : 'Mẫu Nước Tiểu';
+                alert(`⚠️ CẢNH BÁO: Mẫu "${val}" đã tồn tại trong kho ${branchName} tại Vị Trí số ${i}!\nHệ thống từ chối lưu trùng.`);
+                inputElem.value = '';
+                inputElem.focus();
+                return;
+            }
+        }
+    }
+
+    // Tìm vị trí trống đầu tiên (từ 1 đến max) để lấp đầy khay
+    let targetPos = -1;
+    for (let i = 1; i <= maxSampleLimit; i++) {
+        if (!labSampleStorage[i] || !labSampleStorage[i].sampleContent || labSampleStorage[i].daHuy) {
+            targetPos = i;
+            break;
+        }
+    }
+
+    if (targetPos === -1) {
+        alert(`⚠️ Kho lưu mẫu đã đầy (đạt giới hạn ${maxSampleLimit} vị trí)! Vui lòng hủy bớt mẫu cũ.`);
+        return;
+    }
+
+    let now = new Date();
+    let timeStr = now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' ' + now.toLocaleDateString('vi-VN');
+    let dateISO = now.toISOString().split('T')[0];
+
+    labSampleStorage[targetPos] = {
+        sampleContent: val,
+        timeStr: timeStr,
+        dateISO: dateISO,
+        userName: currentUser ? currentUser.name : 'N/A',
+        tabIndex: 1, // Mặc định lưu vào Tab 1
+        daHuy: false,
+        nguoiHuy: '',
+        thoiGianHuy: ''
+    };
+
+    saveActiveLabStorage(labSampleStorage);
+    inputElem.value = '';
+    inputElem.focus();
+    renderSampleTable();
+    showAutoSaveNotification(`✅ Đã lưu thành công vào Vị trí số ${targetPos}!`);
+}
+
+// --- 3. HỦY MẪU: CHUYỂN SANG TRẠNG THÁI ĐÃ HỦY CHO TAB 3 ---
+function thucHienHuyMau(pos) {
+    let labSampleStorage = getActiveLabStorage();
+    let s = labSampleStorage[pos];
+    if (!s || s.daHuy) return;
+    let tenNguoiHuy = currentUser ? currentUser.name : prompt("Nhập tên người thực hiện hủy mẫu:");
+    if (!tenNguoiHuy) return;
+
+    if (confirm(`Xác nhận hủy mẫu "${s.sampleContent}" tại vị trí ${pos}?\nNgười hủy: ${tenNguoiHuy}`)) {
+        s.daHuy = true;
+        s.nguoiHuy = tenNguoiHuy;
+        s.thoiGianHuy = new Date().toLocaleString('vi-VN');
+        saveActiveLabStorage(labSampleStorage);
+        
+        alert(`✅ Đã ghi nhận hủy mẫu thành công! Dữ liệu đã chuyển sang Tab 3 (Lịch Sử).`);
+        switchLabSubTab(3); // Tự động chuyển giao diện sang Tab 3 để kiểm tra
+    }
+}
+
+// --- RENDER BẢNG: PHÂN TÁCH TUYỆT ĐỐI GIỮA CÁC TAB ---
+function renderSampleTable() {
+    let labSampleStorage = getActiveLabStorage();
+    const tbody = document.getElementById('sampleTableBody');
+    if (!tbody) return;
+
+    const searchInput = document.getElementById('searchSampleInput');
+    const searchKey = searchInput ? searchInput.value.trim().toLowerCase() : '';
+    const fromDate = document.getElementById('filterSampleFrom') ? document.getElementById('filterSampleFrom').value : '';
+    const toDate = document.getElementById('filterSampleTo') ? document.getElementById('filterSampleTo').value : '';
+
+    let htmlRows = [];
+    let countTab1 = 0;
+    let countTab2 = 0;
+    let totalDisplayCount = 0;
+
+    // ==========================================
+    // TAB 3: CHỈ HIỂN THỊ CÁC MẪU ĐÃ HỦY (Lịch sử tra cứu)
+    // ==========================================
+    if (activeLabSubTab === 3) {
+        let allItems = [];
+        for (let i = 1; i <= maxSampleLimit; i++) {
+            let s = labSampleStorage[i];
+            if (s && s.sampleContent && s.daHuy) { 
+                allItems.push({ pos: i, data: s }); 
+            }
+        }
+        allItems.sort((a, b) => new Date(b.data.dateISO) - new Date(a.data.dateISO));
+let tableHeaderRow = document.getElementById('sampleTableHeadRow');
+if (tableHeaderRow) {
+    tableHeaderRow.innerHTML = `
+        <th style="width: 140px; text-align: center;">Thời Gian Lưu Mẫu</th>
+        <th style="width: 140px; text-align: center;">Thời Gian Hủy Mẫu</th>
+        <th style="width: 100px; text-align: center;">Vị Trí Khay</th>
+        <th style="text-align: left; padding-left: 10px;">Mẫu Đã Hủy / Barcode / Tên Mẫu</th>
+        <th style="width: 110px; text-align: center;">Trạng Thái</th>
+        <th style="width: 130px; text-align: center;">Người Lưu Mẫu</th>
+        <th style="width: 130px; text-align: center;">Người Hủy Mẫu</th>
+    `;
+}
+
+        allItems.forEach(item => {
+            let s = item.data;
+            let tenKhay = "Khay " + Math.ceil(item.pos / 100);
+            totalDisplayCount++;
+htmlRows.push(`
+    <tr>
+        <td style="text-align: center; vertical-align: middle; font-size: 11px; color: #0284c7; font-weight: 500;">
+            📥 ${item.data.timeStr || item.data.dateISO || '---'}
+        </td>
+        <td style="text-align: center; vertical-align: middle; font-size: 11px; color: #dc2626; font-weight: 500;">
+            ❌ ${item.data.thoiGianHuy || '---'}
+        </td>
+        <td style="text-align: center; vertical-align: middle;">${tenKhay} (Vị trí ${item.pos})</td>
+        <td style="text-align: left; padding-left: 10px; vertical-align: middle;"><b>${item.data.sampleContent || ''}</b></td>
+        <td style="text-align: center; vertical-align: middle;"><span style="background: #dc3545; color: white; padding: 2px 6px; border-radius: 4px;">ĐÃ HỦY</span></td>
+        <td style="text-align: center; vertical-align: middle;"><span class="user-tag">${item.data.userName || '---'}</span></td>
+        <td style="text-align: center; vertical-align: middle;"><span class="user-tag" style="background:#f8d7da; color:#721c24;">${item.data.nguoiHuy || 'N/A'}</span></td>
+    </tr>
+`);
+        });
+        tbody.innerHTML = htmlRows.length ? htmlRows.join('') : `<tr><td colspan="6" style="text-align:center; padding: 20px; color: #666;">Chưa có mẫu nào bị hủy trong nhánh này.</td></tr>`;
+        
+        let c1 = document.getElementById('countTab1');
+        let c2 = document.getElementById('countTab2');
+        let tot = document.getElementById('totalSavedSamplesCount');
+        let maxPos = document.getElementById('maxSamplePositions');
+
+        if (c1) c1.innerText = countTab1;
+        if (c2) c2.innerText = countTab2;
+        if (tot) tot.innerText = totalDisplayCount;
+        if (maxPos) maxPos.innerText = maxSampleLimit;
+        return;
+    }
+
+    // ==========================================
+    // TAB 1 & TAB 2: HIỂN THỊ MẪU ĐANG HOẠT ĐỘNG
+    // ==========================================
+    let tableHeaderRow = document.getElementById('sampleTableHeaderRow');
+    if (tableHeaderRow) {
+        tableHeaderRow.innerHTML = `
+            <th style="width: 120px; text-align: center;">Khay & Vị Trí</th>
+            <th style="text-align: left; padding-left: 10px;">Mẫu Lưu Theo Ngày / Barcode / Tên Mẫu</th>
+            <th style="width: 130px; text-align: center;">Ngày Giờ Lưu</th>
+            <th style="width: 110px; text-align: center;">Thuộc Tab</th>
+            <th style="width: 130px; text-align: center;">Người Lưu Mẫu</th>
+            <th style="width: 90px; text-align: center;">Thao Tác</th>
+        `;
+    }
+
+    const khayColors = ['#ffffff', '#f0fdf4', '#eff6ff', '#fefce8', '#fdf4ff', '#fff1f2'];
+
+    for (let i = 1; i <= maxSampleLimit; i++) {
+        let sampleInfo = labSampleStorage[i];
+        let hasData = sampleInfo && sampleInfo.sampleContent && !sampleInfo.daHuy;
+        let khayIndex = Math.ceil(i / 100);
+        let tenKhay = `Khay ${khayIndex}`;
+        let baseKhayBg = khayColors[(khayIndex - 1) % khayColors.length];
+
+        if (hasData) {
+            if (!sampleInfo.tabIndex) sampleInfo.tabIndex = 1;
+            if (sampleInfo.tabIndex === 1) countTab1++;
+            else if (sampleInfo.tabIndex === 2) countTab2++;
+
+            if (sampleInfo.tabIndex !== activeLabSubTab) continue;
+            if (fromDate && sampleInfo.dateISO < fromDate) continue;
+            if (toDate && sampleInfo.dateISO > toDate) continue;
+            
+            if (searchKey) {
+                let match = sampleInfo.sampleContent.toLowerCase().includes(searchKey) ||
+                            sampleInfo.userName.toLowerCase().includes(searchKey) ||
+                            String(i).includes(searchKey) || tenKhay.toLowerCase().includes(searchKey);
+                if (!match) continue;
+            }
+            totalDisplayCount++;
+        } else {
+            if (activeLabSubTab === 2) continue; // Ẩn vị trí trống ở Tab 2
+        }
+
+        let contentTd = `<span style="color: #bbb; font-style: italic;">(Trống - Sẵn sàng quét lưu mẫu)</span>`;
+        let timeTd = '-';
+        let userTd = '-';
+        let tabBadge = '-';
+        let actionTd = '-';
+        let rowBg = baseKhayBg;
+
+        if (hasData) {
+            timeTd = sampleInfo.timeStr;
+            userTd = `<span class="user-tag">${sampleInfo.userName}</span>`;
+            tabBadge = `<span style="background: #28a745; color: white; padding: 3px 8px; border-radius: 4px; font-weight: bold; font-size: 10.5px;">Đang lưu mẫu</span>`;
+            contentTd = `<b>${sampleInfo.sampleContent}</b>`;
+            actionTd = `<button onclick="thucHienHuyMau(${i})" style="background-color: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 11px;">🗑️ Hủy Mẫu</button>`;
+        }
+
+        htmlRows.push(`
+            <tr style="background-color: ${rowBg};">
+                <td style="text-align: center; font-weight: bold; color: #004085; border-right: 1px solid #ddd;">${tenKhay}<br><span style="font-size: 9.5px; color: #555;">(Vị trí ${i})</span></td>
+                <td class="text-left" style="padding-left: 10px;">${contentTd}</td>
+                <td style="text-align: center;">${timeTd}</td>
+                <td style="text-align: center;">${tabBadge}</td>
+                <td style="text-align: center;">${userTd}</td>
+                <td style="text-align: center;">${actionTd}</td>
+            </tr>
+        `);
+    }
+
+    tbody.innerHTML = htmlRows.join('');
+    
+    let c1 = document.getElementById('countTab1');
+    let c2 = document.getElementById('countTab2');
+    let tot = document.getElementById('totalSavedSamplesCount');
+    let maxPos = document.getElementById('maxSamplePositions');
+
+    if (c1) c1.innerText = countTab1;
+    if (c2) c2.innerText = countTab2;
+    if (tot) tot.innerText = totalDisplayCount;
+    if (maxPos) maxPos.innerText = maxSampleLimit;
+}
+
+        function exportSamplesToExcel() {
+            let data = [["Khay & Vị Trí", "Mẫu Lưu Theo Ngày / Barcode / Tên Mẫu", "Ngày Giờ Lưu", "Thuộc Tab", "Người Lưu Mẫu", "Trạng Thái", "Người Hủy Mẫu", "Thời Gian Hủy"]];
+            for (let i = 1; i <= maxSampleLimit; i++) {
+                if (labSampleStorage[i] && labSampleStorage[i].sampleContent) {
+                    let s = labSampleStorage[i];
+                    let tenKhay = "Khay " + Math.ceil(i / 100);
+                    data.push([
+                        `${tenKhay} - Vị trí ${i}`, 
+                        s.sampleContent, 
+                        s.timeStr, 
+                        `Tab ${s.tabIndex || 1}`, 
+                        s.userName, 
+                        s.daHuy ? "Đã Hủy" : "Đang Lưu", 
+                        s.nguoiHuy || '', 
+                        s.thoiGianHuy || ''
+                    ]);
+                }
+            }
+            let ws = XLSX.utils.aoa_to_sheet(data);
+            let wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "LabLuuMau");
+            XLSX.writeFile(wb, `Lab_Luu_Mau_${new Date().toISOString().split('T')[0]}.xlsx`);
+        }
+
+        function printSampleTable() {
+            let printContent = `
+                <div style="font-family: Arial, sans-serif; padding: 20px; width: 800px; margin: 0 auto;">
+                    <h2 style="text-align: center; margin-bottom: 5px;">PHÒNG KHÁM BỆNH VIỆN ĐẠI HỌC Y DƯỢC 1</h2>
+                    <h3 style="text-align: center; margin-top: 0; text-transform: uppercase;">DANH SÁCH MẪU LƯU XÉT NGHIỆM (LAB LƯU MẪU)</h3>
+                    <p><b>Thời gian xuất phiếu:</b> ${new Date().toLocaleString('vi-VN')}</p>
+                    <table border="1" cellspacing="0" cellpadding="5" style="width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 11px;">
+<thead>
+    <tr>
+        <th>Giờ Lưu Mẫu</th>
+        <th>Giờ Hủy Mẫu</th>
+        <th>Khay & Vị Trí</th>
+        <th>Mẫu Lưu / Barcode</th>
+        <th>Trạng Thái</th>
+        <th>Người Hủy Mẫu</th>
+        <th>Người Lưu Mẫu</th>
+    </tr>
+</thead>
+                        <tbody>
+            `;
+
+            for (let i = 1; i <= maxSampleLimit; i++) {
+                if (labSampleStorage[i] && labSampleStorage[i].sampleContent) {
+                    let s = labSampleStorage[i];
+                    let tenKhay = "Khay " + Math.ceil(i / 100);
+                    let trangThaiStr = s.daHuy ? `Đã Hủy (Hủy bởi: ${s.nguoiHuy || 'N/A'})` : "Đang Lưu";
+                    printContent += `
+                        <tr>
+                            <td style="text-align: center; font-weight: bold;">${tenKhay} (Vị trí ${i})</td>
+                            <td style="text-align: left; padding-left: 8px;">${s.sampleContent}</td>
+                            <td style="text-align: center;">${s.timeStr}</td>
+                            <td style="text-align: center;">${s.userName}</td>
+                            <td style="text-align: center;">${trangThaiStr}</td>
+                        </tr>
+                    `;
+                }
+            }
+
+            printContent += `
+                        </tbody>
+                    </table>
+                    <div style="display: flex; justify-content: space-between; margin-top: 40px; text-align: center;">
+                        <div><p><b>Người Lập Báo Cáo</b><br>(Ký, họ tên)</p></div>
+                        <div><p><b>Phụ Trách Kho / Lab</b><br>(Ký, họ tên)</p></div>
+                    </div>
+                </div>
+            `;
+
+            let printArea = document.getElementById('printSlipArea');
+            printArea.innerHTML = printContent;
+            printArea.style.display = 'block';
+            window.print();
+            printArea.style.display = 'none';
+        }
+
+        // --- CÁC HÀM CƠ BẢN KHÁC ---
+        function openProductModal() { document.getElementById('productModal').style.display = 'block'; }
+        function closeProductModal() { document.getElementById('productModal').style.display = 'none'; }
+        
+        function changeTheme(themeName) {
+            document.body.className = document.body.className.replace(/theme-\S+/g, '');
+            if (themeName !== 'default') document.body.classList.add('theme-' + themeName);
+            localStorage.setItem('user_selected_theme', themeName);
+        }
+
+        function saveProductsToCloud(data) { localStorage.setItem('qr_mapped_products_v7', JSON.stringify(data)); }
+        function saveInventoryToCloud(data) { localStorage.setItem('qr_inventory_v11', JSON.stringify(data)); }
+        function saveLogsToCloud(data) { localStorage.setItem('qr_logs_v11', JSON.stringify(data)); }
+
+        function renderTables() {
+            if (!currentUser) return;
+
+            let sortedProducts = getSortedProductsForCategory(currentCategory);
+
+            const invBody = document.getElementById('inventoryTable').querySelector('tbody');
+            let invHtml = [];
+            let totalBatches = 0;
+            const searchInvKey = document.getElementById('searchInvInput') ? document.getElementById('searchInvInput').value.trim().toLowerCase() : '';
+            const filterInvFrom = document.getElementById('filterInvFrom').value;
+            const filterInvTo = document.getElementById('filterInvTo').value;
+
+            let groupedInventory = {};
+            for (let key in inventory) {
+                let item = inventory[key];
+                if (item.category !== currentCategory || item.qty <= 0) continue;
+                
+                let itemExpYM = formatExpiryDisplay(item.expiry);
+                if (filterInvFrom && itemExpYM < filterInvFrom) continue;
+                if (filterInvTo && itemExpYM > filterInvTo) continue;
+
+                let foundRes = findProductByTerm(item.barcode);
+                let currentProductName = foundRes ? foundRes.product.name : item.productName;
+
+                const matchesSearch = !searchInvKey || 
+                    (currentProductName && currentProductName.toLowerCase().includes(searchInvKey)) ||
+                    (item.barcode && item.barcode.toLowerCase().includes(searchInvKey)) ||
+                    (item.lot && item.lot.toLowerCase().includes(searchInvKey));
+
+                if (matchesSearch) {
+                    totalBatches++;
+                    if (!groupedInventory[currentProductName]) {
+                        groupedInventory[currentProductName] = { productName: currentProductName, barcode: item.barcode, batches: [], totalQty: 0 };
+                    }
+                    groupedInventory[currentProductName].batches.push({ key: key, lot: item.lot, expiry: itemExpYM, qty: item.qty });
+                    groupedInventory[currentProductName].totalQty += item.qty;
+                }
+            }
+
+            sortedProducts.forEach(p => {
+                let group = groupedInventory[p.name];
+                if (!group) return;
+
+                let minStock = p.minStock || 0;
+                let maxStock = p.maxStock || 0;
+                let unit = p.unit || '';
+                let spec = p.spec || '-';
+                let isAdmin = (currentUser.role === 'ADMIN');
+
+                let representativeExpiry = group.batches.length > 0 ? group.batches[0].expiry : '';
+                let status = checkExpiryAndStockStatus(representativeExpiry, group.totalQty, minStock, maxStock);
+
+                let lotHtml = '', expiryHtml = '', qtyHtml = '', actionHtml = '';
+
+                group.batches.forEach((b, batchIdx) => {
+                    let adminAction = isAdmin ? `<button class="btn-delete" style="padding:1px 4px; font-size:9px;" onclick="deleteBatch('${b.key}')">Xóa</button>` : '';
+                    let colorClass = `lot-style-${(batchIdx % 4) + 1}`;
+                    
+                    lotHtml += `<div style="padding: 3px 0;"><span class="lot-highlight-tab2 ${colorClass}">${b.lot}</span></div>`;
+                    expiryHtml += `<div style="padding: 3px 0;"><span class="lot-highlight-tab2 ${colorClass}">${b.expiry}</span></div>`;
+                    qtyHtml += `<div style="padding: 6px 0; font-size: 13px;"><b>${b.qty}</b> ${unit}</div>`;
+                    actionHtml += `<div style="padding: 6px 0; min-height:28px;">${adminAction}</div>`;
+                });
+
+                let trangThaiHTML = getMiniStatusBar(group.totalQty, minStock, maxStock);
+                invHtml.push(`<tr class="${status.class}">
+                    <td style="text-align: center;"><input type="checkbox" class="row-checkbox"></td>
+                    <td><b>${group.productName}</b><br><span style="font-size:10px; color:#666;">Tổng tồn: <b>${group.totalQty}</b> ${unit}</span></td>
+                    <td>${lotHtml}</td><td>${expiryHtml}</td><td>${qtyHtml}</td>
+                    <td style="text-align: center;">${minStock}</td><td style="text-align: center;">${maxStock}</td>
+                    <td>${spec}</td><td>${trangThaiHTML}</td><td class="admin-only-col">${actionHtml}</td>
+                </tr>`);
+            });
+
+            invBody.innerHTML = invHtml.length ? invHtml.join('') : `<tr><td colspan="10" style="text-align:center; color:#888;">Không tìm thấy sản phẩm tồn kho phù hợp</td></tr>`;
+            let totalBatchesEl = document.getElementById('totalInventoryBatches');
+            if (totalBatchesEl) totalBatchesEl.innerText = totalBatches;
+
+            function renderHierarchicalLogs(tableType, filterFrom, filterTo, searchKey) {
+                let safeLogs = Array.isArray(logs) ? logs : Object.values(logs || {});
+                let filtered = safeLogs.filter(l => {
+                    if (l.category !== currentCategory) return false;
+                    if (tableType === 'NHẬP' && l.type !== 'NHẬP') return false;
+                    if (tableType === 'XUẤT' && l.type !== 'XUẤT') return false;
+                    
+                    let lExpYM = formatExpiryDisplay(l.expiry);
+                    if (filterFrom && lExpYM < filterFrom) return false;
+                    if (filterTo && lExpYM > filterTo) return false;
+
+                    let foundRes = findProductByTerm(l.barcode);
+                    let currentName = foundRes ? foundRes.product.name : l.productName;
+
+                    if (searchKey) {
+                        let match = (currentName && currentName.toLowerCase().includes(searchKey)) ||
+                                    (l.lot && l.lot.toLowerCase().includes(searchKey)) ||
+                                    (l.barcode && l.barcode.toLowerCase().includes(searchKey)) ||
+                                    (l.userName && l.userName.toLowerCase().includes(searchKey)) ||
+                                    (l.note && l.note.toLowerCase().includes(searchKey));
+                        if (!match) return false;
+                    }
+                    return true;
+                });
+
+                let tree = {};
+                let todayStr = new Date().toISOString().split('T')[0];
+
+                filtered.forEach((l, originalIndex) => {
+                    let dStr = l.dateISO || todayStr;
+                    let parts = dStr.split('-');
+                    let year = parts[0] || '2026';
+                    let month = parts[1] ? `${year}-${parts[1]}` : `${year}-01`;
+                    let day = dStr;
+
+                    if (!tree[year]) tree[year] = {};
+                    if (!tree[year][month]) tree[year][month] = {};
+                    if (!tree[year][month][day]) tree[year][month][day] = [];
+
+                    tree[year][month][day].push({ log: l, index: originalIndex });
+                });
+
+                let htmlRows = [];
+                let totalImpSum = 0;
+                let totalExpSum = 0;
+                let isAdmin = (currentUser.role === 'ADMIN');
+
+                for (let year in tree) {
+                    let isYearOpen = toggledYears[year] !== undefined ? toggledYears[year] : true;
+                    let yearIcon = isYearOpen ? '▼' : '▶';
+                    
+                    let yearCount = 0;
+                    for (let m in tree[year]) {
+                        for (let d in tree[year][m]) {
+                            yearCount += tree[year][m][d].length;
+                        }
+                    }
+
+                    let colSpanNum = (tableType === 'NHẬP') ? 10 : (tableType === 'XUẤT' ? 5 : 10);
+                    htmlRows.push(`
+                        <tr class="time-group-header" onclick="toggleYearGroup('${year}')">
+                            <td colspan="${colSpanNum}" style="padding: 8px 10px;">
+                                <span class="toggle-icon">${yearIcon}</span> 📁 <b>Năm ${year}</b> <span style="font-size:10px; font-weight:normal; color:#555;">(Tổng: ${yearCount} giao dịch)</span>
+                            </td>
+                        </tr>
+                    `);
+
+                    if (isYearOpen) {
+                        for (let month in tree[year]) {
+                            let isMonthOpen = toggledMonths[month] !== undefined ? toggledMonths[month] : true;
+                            let monthIcon = isMonthOpen ? '▼' : '▶';
+                            let monthName = `Tháng ${month.split('-')[1]}/${month.split('-')[0]}`;
+                            let monthCount = 0;
+                            for (let d in tree[year][month]) {
+                                monthCount += tree[year][month][d].length;
+                            }
+
+                            htmlRows.push(`
+                                <tr class="time-subgroup-header" onclick="toggleMonthGroup('${month}')">
+                                    <td colspan="${colSpanNum}" style="padding: 6px 10px; padding-left: 25px;">
+                                        <span class="toggle-icon">${monthIcon}</span> 📂 <b>${monthName}</b> <span style="font-size:10px; font-weight:normal; color:#666;">(${monthCount} giao dịch)</span>
+                                    </td>
+                                </tr>
+                            `);
+
+                            if (isMonthOpen) {
+                                for (let day in tree[year][month]) {
+                                    let dayKey = `${month}_${day}`;
+                                    let isDayOpen = toggledDays[dayKey] !== undefined ? toggledDays[dayKey] : true;
+                                    let dayIcon = isDayOpen ? '▼' : '▶';
+                                    let dayItems = tree[year][month][day];
+                                    
+                                    dayItems.sort((a, b) => {
+                                        let pA = mappedProducts.find(p => p.name === a.log.productName || p.barcode === a.log.barcode);
+                                        let pB = mappedProducts.find(p => p.name === b.log.productName || p.barcode === b.log.barcode);
+                                        let sttA = pA ? (pA.stt || 999) : 999;
+                                        let sttB = pB ? (pB.stt || 999) : 999;
+                                        return sttA - sttB;
+                                    });
+
+                                    let dayImportCount = dayItems.filter(x => x.log.type === 'NHẬP').reduce((sum, x) => sum + x.log.qty, 0);
+                                    let dayExportCount = dayItems.filter(x => x.log.type === 'XUẤT').reduce((sum, x) => sum + x.log.qty, 0);
+                                    let dayBadgeText = `📅 Ngày ${day.split('-')[2]}/${day.split('-')[1]}/${day.split('-')[0]} — Nhập: ${dayImportCount} | Xuất: ${dayExportCount}`;
+
+                                    htmlRows.push(`
+                                        <tr style="background-color: #fafbfc; cursor: pointer; font-weight: bold;" onclick="toggleDayGroup('${dayKey}')">
+                                            <td colspan="${colSpanNum}" style="padding: 5px 10px; padding-left: 40px; color: #2c3e50;">
+                                                <span class="toggle-icon">${dayIcon}</span> ${dayBadgeText}
+                                            </td>
+                                        </tr>
+                                    `);
+
+                                    if (isDayOpen) {
+                                        dayItems.forEach(({ log: l, index }) => {
+                                            let foundRes = findProductByTerm(l.barcode);
+                                            let currentName = foundRes ? foundRes.product.name : l.productName;
+                                            let formattedExp = formatExpiryDisplay(l.expiry);
+
+                                            if (l.type === 'NHẬP') totalImpSum += l.qty;
+                                            if (l.type === 'XUẤT') totalExpSum += l.qty;
+
+                                            if (tableType === 'NHẬP') {
+                                                let status = checkExpiryAndStockStatus(formattedExp, l.qty, foundRes ? foundRes.product.minStock : 0);
+                                                let adminAction = isAdmin ? `<button class="btn-delete" onclick="deleteLog(${index})">Xóa</button>` : '-';
+
+                                                htmlRows.push(`<tr>
+                                                    <td style="text-align: center;"><input type="checkbox" class="row-checkbox"></td>
+                                                    <td style="padding-left: 55px;">⏰ <b>${l.timeStr}</b></td>
+                                                    <td><b>${currentName}</b></td>
+                                                    <td><span class="lot-date-highlight-tab3">${l.lot}</span></td>
+                                                    <td><span class="lot-date-highlight-tab3">${formattedExp}</span></td>
+                                                    <td>${foundRes ? foundRes.product.spec : '-'}</td>
+                                                    <td class="${status.class}">${status.text}</td>
+                                                    <td>${foundRes ? foundRes.product.storageTemp : '-'}</td>
+                                                    <td><b>${l.qty}</b></td>
+                                                    <td>${adminAction}</td>
+                                                </tr>`);
+                                            } else if (tableType === 'XUẤT') {
+                                                let adminAction = isAdmin ? `<button class="btn-delete" onclick="deleteLog(${index})">Xóa</button>` : '-';
+                                                let lotInfo = l.lot ? `LOT: <span class="lot-date-highlight">${l.lot}</span>` : '';
+                                                let expiryInfo = l.expiry ? `Hạn sử dụng: <span class="lot-date-highlight">${formatExpiryDisplay(l.expiry)}</span>` : '';
+                                                let secondLine = (lotInfo || expiryInfo) ? `<br><div style="margin-top: 4px; font-size: 13px; color: #555;">${lotInfo} &nbsp;|&nbsp; ${expiryInfo}</div>` : '';
+                                                
+                                                htmlRows.push(`<tr>
+                                                    <td style="text-align: center;"><input type="checkbox" class="row-checkbox"></td>
+                                                    <td style="padding-left: 55px;">⏰ <b>${l.timeStr}</b></td>
+                                                    <td><b>${currentName}</b>${secondLine}</td>
+                                                    <td><b style="color:#d97706; font-size: 13px;">${l.qty}</b></td>
+                                                    <td>${adminAction}</td>
+                                                </tr>`);
+                                            } else if (tableType === 'LOG') {
+                                                let adminAction = isAdmin ? `<button class="btn-delete" onclick="deleteLog(${index})">Xóa</button>` : '-';
+                                                let typeBadge = l.type === 'NHẬP' ? `<span style="color:green; font-weight:bold;">NHẬP (+)</span>` : `<span style="color:orange; font-weight:bold;">XUẤT (-)</span>`;
+                                                
+                                                htmlRows.push(`<tr>
+                                                    <td style="text-align: center;"><input type="checkbox" class="row-checkbox"></td>
+                                                    <td><b>${currentName}</b></td>
+                                                    <td><span class="lot-date-highlight-tab5">${l.lot}</span></td>
+                                                    <td><span class="lot-date-highlight-tab5">${formattedExp}</span></td>
+                                                    <td>${typeBadge}</td>
+                                                    <td><b>${l.qty}</b></td>
+                                                    <td>${l.note || '-'}</td>
+                                                    <td style="padding-left: 20px;">⏰ <b>${l.timeStr}</b></td>
+                                                    <td><span class="user-tag">${l.userName}</span></td>
+                                                    <td class="admin-only-col">${adminAction}</td>
+                                                </tr>`);
+                                            }
+                                        });
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                return { htmlRows, totalImpSum, totalExpSum };
+            }
+
+            const impBody = document.getElementById('monthlyImportTable').querySelector('tbody');
+            const searchImpKey = document.getElementById('searchImpInput') ? document.getElementById('searchImpInput').value.trim().toLowerCase() : '';
+            const filterImpFrom = document.getElementById('filterImpFrom').value;
+            const filterImpTo = document.getElementById('filterImpTo').value;
+            let impResult = renderHierarchicalLogs('NHẬP', filterImpFrom, filterImpTo, searchImpKey);
+            impBody.innerHTML = impResult.htmlRows.length ? impResult.htmlRows.join('') : `<tr><td colspan="10" style="text-align:center; color:#888;">Chưa có dữ liệu nhập kho</td></tr>`;
+
+            const expBody = document.getElementById('monthlyExportTable').querySelector('tbody');
+            const searchExpKey = document.getElementById('searchExpInput') ? document.getElementById('searchExpInput').value.trim().toLowerCase() : '';
+            const filterExpFrom = document.getElementById('filterExpFrom').value;
+            const filterExpTo = document.getElementById('filterExpTo').value;
+            let expResult = renderHierarchicalLogs('XUẤT', filterExpFrom, filterExpTo, searchExpKey);
+            expBody.innerHTML = expResult.htmlRows.length ? expResult.htmlRows.join('') : `<tr><td colspan="5" style="text-align:center; color:#888;">Chưa có dữ liệu xuất kho</td></tr>`;
+
+            const logBody = document.getElementById('logTable').querySelector('tbody');
+            const searchLogKey = document.getElementById('searchLogInput') ? document.getElementById('searchLogInput').value.trim().toLowerCase() : '';
+            const filterLogFrom = document.getElementById('filterLogFrom').value;
+            const filterLogTo = document.getElementById('filterLogTo').value;
+            let logResult = renderHierarchicalLogs('LOG', filterLogFrom, filterLogTo, searchLogKey);
+            logBody.innerHTML = logResult.htmlRows.length ? logResult.htmlRows.join('') : `<tr><td colspan="10" style="text-align:center; color:#888;">Chưa có lịch sử giao dịch</td></tr>`;
+            
+            let totalImpEl = document.getElementById('totalImport');
+            let totalExpEl = document.getElementById('totalExport');
+            if (totalImpEl) totalImpEl.innerText = logResult.totalImpSum;
+            if (totalExpEl) totalExpEl.innerText = logResult.totalExpSum;
+        }
+
+window.addEventListener('DOMContentLoaded', () => {
+    // 1. Nạp ngay dữ liệu cục bộ lên giao diện trước để không bị trống bảng
+    let localInv = localStorage.getItem('qr_inventory_v11');
+    if (localInv) { try { inventory = JSON.parse(localInv); } catch(e){} }
+    
+    let localLogs = localStorage.getItem('qr_logs_v11');
+    if (localLogs) { try { logs = JSON.parse(localLogs); } catch(e){} }
+    
+    let localProds = localStorage.getItem('qr_mapped_products_v7');
+    if (localProds) { try { mappedProducts = JSON.parse(localProds); } catch(e){} }
+
+    if (typeof renderTables === 'function') renderTables();
+    if (typeof renderMappedProductsTable === 'function') renderMappedProductsTable();
+    if (typeof populateLabelProductSelect === 'function') populateLabelProductSelect();
+
+    // 2. Lắng nghe Realtime từ Firebase theo dạng an toàn
+    db.ref('kho_xet_nghiem/qr_mapped_products_v7').on('value', (snapshot) => {
+        const cloudProducts = snapshot.val();
+        if (cloudProducts) {
+            mappedProducts = cloudProducts;
+            localStorage.setItem('qr_mapped_products_v7', JSON.stringify(cloudProducts));
+            if (typeof renderMappedProductsTable === 'function') renderMappedProductsTable();
+            if (typeof populateLabelProductSelect === 'function') populateLabelProductSelect();
+        }
+    });
+
+    db.ref('kho_xet_nghiem/qr_inventory_v11').on('value', (snapshot) => {
+        const cloudInventory = snapshot.val();
+        if (cloudInventory) {
+            inventory = cloudInventory;
+            localStorage.setItem('qr_inventory_v11', JSON.stringify(cloudInventory));
+            if (typeof renderTables === 'function') renderTables();
+        }
+    });
+
+    db.ref('kho_xet_nghiem/qr_logs_v11').on('value', (snapshot) => {
+        const cloudLogs = snapshot.val();
+        if (cloudLogs) {
+            logs = cloudLogs;
+            localStorage.setItem('qr_logs_v11', JSON.stringify(cloudLogs));
+            if (typeof renderTables === 'function') renderTables();
+        }
+    });
+});
+db.ref('kho_xet_nghiem/ten_nhanh_hoa_chat').on('value', (snapshot) => {
+    const data = snapshot.val();
+    // Đổ dữ liệu lên giao diện bảng/danh sách
+});
+// Hàm thu gọn hoặc mở rộng nhánh con Lab Lưu Mẫu khi bấm vào tiêu đề chính
+function toggleLabSubMenu() {
+    const submenu = document.getElementById('lab-submenu');
+    const arrow = document.getElementById('lab-arrow');
+    
+    if (submenu.style.display === 'none') {
+        submenu.style.display = 'block';
+        arrow.textContent = '▼';
+    } else {
+        submenu.style.display = 'none';
+        arrow.textContent = '▶';
+    }
+}
+
+// Khi chuyển đổi giữa Lưu Mẫu Máu và Lưu Mẫu Nước Tiểu
+function switchLabBranch(branchType, element) {
+// 💡 DÁN DÒNG NÀY VÀO ĐÂY ĐỂ MỖI KHI BẤM CHUYỂN NHÁNH LÀ TỰ ĐỘNG CHECK NGAY
+    checkNewDayAndShiftSamples();
+    // 1. Lưu lại nhánh hiện tại
+    window.currentLabBranch = branchType;
+
+    // 2. Xóa active các nút nhánh con trong sidebar
+    document.querySelectorAll('#lab-submenu .sub-menu-btn').forEach(btn => {
+        btn.classList.remove('active');
+        btn.style.backgroundColor = 'transparent';
+        btn.style.color = '#fff';
+    });
+    
+    // 3. Kích hoạt nút đang chọn
+    if (element) {
+        element.classList.add('active');
+        element.style.backgroundColor = '#10b981';
+        element.style.color = '#fff';
+    }
+
+    // 4. Ẩn thanh 7 Tab của Kho Xét Nghiệm để nhường chỗ cho Lab Lưu Mẫu
+    let tabContainerHeader = document.querySelector('.tab-container');
+    if (tabContainerHeader) tabContainerHeader.style.display = 'none';
+
+    // 5. Hiện khung Lab Lưu Mẫu
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    let samplePane = document.getElementById('tabLabLuuMau');
+    if (samplePane) samplePane.classList.add('active');
+
+    // 6. Đổi tiêu đề phía trên cho đúng nhánh
+    let categoryDisplay = document.getElementById('currentCategoryDisplay');
+    if (categoryDisplay) {
+        let branchName = (branchType === 'mau') ? 'LƯU MẪU MÁU' : 'LƯU MẪU NƯỚC TIỂU';
+        categoryDisplay.innerText = `ĐANG CHỌN: LAB LƯU MẪU (${branchName})`;
+    }
+
+    // 7. Render lại bảng theo dữ liệu độc lập của nhánh đó
+    if (typeof switchLabSubTab === 'function') {
+        switchLabSubTab(1);
+    }
+}
+
+// Xử lý quét và lưu mẫu tự động riêng biệt cho từng nhánh
+function xuLyQuetMauLuu() {
+    let labSampleStorage = getActiveLabStorage();
+    let inputElem = document.getElementById('inputQuetMauLuu');
+    let val = inputElem.value.trim();
+    if (!val) { alert("Vui lòng quét hoặc nhập mã mẫu lưu!"); return; }
+
+    // Kiểm tra trùng lặp trong chính nhánh hiện tại
+    for (let i = 1; i <= maxSampleLimit; i++) {
+        if (labSampleStorage[i] && labSampleStorage[i].sampleContent && !labSampleStorage[i].daHuy) {
+            if (labSampleStorage[i].sampleContent.toLowerCase() === val.toLowerCase()) {
+                let branchName = (window.currentLabBranch === 'mau') ? 'Mẫu Máu' : 'Mẫu Nước Tiểu';
+                alert(`⚠️ CẢNH BÁO: Mẫu "${val}" đã tồn tại trong kho ${branchName} tại Vị Trí số ${i}!\nHệ thống từ chối lưu trùng.`);
+                inputElem.value = '';
+                inputElem.focus();
+                return;
+            }
+        }
+    }
+
+    let targetPos = -1;
+    for (let i = 1; i <= maxSampleLimit; i++) {
+        if (!labSampleStorage[i] || !labSampleStorage[i].sampleContent || labSampleStorage[i].daHuy) {
+            targetPos = i;
+            break;
+        }
+    }
+
+    if (targetPos === -1) {
+        alert(`⚠️ Kho lưu mẫu của nhánh này đã đầy (đạt giới hạn ${maxSampleLimit} vị trí)!`);
+        return;
+    }
+
+    let now = new Date();
+    let timeStr = now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' ' + now.toLocaleDateString('vi-VN');
+    let dateISO = now.toISOString().split('T')[0];
+
+    labSampleStorage[targetPos] = {
+        sampleContent: val,
+        timeStr: timeStr,
+        dateISO: dateISO,
+        userName: currentUser ? currentUser.name : 'N/A',
+        tabIndex: 1,
+        daHuy: false,
+        nguoiHuy: '',
+        thoiGianHuy: ''
+    };
+
+    saveActiveLabStorage(labSampleStorage);
+    inputElem.value = '';
+    inputElem.focus();
+    renderSampleTable();
+    showAutoSaveNotification(`✅ Đã lưu thành công vào Vị trí số ${targetPos}!`);
+}
+
+// Hủy mẫu riêng biệt theo vị trí của nhánh đang mở
+function thucHienHuyMau(pos) {
+    let labSampleStorage = getActiveLabStorage();
+    let s = labSampleStorage[pos];
+    if (!s || s.daHuy) return;
+    let tenNguoiHuy = currentUser ? currentUser.name : prompt("Nhập tên người thực hiện hủy mẫu:");
+    if (!tenNguoiHuy) return;
+
+    if (confirm(`Xác nhận hủy mẫu "${s.sampleContent}" tại vị trí ${pos}?\nNgười hủy: ${tenNguoiHuy}`)) {
+        s.daHuy = true;
+        s.nguoiHuy = tenNguoiHuy;
+        s.thoiGianHuy = new Date().toLocaleString('vi-VN');
+        saveActiveLabStorage(labSampleStorage);
+        
+        alert(`✅ Đã ghi nhận hủy mẫu thành công! Hệ thống chuyển sang Tab 3 (Lịch Sử).`);
+        switchLabSubTab(3);
+    }
+}
+
+// Render bảng dữ liệu dựa trên kho lưu trữ độc lập
+function renderSampleTable() {
+    let labSampleStorage = getActiveLabStorage();
+    const tbody = document.getElementById('sampleTableBody');
+    if (!tbody) return;
+
+    const searchInput = document.getElementById('searchSampleInput');
+    const searchKey = searchInput ? searchInput.value.trim().toLowerCase() : '';
+    const fromDate = document.getElementById('filterSampleFrom') ? document.getElementById('filterSampleFrom').value : '';
+    const toDate = document.getElementById('filterSampleTo') ? document.getElementById('filterSampleTo').value : '';
+
+    let htmlRows = [];
+    let countTab1 = 0;
+    let countTab2 = 0;
+    let totalDisplayCount = 0;
+
+// --- TAB 3: LỊCH SỬ HỦY (HIỂN THỊ DẠNG CÂY NĂM > THÁNG > NGÀY) ---
+if (activeLabSubTab === 3) {
+    let treeData = {}; 
+
+    // 1. Gom nhóm dữ liệu theo Năm -> Tháng -> Ngày từ danh sách mẫu hủy
+    for (let i = 1; i <= maxSampleLimit; i++) {
+        let s = labSampleStorage[i];
+        if (s && s.sampleContent && s.daHuy) {
+            let dateStr = s.thoiGianHuy || s.date || '';
+            let parts = dateStr.split('/');
+            
+            if (parts.length >= 3) {
+                let day = parts[0].trim();
+                let month = parts[1].trim();
+                let year = parts[2].substring(0, 4).trim();
+
+                if (!treeData[year]) treeData[year] = {};
+                if (!treeData[year][month]) treeData[year][month] = {};
+                if (!treeData[year][month][day]) treeData[year][month][day] = [];
+
+                treeData[year][month][day].push({ pos: i, data: s });
+            }
+        }
+    }
+
+    let htmlRows = [];
+    let totalCount = 0;
+
+    // 2. Tạo giao diện HTML nhóm theo cấp độ
+    for (let year in treeData) {
+        htmlRows.push(`
+            <tr class="group-year-header" data-level="year" data-open="false" onclick="toggleGroup(this)" style="background: #e2e8f0; font-weight: bold; cursor: pointer;">
+                <td colspan="7" style="padding: 10px; color: #1e293b;">📁 Năm ${year}</td>
+            </tr>
+        `);
+
+        for (let month in treeData[year]) {
+            htmlRows.push(`
+                <tr class="group-month-header" data-level="month" data-open="false" onclick="toggleGroup(this)" style="background: #f1f5f9; font-weight: 600; cursor: pointer; display: none;">
+                    <td colspan="7" style="padding: 8px 8px 8px 25px; color: #334155;">📂 Tháng ${month} / ${year}</td>
+                </tr>
+            `);
+
+            for (let day in treeData[year][month]) {
+                let dayItems = treeData[year][month][day];
+                totalCount += dayItems.length;
+
+                htmlRows.push(`
+                    <tr class="group-day-header" data-level="day" data-open="false" onclick="toggleGroup(this)" style="background: #f8fafc; font-weight: 500; cursor: pointer; display: none;">
+                        <td colspan="7" style="padding: 6px 6px 6px 45px; color: #0284c7;">📅 Ngày ${day}/${month}/${year} (${dayItems.length} mẫu hủy)</td>
+                    </tr>
+                `);
+
+                dayItems.forEach(item => {
+                    let tenKhay = 'Khay ' + Math.ceil(item.pos / 100);
+                    htmlRows.push(`
+                        <tr class="detail-row" data-level="detail" style="display: none;">
+                            <td style="text-align: center; vertical-align: middle; font-size: 11px; color: #0284c7; font-weight: 500;">
+                                📥 ${item.data.timeStr || item.data.dateISO || '---'}
+                            </td>
+                            <td style="text-align: center; vertical-align: middle; font-size: 11px; color: #dc2626; font-weight: 500;">
+                                ❌ ${item.data.thoiGianHuy || '---'}
+                            </td>
+                            <td style="text-align: center; vertical-align: middle;">${tenKhay} (Vị trí ${item.pos % 100 || 100})</td>
+                            <td style="text-align: left; padding-left: 10px; vertical-align: middle;"><b>${item.data.sampleContent || ''}</b></td>
+                            <td style="text-align: center; vertical-align: middle;"><span style="background: #dc3545; color: white; padding: 2px 6px; border-radius: 4px;">ĐÃ HỦY</span></td>
+                            <td style="text-align: center; vertical-align: middle;"><span class="user-tag">${item.data.userName || '---'}</span></td>
+                            <td style="text-align: center; vertical-align: middle;"><span class="user-tag" style="background:#f8d7da; color:#721c24;">${item.data.nguoiHuy || 'N/A'}</span></td>
+                        </tr>
+                    `);
+                });
+            }
+        }
+    }
+
+    // Cập nhật tổng số lượng hiển thị trên tiêu đề bảng nếu có
+    let totalCountEl = document.getElementById('totalSampleCount');
+    if (totalCountEl) totalCountEl.innerText = totalCount;
+
+    // Đổ dữ liệu ra bảng
+    let tbody = document.getElementById('sampleTableBody');
+    if (tbody) {
+        tbody.innerHTML = htmlRows.length ? htmlRows.join('') : `<tr><td colspan="7" style="text-align: center; padding: 20px; color: #666;">Chưa có mẫu nào bị hủy.</td></tr>`;
+    }
+    return;
+}
+    let tableHeaderRow = document.getElementById('sampleTableHeaderRow');
+    if (tableHeaderRow) {
+        tableHeaderRow.innerHTML = `
+            <th style="width: 120px; text-align: center;">Khay & Vị Trí</th>
+            <th style="text-align: left; padding-left: 10px;">Mẫu Lưu Theo Ngày / Barcode / Tên Mẫu</th>
+            <th style="width: 130px; text-align: center;">Ngày Giờ Lưu</th>
+            <th style="width: 110px; text-align: center;">Thuộc Tab</th>
+            <th style="width: 130px; text-align: center;">Người Lưu Mẫu</th>
+            <th style="width: 90px; text-align: center;">Thao Tác</th>
+        `;
+    }
+
+    const khayColors = ['#ffffff', '#f0fdf4', '#eff6ff', '#fefce8', '#fdf4ff', '#fff1f2'];
+    let collectedRows = [];
+
+    // Duyệt qua toàn bộ vị trí để thu thập dữ liệu hợp lệ
+    for (let i = 1; i <= maxSampleLimit; i++) {
+        let sampleInfo = labSampleStorage[i];
+        let hasData = sampleInfo && sampleInfo.sampleContent;
+
+        if (!hasData || sampleInfo.daHuy) continue;
+
+        if (!sampleInfo.tabIndex) sampleInfo.tabIndex = 1;
+        if (sampleInfo.tabIndex === 1) countTab1++;
+        else if (sampleInfo.tabIndex === 2) countTab2++;
+
+        if (sampleInfo.tabIndex !== activeLabSubTab) continue;
+        if (fromDate && sampleInfo.dateISO < fromDate) continue;
+        if (toDate && sampleInfo.dateISO > toDate) continue;
+        
+        if (searchKey) {
+            let match = sampleInfo.sampleContent.toLowerCase().includes(searchKey) ||
+                        sampleInfo.userName.toLowerCase().includes(searchKey) ||
+                        String(i).includes(searchKey) || ("khay " + Math.ceil(i / 100)).toLowerCase().includes(searchKey);
+            if (!match) continue;
+        }
+
+        totalDisplayCount++;
+        let khayIndex = Math.ceil(i / 100);
+        let tenKhay = `Khay ${khayIndex}`;
+        let baseKhayBg = khayColors[(khayIndex - 1) % khayColors.length];
+
+        let contentTd = `<b>${sampleInfo.sampleContent}</b>`;
+        let timeTd = sampleInfo.timeStr;
+        let userTd = `<span class="user-tag">${sampleInfo.userName}</span>`;
+        let tabBadge = `<span style="background: #28a745; color: white; padding: 3px 8px; border-radius: 4px; font-weight: bold; font-size: 10.5px;">Đang lưu mẫu</span>`;
+        let actionTd = `<button onclick="thucHienHuyMau(${i})" style="background-color: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 11px;">🗑️ Hủy Mẫu</button>`;
+
+        collectedRows.push({
+            pos: i,
+            html: `
+                <tr style="background-color: ${baseKhayBg};">
+                    <td style="text-align: center; font-weight: bold; color: #004085; border-right: 1px solid #ddd;">${tenKhay}<br><span style="font-size: 9.5px; color: #555;">(Vị trí ${i})</span></td>
+                    <td class="text-left" style="padding-left: 10px;">${contentTd}</td>
+                    <td style="text-align: center;">${timeTd}</td>
+                    <td style="text-align: center;">${tabBadge}</td>
+                    <td style="text-align: center;">${userTd}</td>
+                    <td style="text-align: center;">${actionTd}</td>
+                </tr>
+            `
+        });
+    }
+
+    // Đảo ngược thứ tự (nghịch đảo): Mẫu mới lưu sẽ nằm ở vị trí đầu tiên (trên cùng)
+    collectedRows.reverse().forEach(item => {
+        htmlRows.push(item.html);
+    });
+
+    tbody.innerHTML = htmlRows.length ? htmlRows.join('') : `<tr><td colspan="6" style="text-align:center; padding: 20px; color: #666;">Chưa có mẫu nào được lưu trong tab này.</td></tr>`;
+    
+    let c1 = document.getElementById('countTab1');
+    let c2 = document.getElementById('countTab2');
+    let tot = document.getElementById('totalSavedSamplesCount');
+    let maxPos = document.getElementById('maxSamplePositions');
+
+    if (c1) c1.innerText = countTab1;
+    if (c2) c2.innerText = countTab2;
+    if (tot) tot.innerText = totalDisplayCount;
+    if (maxPos) maxPos.innerText = maxSampleLimit;
+}
+// Bổ sung điều kiện ẩn/hiện nút "Hủy Mẫu Hàng Loạt" đối với tài khoản User
+    document.addEventListener('DOMContentLoaded', () => {
+        let originalApplyPermissions = window.applyUserPermissions;
+        if (typeof originalApplyPermissions === 'function') {
+            window.applyUserPermissions = function() {
+                originalApplyPermissions(); // Chạy lại logic phân quyền cũ
+                
+                let userRole = currentUser ? (currentUser.role || 'USER') : 'USER';
+                let isAdmin = (userRole === 'ADMIN' || userRole === 'PHÓ ADMIN' || userRole === 'SUB_ADMIN');
+
+                // Ẩn nút "Hủy Mẫu Hàng Loạt" đối với tài khoản User
+                let btnHuyHangLoat = document.querySelector('button[onclick="thucHienHuyMauHangLoat()"]');
+                if (btnHuyHangLoat) {
+                    btnHuyHangLoat.style.display = isAdmin ? 'inline-block' : 'none';
+                }
+            };
+        }
+    });
+// Tự động ép toàn bộ các thẻ trên trang nhận font Arial
+    document.addEventListener("DOMContentLoaded", function() {
+        var allElements = document.getElementsByTagName("*");
+        for (var i = 0; i < allElements.length; i++) {
+            allElements[i].style.fontFamily = "Arial, sans-serif";
+        }
+    });
+// --- 1. SANG NGÀY MỚI: TỰ ĐỘNG ĐẨY MẪU CŨ SANG TAB 2 VÀ GIẢI PHÓNG TAB 1 VỀ TỪ VỊ TRÍ 1 ---
+function checkNewDayAndShiftSamples() {
+    let labSampleStorage = getActiveLabStorage(); 
+    if (!labSampleStorage) return;
+
+    let now = new Date();
+    let todayDay = String(now.getDate()).padStart(2, '0');
+    let todayMonth = String(now.getMonth() + 1).padStart(2, '0');
+    let todayYear = now.getFullYear();
+    let todayStrStandard = `${todayYear}-${todayMonth}-${todayDay}`;
+
+    let hasChanges = false;
+    
+    // Duyệt qua kho, nếu thấy mẫu nào thuộc Tab 1 mà là ngày của hôm trước -> Tự động chuyển tabIndex thành 2
+    for (let i = 1; i <= maxSampleLimit; i++) {
+        let s = labSampleStorage[i];
+        
+        if (s && s.sampleContent && !s.daHuy && s.tabIndex === 1) {
+            let sampleDateStr = "";
+
+            if (s.dateISO) {
+                sampleDateStr = s.dateISO;
+            } else if (s.timeStr) {
+                let parts = s.timeStr.split(' ');
+                if (parts.length >= 2) {
+                    let dateParts = parts[1].split('/');
+                    if (dateParts.length === 3) {
+                        sampleDateStr = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
+                    }
+                }
+            }
+
+            // Nếu ngày của mẫu khác ngày hôm nay -> Đẩy sang Tab 2 (Tích lũy)
+            if (sampleDateStr && sampleDateStr !== todayStrStandard) {
+                s.tabIndex = 2;
+                hasChanges = true;
+            } else if (!sampleDateStr) {
+                if (s.timeStr && !s.timeStr.includes(`${todayDay}/${todayMonth}/${todayYear}`)) {
+                    s.tabIndex = 2;
+                    hasChanges = true;
+                }
+            }
+        }
+    }
+
+    if (hasChanges) {
+        saveActiveLabStorage(labSampleStorage);
+        console.log("Đã tự động chuyển các mẫu chưa hủy của ngày hôm trước sang Tab 2. Tab 1 đã sẵn sàng reset về vị trí 1!");
+    }
+}
+
+// Gọi kiểm tra đổi ngày ngay khi tải trang
+window.addEventListener('DOMContentLoaded', (event) => {
+    setTimeout(() => {
+        checkNewDayAndShiftSamples();
+        if (typeof renderSampleTable === 'function') {
+            renderSampleTable();
+        }
+    }, 500);
+});
+
+// --- 2. KHI QUÉT LƯU MẪU MỚI: LUÔN TÌM VỊ TRÍ TRỐNG ĐẦU TIÊN TỪ SỐ 1 TRONG NGÀY MỚI ---
+function xuLyQuetMauLuu() {
+    checkNewDayAndShiftSamples(); // Chạy kiểm tra đổi ngày trước khi ghi nhận
+    let labSampleStorage = getActiveLabStorage();
+    let inputElem = document.getElementById('inputQuetMauLuu');
+    let val = inputElem.value.trim();
+    if (!val) { alert("Vui lòng quét hoặc nhập mã mẫu lưu!"); return; }
+
+    // Kiểm tra trùng lặp mẫu đang hoạt động
+    for (let i = 1; i <= maxSampleLimit; i++) {
+        if (labSampleStorage[i] && labSampleStorage[i].sampleContent && !labSampleStorage[i].daHuy) {
+            if (labSampleStorage[i].sampleContent.toLowerCase() === val.toLowerCase()) {
+                let branchName = (window.currentLabBranch === 'mau') ? 'Mẫu Máu' : 'Mẫu Nước Tiểu';
+                alert(`⚠️ CẢNH BÁO: Mẫu "${val}" đã tồn tại trong kho ${branchName} tại Vị Trí số ${i}!\nHệ thống từ chối lưu trùng.`);
+                inputElem.value = '';
+                inputElem.focus();
+                return;
+            }
+        }
+    }
+
+    // Tự động tìm vị trí trống đầu tiên (quét từ 1 trở đi) để lấp đầy Tab 1 của ngày mới
+    let targetPos = -1;
+    for (let i = 1; i <= maxSampleLimit; i++) {
+        // Nếu vị trí đó trống, hoặc đã bị hủy, hoặc mẫu cũ đã được chuyển sang Tab 2 thì vị trí đó trở thành vị trí trống có thể ghi đè/quét mới
+        if (!labSampleStorage[i] || !labSampleStorage[i].sampleContent || labSampleStorage[i].daHuy || labSampleStorage[i].tabIndex === 2) {
+            targetPos = i;
+            break;
+        }
+    }
+
+    if (targetPos === -1) {
+        alert(`⚠️ Kho lưu mẫu đã đầy (đạt giới hạn ${maxSampleLimit} vị trí)! Vui lòng hủy bớt mẫu cũ.`);
+        return;
+    }
+
+    let now = new Date();
+    let timeStr = now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' ' + now.toLocaleDateString('vi-VN');
+    let dateISO = now.toISOString().split('T')[0];
+
+    labSampleStorage[targetPos] = {
+        sampleContent: val,
+        timeStr: timeStr,
+        dateISO: dateISO,
+        userName: currentUser ? currentUser.name : 'N/A',
+        tabIndex: 1, // Ghi nhận vào Tab 1 của ngày mới
+        daHuy: false,
+        nguoiHuy: '',
+        thoiGianHuy: ''
+    };
+
+    saveActiveLabStorage(labSampleStorage);
+    inputElem.value = '';
+    inputElem.focus();
+    renderSampleTable();
+    showAutoSaveNotification(`✅ Đã lưu thành công vào Khay ${Math.ceil(targetPos / 100)} - Vị trí số ${targetPos}!`);
+}
+// --- 3. HỦY MẪU HÀNG LOẠT THEO NGÀY ĐÃ CHỌN TẠI TAB 2 ---
+function thucHienHuyTheoNgayDaChon() {
+    let selectElem = document.getElementById('selectNgayHuyTab2');
+    if (!selectElem) return;
+    
+    let ngayChon = selectElem.value;
+    if (!ngayChon) {
+        alert("⚠️ Vui lòng chọn một ngày cụ thể từ danh sách để tiến hành hủy mẫu!");
+        return;
+    }
+
+    let labSampleStorage = getActiveLabStorage();
+    let tenNguoiHuy = currentUser ? currentUser.name : prompt("Nhập tên người thực hiện hủy mẫu:");
+    if (!tenNguoiHuy) return;
+
+    let parts = ngayChon.split('-');
+    let displayDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
+
+    if (!confirm(`Xác nhận hủy toàn bộ các mẫu/khay tích lũy thuộc ngày ${displayDate} tại Tab 2?\nThao tác này sẽ giải phóng toàn bộ vị trí và chuyển các mẫu sang Tab 3 (Lịch sử).`)) {
+        return;
+    }
+
+    let countHuy = 0;
+    let now = new Date();
+    let thoiGianHuyStr = now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' ' + now.toLocaleDateString('vi-VN');
+
+    for (let i = 1; i <= maxSampleLimit; i++) {
+        let s = labSampleStorage[i];
+        if (s && s.sampleContent && !s.daHuy && s.tabIndex === 2) {
+            let matchDate = (s.dateISO === ngayChon) || (s.timeStr && s.timeStr.includes(displayDate));
+            if (matchDate) {
+                s.daHuy = true;
+                s.nguoiHuy = tenNguoiHuy;
+                s.thoiGianHuy = thoiGianHuyStr;
+                countHuy++;
+            }
+        }
+    }
+
+    if (countHuy > 0) {
+        saveActiveLabStorage(labSampleStorage);
+        alert(`✅ Đã hủy thành công ${countHuy} mẫu của ngày ${displayDate} tại Tab 2!`);
+        renderSampleTable();
+        switchLabSubTab(3); // Chuyển sang Tab 3 để kiểm tra lịch sử
+    } else {
+        alert("⚠️ Không tìm thấy mẫu nào khớp với ngày đã chọn.");
+    }
+}
+// --- HÀM CẬP NHẬT & HIỂN THỊ DROPDOWN NGÀY CHO TAB 2 ---
+function capNhatDanhSachNgayTab2() {
+    let selectElem = document.getElementById('selectNgayHuyTab2');
+    if (!selectElem) return;
+    
+    let labSampleStorage = getActiveLabStorage();
+    let setNgay = new Set();
+
+    for (let i = 1; i <= maxSampleLimit; i++) {
+        let s = labSampleStorage[i];
+        if (s && s.sampleContent && !s.daHuy && s.tabIndex === 2) {
+            if (s.dateISO) {
+                setNgay.add(s.dateISO);
+            } else if (s.timeStr) {
+                let parts = s.timeStr.split(' ');
+                if (parts.length >= 2) {
+                    let dateParts = parts[1].split('/');
+                    if (dateParts.length === 3) {
+                        setNgay.add(`${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`);
+                    }
+                }
+            }
+        }
+    }
+
+    selectElem.innerHTML = `<option value="">-- Chọn ngày cần hủy --</option>`;
+    let sortedDates = Array.from(setNgay).sort().reverse();
+    
+    sortedDates.forEach(d => {
+        let opt = document.createElement('option');
+        opt.value = d;
+        let parts = d.split('-');
+        opt.innerText = `📅 Ngày ${parts[2]}/${parts[1]}/${parts[0]}`;
+        selectElem.appendChild(opt);
+    });
+}
+
+// --- HÀM THỰC THI HỦY MẪU THEO NGÀY ĐÃ CHỌN ---
+function thucHienHuyTheoNgayDaChon() {
+    let selectElem = document.getElementById('selectNgayHuyTab2');
+    if (!selectElem) return;
+    
+    let ngayChon = selectElem.value;
+    if (!ngayChon) {
+        alert("⚠️ Vui lòng chọn một ngày cụ thể từ danh sách để tiến hành hủy mẫu!");
+        return;
+    }
+
+    let labSampleStorage = getActiveLabStorage();
+    let tenNguoiHuy = currentUser ? currentUser.name : prompt("Nhập tên người thực hiện hủy mẫu:");
+    if (!tenNguoiHuy) return;
+
+    let parts = ngayChon.split('-');
+    let displayDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
+
+    if (!confirm(`Xác nhận hủy toàn bộ các mẫu tích lũy thuộc ngày ${displayDate} tại Tab 2?\nThao tác này sẽ chuyển các mẫu sang Tab 3 (Lịch sử).`)) {
+        return;
+    }
+
+    let countHuy = 0;
+    let now = new Date();
+    let thoiGianHuyStr = now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' ' + now.toLocaleDateString('vi-VN');
+
+    for (let i = 1; i <= maxSampleLimit; i++) {
+        let s = labSampleStorage[i];
+        if (s && s.sampleContent && !s.daHuy && s.tabIndex === 2) {
+            let matchDate = (s.dateISO === ngayChon) || (s.timeStr && s.timeStr.includes(displayDate));
+            if (matchDate) {
+                s.daHuy = true;
+                s.nguoiHuy = tenNguoiHuy;
+                s.thoiGianHuy = thoiGianHuyStr;
+                countHuy++;
+            }
+        }
+    }
+
+    if (countHuy > 0) {
+        saveActiveLabStorage(labSampleStorage);
+        alert(`✅ Đã hủy thành công ${countHuy} mẫu của ngày ${displayDate}!`);
+        renderSampleTable();
+        switchLabSubTab(3); // Chuyển sang Tab 3 xem lịch sử
+    } else {
+        alert("⚠️ Không tìm thấy mẫu nào khớp với ngày đã chọn.");
+    }
+}
+
+// --- MÓC VÀO HÀM CHUYỂN TAB ĐỂ TỰ ĐỘNG ẨN/HIỆN NÚT VÀ CẬP NHẬT NGÀY ---
+let originalSwitchLabSubTab = window.switchLabSubTab;
+if (typeof originalSwitchLabSubTab === 'function') {
+    window.switchLabSubTab = function(tabNum) {
+        originalSwitchLabSubTab(tabNum);
+        
+        let divHuyNgay = document.getElementById('divHuyTheoNgayTab2');
+        if (divHuyNgay) {
+            // Chỉ hiện thanh chọn hủy theo ngày NẾU đang ở Tab 2
+            if (tabNum === 2) {
+                divHuyNgay.style.display = 'flex';
+                capNhatDanhSachNgayTab2();
+            } else {
+                divHuyNgay.style.display = 'none';
+            }
+        }
+    };
+}
+function moModalMoRongViTri() {
+    let modal = document.getElementById('modalMoRongViTri');
+    if (modal) {
+        modal.style.display = 'block';
+    } else {
+        console.warn("Không tìm thấy modalMoRongViTri trong DOM!");
+    }
+}
+
+function dongModalMoRongViTri() {
+    let modal = document.getElementById('modalMoRongViTri');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+function luuCaiDatViTri() {
+    let selectElem = document.getElementById('selectMaxPositions');
+    if (selectElem) {
+        maxSampleLimit = parseInt(selectElem.value) || 100;
+        localStorage.setItem('qr_max_sample_limit', maxSampleLimit);
+        dongModalMoRongViTri();
+        renderSampleTable();
+        alert(`✅ Đã cập nhật giới hạn vị trí lưu mẫu thành công: ${maxSampleLimit} vị trí!`);
+    }
+}
+function checkAndMoveUrineTabs() {
+    let urineData = JSON.parse(localStorage.getItem('urine_storage_data')) || [];
+    let todayStr = new Date().toLocaleDateString('vi-VN'); // Lấy định dạng ngày hiện tại (ví dụ: "03/11/2026")
+    let hasChanged = false;
+
+    urineData.forEach(item => {
+        // Giả sử item.ngayLuu hoặc item.ngayGioLưu có chứa chuỗi ngày tháng lưu mẫu
+        // Ví dụ item.ngayGioLưu là "15:46:20 2/11/2026"
+        let itemDatePart = item.ngayGioLưu ? item.ngayGioLưu.split(' ')[1] : ''; 
+
+        // Nếu mẫu nằm ở Tab 1 (Trong ngày) nhưng ngày của mẫu KHÁC với ngày hiện tại (tức là qua ngày mới)
+        if (item.tab === 1 && itemDatePart && itemDatePart !== todayStr) {
+            item.tab = 2; // Tự động chuyển sang Tab 2 (Tích lũy)
+            hasChanged = true;
+        }
+    });
+
+    // Nếu có sự thay đổi, lưu lại vào localStorage và render lại bảng
+    if (hasChanged) {
+        localStorage.setItem('urine_storage_data', JSON.stringify(urineData));
+        renderUrineTables(); // Hàm hiển thị lại bảng của nước tiểu
+    }
+}
+function deleteLogByUniqueKey(timeStr, barcode, lot, qty, type) {
+    if (!currentUser || currentUser.role !== 'ADMIN') {
+        alert("⛔ Chỉ có tài khoản ADMIN mới có quyền xóa giao dịch!");
+        return;
+    }
+
+    if (!confirm(`Bạn có chắc chắn muốn xóa giao dịch [${type}] của sản phẩm này không?\nHệ thống sẽ tự động hoàn trả/điều chỉnh tồn kho tương ứng.`)) {
+        return;
+    }
+
+    // 1. Tìm đúng vị trí chính xác của log dựa trên các thuộc tính độc nhất
+    let logIndex = logs.findIndex(l => l.timeStr === timeStr && l.barcode === barcode && l.lot === lot && l.qty === qty && l.type === type);
+    
+    if (logIndex === -1) {
+        alert("⚠️ Không tìm thấy giao dịch chính xác trong hệ thống!");
+        return;
+    }
+
+    let targetLog = logs[logIndex];
+    let cleanBarcode = targetLog.barcode.replace(/[.#$\[\]\/]/g, '_');
+    let cleanLot = targetLog.lot.replace(/[.#$\[\]\/]/g, '_');
+    let batchKey = `${targetLog.category}_${cleanBarcode}_${cleanLot}`;
+
+    // 2. Hoàn tác số lượng tồn kho (Inventory rollback)
+    if (inventory[batchKey]) {
+        if (targetLog.type === 'NHẬP') {
+            inventory[batchKey].qty -= targetLog.qty;
+            if (inventory[batchKey].qty < 0) inventory[batchKey].qty = 0;
+        } else if (targetLog.type === 'XUẤT') {
+            inventory[batchKey].qty += targetLog.qty;
+        }
+    }
+
+    // 3. Xóa đúng dòng log đó ra khỏi mảng
+    logs.splice(logIndex, 1);
+
+    // 4. Lưu lại dữ liệu lên Cloud / LocalStorage
+    saveInventoryToCloud(inventory);
+    saveLogsToCloud(logs);
+
+    // 5. Render lại giao diện
+    renderTables();
+    alert("✅ Đã xóa giao dịch và đồng bộ lại tồn kho thành công!");
+}
+function resetSampleFilter() {
+    let searchInput = document.getElementById('searchSampleInput');
+    if (searchInput) searchInput.value = '';
+    renderSampleTable(); // Vẽ lại bảng hiển thị toàn bộ
+}
+// Hàm điều khiển thu gọn / mở rộng theo cấp Năm > Tháng > Ngày ở Tab 3
+function toggleGroup(headerRow) {
+    let level = headerRow.getAttribute('data-level');
+    let isOpen = headerRow.getAttribute('data-open') === 'true';
+    
+    headerRow.setAttribute('data-open', !isOpen);
+    
+    let nextRow = headerRow.nextElementSibling;
+    while (nextRow) {
+        let nextLevel = nextRow.getAttribute('data-level');
+        let isDetail = nextRow.classList.contains('detail-row');
+        
+        if (nextLevel && (
+            (level === 'year' && nextLevel === 'year') ||
+            (level === 'month' && (nextLevel === 'month' || nextLevel === 'year')) ||
+            (level === 'day' && (nextLevel !== 'detail'))
+        )) {
+            break;
+        }
+
+        if (level === 'year' && nextLevel === 'month') {
+            nextRow.style.display = isOpen ? 'none' : '';
+            if (isOpen) {
+                nextRow.setAttribute('data-open', 'false');
+                let sub = nextRow.nextElementSibling;
+                while(sub && sub.getAttribute('data-level') && sub.getAttribute('data-level') !== 'year') {
+                    sub.style.display = 'none';
+                    sub = sub.nextElementSibling;
+                }
+            }
+        } else if (level === 'month' && nextLevel === 'day') {
+            nextRow.style.display = isOpen ? 'none' : '';
+            if (isOpen) {
+                nextRow.setAttribute('data-open', 'false');
+                let sub = nextRow.nextElementSibling;
+                while(sub && sub.getAttribute('data-level') === 'day') {
+                    sub.style.display = 'none';
+                    sub = sub.nextElementSibling;
+                }
+            }
+        } else if (level === 'day' && isDetail) {
+            nextRow.style.display = isOpen ? 'none' : '';
+        }
+
+        nextRow = nextRow.nextElementSibling;
+    }
+}
+ </script>
 </body>
 </html>
